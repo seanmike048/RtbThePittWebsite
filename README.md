@@ -58,3 +58,15 @@ src/
 ```
 
 The original AI Studio export is kept as `rtb-command-center.zip` for reference.
+
+## Deploy (Firebase App Hosting)
+
+App Hosting runs `npm run build`, then `npm start`, which serves `dist/` with the zero-dependency `server.mjs` on `$PORT`
+(8080 by default). Unknown paths fall back to `index.html`; `/healthz` returns `ok`. Run settings live in `apphosting.yaml`.
+
+```bash
+npm run build && PORT=8080 npm start
+```
+
+**Refresh data** on the CFO impact · 437 tab only works inside claude.ai, where the viewer's Snowflake and Google Drive
+connectors are available. On the hosted URL the page shows the embedded data and says live refresh is unavailable.
