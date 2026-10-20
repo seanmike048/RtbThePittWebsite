@@ -1,7 +1,7 @@
 import React from 'react';
-import { AlertTriangle, Download, Lock, Mail, MessageSquare, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Lock, Mail, MessageSquare, ShieldCheck } from 'lucide-react';
 import type { RTBViewModel } from '../lib/adapter/types.ts';
-import { Badge, Button, Card, CopyButton, EmptyNote, SectionHeading } from './ui.tsx';
+import { Badge, Card, CopyButton, EmptyNote, SectionHeading } from './ui.tsx';
 
 /** Renders Slack mrkdwn *bold* segments so the preview reads like Slack. */
 const SlackText: React.FC<{ text: string }> = ({ text }) => (
@@ -25,16 +25,6 @@ const SlackText: React.FC<{ text: string }> = ({ text }) => (
 export const Validation: React.FC<{ model: RTBViewModel }> = ({ model }) => {
   const v = model.validation;
 
-  const exportJson = () => {
-    const blob = new Blob([model.rawSourceJson], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `rtb_report_${model.overview.publisherId}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const stats = [
     {
       label: 'Finalized report',
@@ -54,9 +44,7 @@ export const Validation: React.FC<{ model: RTBViewModel }> = ({ model }) => {
           title="Communication & truth validation"
           description="Generated language is checked against source facts with deterministic fallbacks. Slack text is capped at 200 words."
           aside={
-            <Button size="sm" onClick={exportJson}>
-              <Download className="h-4 w-4" /> Export JSON
-            </Button>
+<CopyButton text={model.rawSourceJson} label="Copy report JSON" />
           }
         />
         <dl className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">

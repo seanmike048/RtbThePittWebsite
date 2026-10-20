@@ -40,7 +40,7 @@ export const Header: React.FC<{
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-surface/85 backdrop-blur-xl">
+    <header className="sticky top-[env(safe-area-inset-top,0px)] z-40 border-b border-line bg-surface/85 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
           <a href="#" onClick={e => (e.preventDefault(), onTabChange('overview'))} className="flex min-w-0 items-center gap-3">
