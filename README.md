@@ -12,7 +12,7 @@ what to do next, and the validated Slack / client messages produced by the
 npm install
 npm run dev      # http://localhost:3000
 npm run build    # static site in dist/
-npm test         # adapter / guardrail unit tests (Node 22+)
+npm test         # adapter guardrails + endpoint-437 CFO model tests (Node 22+)
 ```
 
 ## Views
@@ -21,7 +21,7 @@ npm test         # adapter / guardrail unit tests (Node 22+)
 | --- | --- |
 | **Overview** | Incident headline, priority & confidence, KPIs, bid-request collapse, timeline, investigation, ledger |
 | **Disconnections** | Seat ledger — click a row for the full record drawer |
-| **Analytics & CFO model** | Equativ SSP 30-day baseline, top-16 concentration, DSP issue snapshot, ads.txt cohort, editable scenario calculator, SQL appendix, limitations |
+| **CFO impact · 437** | Amazon DSP endpoint 437 · Americas Display · Sep 2026: validated workbook baseline, concentration, publisher prioritization, editable Conservative / Base / Upside scenarios, run-rate horizons, sensitivity, ROI availability, SQL and assumptions appendices. SSP-wide context kept in a collapsible section |
 | **Signals & checklist** | Seat mapping, signal associations, policy / benchmark checklist |
 | **Validation & Slack** | Boundary C validation, Slack broadcast preview (≤ 200 words), client message |
 | **Adapter specs** | Decision boundaries, ingestion rules, n8n export steps, JSON schema |
@@ -50,7 +50,11 @@ src/
 │   ├── Investigation.tsx   # Facts, evidence, unknowns, hypotheses, actions
 │   ├── Disconnections.tsx  # Ledger table + detail drawer
 │   ├── Signals.tsx / Validation.tsx / Specs.tsx / ImportModal.tsx
-└── lib/adapter/            # Types, parser, sample data, tests
+├── components/cfo437/      # CFO impact · 437 page sections
+└── lib/
+    ├── adapter/            # Types, parser, sample data, tests
+    ├── cfo437/             # Endpoint-437 baseline, assumptions, scenario model, SQL, tests
+    └── analytics/          # SSP-wide context data
 ```
 
 The original AI Studio export is kept as `rtb-command-center.zip` for reference.

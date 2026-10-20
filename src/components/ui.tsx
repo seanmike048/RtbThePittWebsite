@@ -276,3 +276,16 @@ export const formatTimestamp = (ts: string) => {
   const [date, time] = ts.split('T');
   return { date, time: time ? time.slice(0, 5) : '' };
 };
+
+export const TableShell: React.FC<{ children: React.ReactNode; minWidth?: string }> = ({ children, minWidth = '640px' }) => (
+  <div className="overflow-x-auto rounded-xl border border-line">
+    <table className="w-full text-left text-sm" style={{ minWidth }}>
+      {children}
+    </table>
+  </div>
+);
+
+export const Th: React.FC<{ children?: React.ReactNode; right?: boolean }> = ({ children, right }) => (
+  <th className={cx('whitespace-nowrap bg-surface-2 px-4 py-3 text-xs font-medium text-muted', right && 'text-right')}>{children}</th>
+);
+

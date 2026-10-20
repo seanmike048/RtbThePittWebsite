@@ -32,7 +32,7 @@ import {
   SUMMARY,
   TOP_PUBLISHERS,
 } from '../lib/analytics/data.ts';
-import { Badge, Card, CopyButton, cx, Eyebrow, SectionHeading, SegmentedControl } from './ui.tsx';
+import { Badge, Card, CopyButton, cx, Eyebrow, SectionHeading, SegmentedControl, TableShell, Th } from './ui.tsx';
 
 const eur = (n: number, digits = 2) =>
   `€${n.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
@@ -101,18 +101,6 @@ const Callout: React.FC<{ tone: 'ok' | 'accent' | 'warn' | 'danger'; title: stri
     </div>
   );
 };
-
-const TableShell: React.FC<{ children: React.ReactNode; minWidth?: string }> = ({ children, minWidth = '640px' }) => (
-  <div className="overflow-x-auto rounded-xl border border-line">
-    <table className="w-full text-left text-sm" style={{ minWidth }}>
-      {children}
-    </table>
-  </div>
-);
-
-const Th: React.FC<{ children?: React.ReactNode; right?: boolean }> = ({ children, right }) => (
-  <th className={cx('whitespace-nowrap bg-surface-2 px-4 py-3 text-xs font-medium text-muted', right && 'text-right')}>{children}</th>
-);
 
 /* ---------------- Scenario model ---------------- */
 

@@ -34,7 +34,7 @@ export const Header: React.FC<{
   const tabs: { id: TabId; label: string; count?: number }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'disconnections', label: 'Disconnections', count: model.disconnections.length },
-    { id: 'analytics', label: 'Analytics & CFO model' },
+    { id: 'analytics', label: 'CFO impact · 437' },
     { id: 'signals', label: 'Signals & checklist' },
     { id: 'validation', label: 'Validation & Slack' },
     { id: 'specs', label: 'Adapter specs' },
