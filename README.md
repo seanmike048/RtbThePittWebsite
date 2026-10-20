@@ -21,6 +21,7 @@ npm test         # adapter / guardrail unit tests (Node 22+)
 | --- | --- |
 | **Overview** | Incident headline, priority & confidence, KPIs, bid-request collapse, timeline, investigation, ledger |
 | **Disconnections** | Seat ledger — click a row for the full record drawer |
+| **Analytics & CFO model** | Equativ SSP 30-day baseline, top-16 concentration, DSP issue snapshot, ads.txt cohort, editable scenario calculator, SQL appendix, limitations |
 | **Signals & checklist** | Seat mapping, signal associations, policy / benchmark checklist |
 | **Validation & Slack** | Boundary C validation, Slack broadcast preview (≤ 200 words), client message |
 | **Adapter specs** | Decision boundaries, ingestion rules, n8n export steps, JSON schema |

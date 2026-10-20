@@ -14,6 +14,7 @@ import { DetailDrawer, DisconnectionsTable } from './components/Disconnections.t
 import { Signals } from './components/Signals.tsx';
 import { Validation } from './components/Validation.tsx';
 import { Specs } from './components/Specs.tsx';
+import { Analytics } from './components/Analytics.tsx';
 import { ImportModal } from './components/ImportModal.tsx';
 import { Badge, CopyButton, Modal } from './components/ui.tsx';
 
@@ -59,6 +60,7 @@ export default function App() {
           </>
         )}
         {tab === 'disconnections' && <DisconnectionsTable model={model} onSelect={setSelected} />}
+        {tab === 'analytics' && <Analytics />}
         {tab === 'signals' && <Signals model={model} />}
         {tab === 'validation' && <Validation model={model} />}
         {tab === 'specs' && <Specs />}

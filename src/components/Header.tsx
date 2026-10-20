@@ -3,7 +3,7 @@ import { Code2, Moon, Sun, Upload } from 'lucide-react';
 import type { RTBViewModel } from '../lib/adapter/types.ts';
 import { Button, cx } from './ui.tsx';
 
-export type TabId = 'overview' | 'disconnections' | 'signals' | 'validation' | 'specs';
+export type TabId = 'overview' | 'disconnections' | 'analytics' | 'signals' | 'validation' | 'specs';
 
 function useTheme() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -34,6 +34,7 @@ export const Header: React.FC<{
   const tabs: { id: TabId; label: string; count?: number }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'disconnections', label: 'Disconnections', count: model.disconnections.length },
+    { id: 'analytics', label: 'Analytics & CFO model' },
     { id: 'signals', label: 'Signals & checklist' },
     { id: 'validation', label: 'Validation & Slack' },
     { id: 'specs', label: 'Adapter specs' },
