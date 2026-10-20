@@ -85,7 +85,7 @@ export const SectionHeading: React.FC<{
       <div className="min-w-0">
         {eyebrow && <Eyebrow tone={eyebrowTone}>{eyebrow}</Eyebrow>}
         <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">{title}</h2>
-        {description && <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">{description}</p>}
+        {description && <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted [overflow-wrap:anywhere]">{description}</p>}
       </div>
     </div>
     {aside && <div className="shrink-0">{aside}</div>}

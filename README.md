@@ -19,42 +19,34 @@ npm test         # adapter guardrails + endpoint-437 CFO model tests (Node 22+)
 
 | Tab | What it shows |
 | --- | --- |
-| **Overview** | Incident headline, priority & confidence, KPIs, bid-request collapse, timeline, investigation, ledger |
-| **Disconnections** | Seat ledger — click a row for the full record drawer |
-| **CFO impact · 437** | Amazon DSP endpoint 437 · Americas Display · Sep 2026: validated workbook baseline, concentration, publisher prioritization, editable Conservative / Base / Upside scenarios, run-rate horizons, sensitivity, ROI availability, SQL and assumptions appendices. SSP-wide context kept in a collapsible section. **Refresh data** loads everything live from Snowflake through the viewer's connector: publisher rows for any month (`ANALYTICS_DATA_HUB.EQT_SSP_ACTIVITY.MONTH_SCO_NODES` + sellers.json seller types, which reproduce the workbook), the monthly trend, connection history and open alerts (`ANALYTICS.PUBLIC.VIEW_DISCONNECTION_ALERT_365DAYS`). Every section can switch to the live baseline |
-| **Signals & checklist** | Seat mapping, signal associations, policy / benchmark checklist |
-| **Validation & Slack** | Boundary C validation, Slack broadcast preview (≤ 200 words), client message |
-| **Adapter specs** | Decision boundaries, ingestion rules, n8n export steps, JSON schema |
+| **Investigations** | The Pitt workflow's approved investigation (pasted text, kept verbatim) with Snowflake context: Equativ's connection-log reason for the cut, revenue reconciliation to the alert view, daily traffic around the cut, every DSP connection change for the network, related networks, actions by team and the unsent publisher draft |
+| **At risk** | Amazon DSP watchlist: networks cut in the last 60 days with the logged reason, and connected seats showing the low-RPMBr signal that preceded past cuts |
+| **CFO impact · 437** | Endpoint-437 CFO model (live from Snowflake, or the validated September workbook) |
 
-Use **Import data** to paste or upload an executed workflow payload, or switch between the bundled
-*Raw input* and *Finalized report* samples from the context bar. Light and dark themes follow the OS and can be toggled.
+Use **Paste investigation** to add another workflow output. **Refresh context** / **Refresh data** query Snowflake read-only
+through the viewer's claude.ai connector; elsewhere the page shows the embedded snapshot from 2026-10-20.
 
-## Guardrails (enforced in `src/lib/adapter/parser.ts`)
+## Guardrails
 
-- Priority and confidence are rendered only when supplied by the backend — never guessed.
-- Spend with no currency is shown per seat and never summed; it is never labelled as lost revenue.
-- Hypotheses (e.g. ads.txt) are quarantined and never shown as a confirmed cause.
-- A metric period that differs from the reporting window is surfaced, not silently aligned.
-- n8n pipeline definitions (`nodes` / `connections`) are rejected with guidance.
+- Workflow output is parsed for display only and shown verbatim; the page never rewrites its findings.
+- Snowflake context that conflicts with the workflow (e.g. a logged internal reason vs. a DSP-side hypothesis) is flagged next to it, not merged.
+- Spend and revenue carry no currency until Finance validates it; 7-day pre-cut revenue is never labelled lost revenue.
+- At-risk rules come from reasons observed in the connection log and are labelled as such, not as policy.
 
 ## Structure
 
 ```
 src/
-├── App.tsx                 # Shell, tabs, modals
-├── index.css               # Design tokens (light + dark), Tailwind v4 theme
+├── App.tsx                       # Tabs and shared state
 ├── components/
-│   ├── ui.tsx              # Card, Badge, Button, Modal, InfoTip, SegmentedControl…
-│   ├── Header.tsx / ContextBar.tsx
-│   ├── Overview.tsx        # Hero, KPI row, collapse chart, timeline
-│   ├── Investigation.tsx   # Facts, evidence, unknowns, hypotheses, actions
-│   ├── Disconnections.tsx  # Ledger table + detail drawer
-│   ├── Signals.tsx / Validation.tsx / Specs.tsx / ImportModal.tsx
-├── components/cfo437/      # CFO impact · 437 page sections
+│   ├── investigations/           # Investigation page, watchlist, daily chart, paste dialog
+│   ├── cfo437/                   # CFO impact · 437 sections
+│   ├── live/useSnowflake.ts      # Read-only Snowflake access through the viewer's connector
+│   └── ui.tsx                    # Card, Badge, Button, Modal, tables…
 └── lib/
-    ├── adapter/            # Types, parser, sample data, tests
-    ├── cfo437/             # Endpoint-437 baseline, assumptions, scenario model, SQL, tests
-    └── analytics/          # SSP-wide context data
+    ├── investigations/           # Workflow-output parser, Tubi case + context snapshot, watchlist, SQL
+    ├── cfo437/                   # Endpoint-437 baseline, scenario model, SQL
+    └── analytics/                # SSP-wide context data
 ```
 
 The original AI Studio export is kept as `rtb-command-center.zip` for reference.

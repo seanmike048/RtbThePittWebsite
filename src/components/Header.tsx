@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Code2, Moon, Sun, Upload } from 'lucide-react';
-import type { RTBViewModel } from '../lib/adapter/types.ts';
+import { FileText, Moon, Sun } from 'lucide-react';
 import { Button, cx } from './ui.tsx';
 
-export type TabId = 'overview' | 'disconnections' | 'analytics' | 'signals' | 'validation' | 'specs';
+export type TabId = 'investigations' | 'watchlist' | 'analytics';
 
 function useTheme() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -23,28 +22,24 @@ function useTheme() {
 }
 
 export const Header: React.FC<{
-  model: RTBViewModel;
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
   onOpenImport: () => void;
-  onOpenSource: () => void;
-}> = ({ model, activeTab, onTabChange, onOpenImport, onOpenSource }) => {
+  counts: { investigations: number; atRisk: number };
+}> = ({ activeTab, onTabChange, onOpenImport, counts }) => {
   const [theme, toggleTheme] = useTheme();
 
   const tabs: { id: TabId; label: string; count?: number }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'disconnections', label: 'Disconnections', count: model.disconnections.length },
+    { id: 'investigations', label: 'Investigations', count: counts.investigations },
+    { id: 'watchlist', label: 'At risk', count: counts.atRisk },
     { id: 'analytics', label: 'CFO impact · 437' },
-    { id: 'signals', label: 'Signals & checklist' },
-    { id: 'validation', label: 'Validation & Slack' },
-    { id: 'specs', label: 'Adapter specs' },
   ];
 
   return (
     <header className="sticky top-[env(safe-area-inset-top,0px)] z-40 border-b border-line bg-surface/85 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
-          <a href="#" onClick={e => (e.preventDefault(), onTabChange('overview'))} className="flex min-w-0 items-center gap-3">
+          <a href="#" onClick={e => (e.preventDefault(), onTabChange('investigations'))} className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm">
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M7 19V5h6a4 4 0 0 1 0 8H7" />
@@ -65,14 +60,10 @@ export const Header: React.FC<{
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
-            <Button variant="ghost" size="sm" onClick={onOpenSource} title="Inspect raw source JSON">
-              <Code2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Raw source</span>
-            </Button>
             <Button variant="primary" size="sm" onClick={onOpenImport}>
-              <Upload className="h-4 w-4" />
-              <span className="hidden sm:inline">Import data</span>
-              <span className="sm:hidden">Import</span>
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Paste investigation</span>
+              <span className="sm:hidden">Paste</span>
             </Button>
           </div>
         </div>
