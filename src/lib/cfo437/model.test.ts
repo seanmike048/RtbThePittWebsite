@@ -179,3 +179,26 @@ test('Snowflake payload maps to connection state', () => {
   assert.equal(s.networks[0].networkName, 'Raptive STR');
   assert.throws(() => snowflakeRows({ nope: 1 }));
 });
+
+import { daysInMonth, sqlPublisherRows, toPublisherRows } from './live.ts';
+import { horizonRunRates as hrr } from './model.ts';
+
+test('Publisher SQL only accepts YYYY-MM months', () => {
+  assert.ok(sqlPublisherRows('2026-09').includes("month = '2026-09-01'"));
+  assert.throws(() => sqlPublisherRows("2026-09'; DROP TABLE x; --"));
+  assert.throws(() => sqlPublisherRows('2026-13'));
+});
+
+test('Snowflake publisher rows recompute RPMBr with ×1,000,000', () => {
+  const r = toPublisherRows([{ PUBLISHER_ID: '5026', PUBLISHER_NAME: 'T', SELLER_TYPE: 'INTERMEDIARY', BID_REQUESTS: '2000000', SPEND: '50' }]);
+  assert.equal(r[0].rpmbr, 25);
+  assert.equal(r[0].sellerType, 'INTERMEDIARY');
+});
+
+test('Horizons use the baseline month length', () => {
+  assert.equal(daysInMonth('2026-08'), 31);
+  assert.equal(daysInMonth('2026-02'), 28);
+  const rows = hrr({ value: 3100, status: 'ok' }, 31000, 31);
+  assert.equal(rows.find(r => r.days === 7)!.baselineSpend, 7000);
+  assert.equal(rows.find(r => r.days === 7)!.recovered.value, 700);
+});

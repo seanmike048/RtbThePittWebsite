@@ -1,4 +1,5 @@
 import type { AssumptionSet } from './assumptions.ts';
+import { type BaselineView, SCOPE, VISIBLE_VIEW } from './baseline.ts';
 import {
   capacityValue,
   directCostReduction,
@@ -44,20 +45,24 @@ export function runScenario(
     subset: { spend: number; bidRequests: number; publishers: number } | null;
     overlap: OverlapStatus;
     currencyValidated: boolean;
+    baseline?: BaselineView;
+    historicalDays?: number;
   },
 ): ScenarioOutputs {
-  const exposure = resolveExposure(ctx.mode, a, ctx.subset);
+  const baseline = ctx.baseline ?? VISIBLE_VIEW;
+  const days = ctx.historicalDays ?? SCOPE.historicalDays;
+  const exposure = resolveExposure(ctx.mode, a, ctx.subset, baseline);
   const recovered = recoveredSpend(exposure, a);
   const recoveredBids = recoveredBidRequests(exposure, a);
-  const fromBids = spendFromBidRequests(recoveredBids);
-  const protectedValue = valueProtected(exposure, a);
+  const fromBids = spendFromBidRequests(recoveredBids, baseline.weightedRpmbr);
+  const protectedValue = valueProtected(exposure, a, days);
   const directCash = directCostReduction(a);
   const benefit = totalBenefit({ recovered, directCash, fromBidRequests: fromBids, protectedValue, overlap: ctx.overlap });
   return {
     exposure,
     recovered,
-    after: spendAfterResolution(recovered),
-    incremental: incrementalPct(recovered),
+    after: spendAfterResolution(recovered, baseline.spend),
+    incremental: incrementalPct(recovered, baseline.spend),
     recoveredBids,
     fromBids,
     daysSaved: effectiveDaysSaved(a),

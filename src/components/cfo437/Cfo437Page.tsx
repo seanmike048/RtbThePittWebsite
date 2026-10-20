@@ -8,11 +8,20 @@ import {
   SCENARIO_IDS,
   type ScenarioId,
 } from '../../lib/cfo437/assumptions.ts';
-import { CURRENCY_WARNING, SCOPE, VISIBLE_VIEW } from '../../lib/cfo437/baseline.ts';
+import { CURRENCY_WARNING, SCOPE } from '../../lib/cfo437/baseline.ts';
 import type { EligibleMode, OverlapStatus } from '../../lib/cfo437/model.ts';
 import { aggregate, isVisible, type PublisherRow, WORKBOOK_ROWS } from '../../lib/cfo437/publishers.ts';
 import { WORKBOOK_MODIFIED } from '../../lib/cfo437/publishers.data.ts';
-import { CONNECTION_SNAPSHOT, type ConnectionState } from '../../lib/cfo437/live.ts';
+import {
+  ALERT_SNAPSHOT,
+  type AlertState,
+  CONNECTION_SNAPSHOT,
+  type ConnectionState,
+  TREND_SNAPSHOT,
+  type TrendPoint,
+} from '../../lib/cfo437/live.ts';
+import { BaselineContext, liveBaseline, VALIDATED_BASELINE } from './baselineContext.tsx';
+import { TrendChart } from './TrendChart.tsx';
 import { LiveRefresh } from './LiveData.tsx';
 import { Disconnections437 } from './Disconnections437.tsx';
 import { runScenario } from '../../lib/cfo437/scenario.ts';
@@ -30,6 +39,7 @@ const SECTIONS = [
   ['c4-scope', 'Scope'],
   ['c4-baseline', 'Baseline'],
   ['c4-concentration', 'Concentration'],
+  ['c4-trend', 'Trend'],
   ['c4-disconnections', 'Disconnections'],
   ['c4-priority', 'Prioritization'],
   ['c4-impact', 'Spend impact'],
@@ -62,21 +72,45 @@ export const Cfo437Page: React.FC = () => {
   const [connection, setConnection] = useState<ConnectionState>(CONNECTION_SNAPSHOT);
   const [workbookModified, setWorkbookModified] = useState(WORKBOOK_MODIFIED);
   const [rowsSource, setRowsSource] = useState<'embedded' | 'live' | 'csv'>('embedded');
+  const [liveRows, setLiveRows] = useState<{ rows: PublisherRow[]; month: string; asOf: string } | null>(null);
+  const [useLive, setUseLive] = useState(false);
+  const [month, setMonth] = useState('2026-09');
+  const [trend, setTrend] = useState<{ points: TrendPoint[]; asOf: string; source: 'snapshot' | 'live' }>({
+    points: TREND_SNAPSHOT,
+    asOf: '2026-10-20',
+    source: 'snapshot',
+  });
+  const [alerts, setAlerts] = useState<AlertState>(ALERT_SNAPSHOT);
   const onLiveRows = useCallback((r: PublisherRow[], modified: string) => {
     setRows(r);
     setSelected(new Set());
     setWorkbookModified(modified);
     setRowsSource('live');
+    setUseLive(false);
   }, []);
+  const onSnowflakeRows = useCallback((r: PublisherRow[], m: string, asOf: string) => {
+    setLiveRows({ rows: r, month: m, asOf });
+    setSelected(new Set());
+    setUseLive(true);
+  }, []);
+  const months = useMemo(
+    () => [...trend.points].filter(p => p.spend > 0).map(p => p.month).reverse(),
+    [trend.points],
+  );
+
+  const live = useLive && liveRows !== null;
+  const baseline = useMemo(() => (live ? liveBaseline(liveRows!.rows, liveRows!.month) : VALIDATED_BASELINE), [live, liveRows]);
+  const activeRows = live ? liveRows!.rows : rows;
+  const rowsLabel = live ? `Snowflake ${liveRows!.asOf}` : rowsSource === 'live' ? 'Google Drive' : rowsSource === 'csv' ? 'CSV import' : 'embedded workbook copy';
 
   const edit = useCallback((s: ScenarioId, id: AssumptionId, v: number | null) => {
     const today = new Date().toISOString().slice(0, 10);
     setSets(prev => ({ ...prev, [s]: { ...prev[s], [id]: editAssumption(prev[s][id], v, today) } }));
   }, []);
 
-  const visibleRows = useMemo(() => rows.filter(isVisible), [rows]);
-  const agg = useMemo(() => (rows.length ? aggregate(visibleRows) : null), [rows, visibleRows]);
-  const aggAll = useMemo(() => (rows.length ? aggregate(rows) : null), [rows]);
+  const visibleRows = useMemo(() => activeRows.filter(isVisible), [activeRows]);
+  const agg = useMemo(() => (activeRows.length ? aggregate(visibleRows) : null), [activeRows, visibleRows]);
+  const aggAll = useMemo(() => (activeRows.length ? aggregate(activeRows) : null), [activeRows]);
   const top16 = useMemo(
     () => [...visibleRows].sort((a, b) => b.spend - a.spend).slice(0, 16).map(r => ({ name: r.publisherName || `#${r.publisherId}`, spend: r.spend })),
     [visibleRows],
@@ -91,17 +125,42 @@ export const Cfo437Page: React.FC = () => {
     };
   }, [selected, visibleRows]);
 
-  const ctx = { mode, subset, overlap, currencyValidated };
+  const ctx = { mode, subset, overlap, currencyValidated, baseline: baseline.view, historicalDays: baseline.days };
   const outs = useMemo(
     () => Object.fromEntries(SCENARIO_IDS.map(s => [s, runScenario(sets[s], ctx)])) as Record<ScenarioId, ReturnType<typeof runScenario>>,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sets, mode, subset, overlap, currencyValidated],
+    [sets, mode, subset, overlap, currencyValidated, baseline],
   );
+
+  const useAlertExposure = (monthly: number, weekly: number) => {
+    const today = new Date().toISOString().slice(0, 10);
+    setSets(prev =>
+      Object.fromEntries(
+        SCENARIO_IDS.map(s => [
+          s,
+          {
+            ...prev[s],
+            eligibleSpend: {
+              ...prev[s].eligibleSpend,
+              value: Math.round(monthly * 100) / 100,
+              status: 'calculated' as const,
+              source: `Alert view REVENUE_7_DAYS_BEFORE (${weekly.toFixed(2)}) ÷ 7 × ${baseline.days}`,
+              confidence: 'Medium' as const,
+              lastUpdated: today,
+            },
+          },
+        ]),
+      ) as Record<ScenarioId, AssumptionSet>,
+    );
+    setMode('validated');
+    document.getElementById('c4-impact')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   const shared = { scenario: active, onScenario: setActive, a: sets[active], out: outs[active], edit };
 
   return (
+    <BaselineContext.Provider value={baseline}>
     <div className="space-y-6">
       <Card className="relative overflow-hidden p-6 sm:p-8">
         <div
@@ -114,8 +173,9 @@ export const Cfo437Page: React.FC = () => {
             CFO impact & scenario analysis
           </h1>
           <p className="mt-3 max-w-3xl text-base leading-relaxed text-ink-2">
-            What resolving issues faster on Amazon DSP endpoint {SCOPE.endpointId} could be worth, built only from the validated
-            {' '}{SCOPE.period} workbook baseline and assumptions you can see and edit.
+            What resolving issues faster on Amazon DSP endpoint {SCOPE.endpointId} could be worth, built from the{' '}
+            {baseline.source === 'live' ? `live Snowflake data for ${baseline.period}` : `validated ${baseline.period} workbook baseline`} and
+            assumptions you can see and edit.
           </p>
           <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
             <Notice tone="warn" icon={<AlertTriangle className="h-4 w-4 text-warn" />}>
@@ -124,8 +184,8 @@ export const Cfo437Page: React.FC = () => {
             </Notice>
             <Notice tone="danger" icon={<AlertTriangle className="h-4 w-4 text-danger" />}>
               <strong>{CURRENCY_WARNING} </strong>
-              Spend is in source currency units (SCU): {VISIBLE_VIEW.rows} visible rows, {VISIBLE_VIEW.positiveRows} with spend,{' '}
-              {VISIBLE_VIEW.zeroRows} without.
+              Spend is in source currency units (SCU): {baseline.view.rows} visible rows, {baseline.view.positiveRows} with spend,{' '}
+              {baseline.view.zeroRows} without.
             </Notice>
           </div>
         </div>
@@ -147,9 +207,19 @@ export const Cfo437Page: React.FC = () => {
       <LiveRefresh
         connection={connection}
         onConnection={setConnection}
+        onTrend={(points, asOf) => setTrend({ points, asOf, source: 'live' })}
+        onAlerts={setAlerts}
+        month={month}
+        months={months}
+        onMonth={setMonth}
+        onSnowflakeRows={onSnowflakeRows}
         workbookModified={workbookModified}
-        rowsSource={rowsSource}
+        rowsSource={live ? 'snowflake' : rowsSource}
+        rowsAsOf={liveRows?.asOf ?? null}
         onRows={onLiveRows}
+        useLive={useLive}
+        canUseLive={liveRows !== null}
+        onUseLive={setUseLive}
       />
       <ExecutiveSummary currencyValidated={currencyValidated} connection={connection} />
       <ScopeAndFreshness
@@ -159,11 +229,15 @@ export const Cfo437Page: React.FC = () => {
         onCurrencyCode={setCurrencyCode}
         connection={connection}
       />
-      <EndpointBaseline agg={agg} aggAll={aggAll} />
+      <EndpointBaseline agg={agg} aggAll={aggAll} rowsLabel={rowsLabel} />
       <Concentration agg={agg} top={top16} />
+      <TrendChart trend={trend.points} source={trend.source} asOf={trend.asOf} activeMonth={baseline.month} />
       <Disconnections437
         connection={connection}
-        rows={rows}
+        rows={activeRows}
+        alerts={alerts}
+        days={baseline.days}
+        onUseAlertExposure={useAlertExposure}
         onUseSubset={ids => {
           setSelected(new Set(ids));
           setMode('subset');
@@ -190,7 +264,7 @@ export const Cfo437Page: React.FC = () => {
         {...shared}
         mode={mode}
         onMode={setMode}
-        hasRows={rows.length > 0}
+        hasRows={activeRows.length > 0}
         subsetCount={selected.size}
         overlap={overlap}
         onOverlap={setOverlap}
@@ -236,8 +310,10 @@ export const Cfo437Page: React.FC = () => {
           setRows(r);
           setSelected(new Set());
           setRowsSource('csv');
+          setUseLive(false);
         }}
       />
     </div>
+    </BaselineContext.Provider>
   );
 };

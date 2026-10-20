@@ -16,19 +16,19 @@ export const DataQuality: React.FC = () => (
           `${CURRENCY_WARNING} All workbook amounts are ${SPEND_UNIT}; nothing is converted or labelled EUR or USD.`,
           'The primary baseline is the visible filtered view (BOTH + INTERMEDIARY), not the In Scope = 1 flag.',
           'An earlier validation (187 positive / 129 zero, RPMBr ≈ 43.73) differs from the latest workbook (205 / 111, 35.9558). The latest is used; both are shown.',
-          'September 2026 is a single aggregate period. There is no time series, so the page has no line charts and horizons are run-rate arithmetic.',
+          'The monthly trend is a genuine time series; horizons are still run-rate arithmetic from one month, not a forecast.',
           'Treating all endpoint spend as at risk is a demonstration only. Issue-specific exposure needs validated spend at risk.',
         ].map(t => (
           <li key={t} className="flex gap-3">
             <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-warn" />
-            {t}
+            <span className="min-w-0 [overflow-wrap:anywhere]">{t}</span>
           </li>
         ))}
       </ul>
       <ul className="space-y-3 text-sm leading-relaxed text-ink-2">
         {[
-          'No validated issue-case table exists in Snowflake, so revenue at risk, evidence confidence and approval status are not sourced.',
-          'The workbook source table is not in ANALYTICS_EXPO, so the baseline cannot yet be reproduced in SQL.',
+          'The alert view gives 7-day pre-cut revenue per disconnection, but no evidence confidence or approval status; no issue-case table exists for those.',
+          'The workbook is built from ANALYTICS_DATA_HUB.EQT_SSP_ACTIVITY.MONTH_SCO_NODES; Refresh data reproduces it live. Seller types come from today\'s sellers.json, so one zero-spend network differs from the workbook.',
           'Ads.txt failures and Not Crawled results are observations, not proof of a DSP disconnection cause.',
           'Endpoint-437 values are never mixed with endpoint 489, Native, Video or the SSP-wide EUR context below.',
           "Two disconnection sources disagree: Snowflake's connection history for partner 437 and the workbook's own Disconected column. Both are shown; neither overrides the other.",
@@ -37,7 +37,7 @@ export const DataQuality: React.FC = () => (
         ].map(t => (
           <li key={t} className="flex gap-3">
             <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-faint" />
-            {t}
+            <span className="min-w-0 [overflow-wrap:anywhere]">{t}</span>
           </li>
         ))}
       </ul>
@@ -86,7 +86,7 @@ export const SqlAppendix: React.FC = () => (
                     {CHECK_META[c.status].icon}
                     {CHECK_META[c.status].label}
                   </Badge>
-                  <span className="num text-ink">{c.item}</span>
+                  <span className="num break-all text-ink">{c.item}</span>
                   <span className="text-muted">— {c.note}</span>
                 </li>
               ))}

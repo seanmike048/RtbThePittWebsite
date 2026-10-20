@@ -1,7 +1,8 @@
 import React from 'react';
 import { Clock, Gauge, Hourglass, Layers3, ShieldAlert, Sigma, TrendingUp, Users } from 'lucide-react';
 import { type AssumptionId, type AssumptionSet, SCENARIO_IDS, SCENARIO_LABELS, type ScenarioId } from '../../lib/cfo437/assumptions.ts';
-import { RPMBR_FORMULA, SPEND_UNIT, VISIBLE_VIEW } from '../../lib/cfo437/baseline.ts';
+import { RPMBR_FORMULA, SPEND_UNIT } from '../../lib/cfo437/baseline.ts';
+import { useBaseline } from './baselineContext.tsx';
 import {
   type EligibleMode,
   horizonRunRates,
@@ -62,6 +63,7 @@ export const SpendImpact: React.FC<{
   currencyValidated: boolean;
 }> = p => {
   const { a, out } = p;
+  const base = useBaseline();
   const set = (id: AssumptionId) => (v: number | null) => p.edit(p.scenario, id, v);
   const bothValues = out.recovered.value !== null && out.fromBids.value !== null;
   return (
@@ -126,7 +128,7 @@ export const SpendImpact: React.FC<{
               unit="SCU"
             />
             <Output label="Scenario recovered spend" r={out.recovered} unit="SCU" highlight note="eligible × coverage × recovery × probability" />
-            <Output label="Scenario spend after resolution" r={out.after} unit="SCU" note={`baseline ${compact(VISIBLE_VIEW.spend)} + recovered`} />
+            <Output label="Scenario spend after resolution" r={out.after} unit="SCU" note={`baseline ${compact(base.view.spend)} (${base.period}) + recovered`} />
             <Output label="Incremental spend" r={out.incremental} unit="% of baseline" digits={3} />
             <Output label="Recovered bid requests" r={out.recoveredBids} unit="bid requests" digits={0} />
             <Output label="Spend from recovered bid requests" r={out.fromBids} unit="SCU" note="recovered bids × RPMBr ÷ 1,000,000" />
@@ -213,6 +215,7 @@ export const FasterDetection: React.FC<{ scenario: ScenarioId; onScenario: (s: S
   edit,
 }) => {
   const set = (id: AssumptionId) => (v: number | null) => edit(scenario, id, v);
+  const base = useBaseline();
   return (
     <Card className="p-6 sm:p-8">
       <SectionAnchor id="c4-detection" />
@@ -220,7 +223,7 @@ export const FasterDetection: React.FC<{ scenario: ScenarioId; onScenario: (s: S
         icon={<Clock className="h-5 w-5" />}
         eyebrow="Faster detection & recovery"
         title="Value protected by detecting sooner"
-        description="Historical daily spend at risk = eligible spend ÷ 30 days. Value protected = daily spend × days saved × historical recovery probability."
+        description={`Historical daily spend at risk = eligible spend ÷ ${base.days} days (${base.period}). Value protected = daily spend × days saved × historical recovery probability.`}
         aside={<ScenarioPicker value={scenario} onChange={onScenario} />}
       />
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
@@ -234,7 +237,7 @@ export const FasterDetection: React.FC<{ scenario: ScenarioId; onScenario: (s: S
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Output
               label="Historical daily spend at risk"
-              r={out.exposure.spend === null ? { value: null, status: 'unavailable', reason: 'Requires eligible spend at risk' } : { value: out.exposure.spend / 30, status: 'ok' }}
+              r={out.exposure.spend === null ? { value: null, status: 'unavailable', reason: 'Requires eligible spend at risk' } : { value: out.exposure.spend / base.days, status: 'ok' }}
               unit="SCU / day"
             />
             <Output label="Days saved" r={out.daysSaved} unit="days" digits={1} note={a.daysSaved.value === null ? 'historical − expected detection' : 'entered directly'} />
@@ -470,7 +473,8 @@ export const Horizons: React.FC<{ scenario: ScenarioId; onScenario: (s: Scenario
   out,
   currencyValidated,
 }) => {
-  const rows = horizonRunRates(out.recovered);
+  const base = useBaseline();
+  const rows = horizonRunRates(out.recovered, base.view.spend, base.days);
   const max = rows[rows.length - 1].after.value ?? rows[rows.length - 1].baselineSpend;
   return (
     <Card className="p-6 sm:p-8">
@@ -479,7 +483,7 @@ export const Horizons: React.FC<{ scenario: ScenarioId; onScenario: (s: Scenario
         icon={<Gauge className="h-5 w-5" />}
         eyebrow="Scenario horizons"
         title="7-day to 12-month run-rate views"
-        description="Scenario run-rate arithmetic based on historical endpoint-437 display data. Not a forecast. Daily rate = September total ÷ 30 days; lifetime totals are never used as daily values."
+        description={`Scenario run-rate arithmetic based on historical endpoint-437 display data. Not a forecast. Daily rate = ${base.period} total ÷ ${base.days} days; lifetime totals are never used as daily values.`}
         aside={<ScenarioPicker value={scenario} onChange={onScenario} />}
       />
       <div className="mt-6 space-y-3">
@@ -525,7 +529,7 @@ export const Horizons: React.FC<{ scenario: ScenarioId; onScenario: (s: Scenario
             {rows.map(r => (
               <tr key={r.label}>
                 <td className="whitespace-nowrap px-4 py-2.5 font-medium text-ink">{r.label}</td>
-                <td className="whitespace-nowrap px-4 py-2.5 text-xs text-muted">Sep 2026 visible view</td>
+                <td className="whitespace-nowrap px-4 py-2.5 text-xs text-muted">{base.period} visible view{base.source === 'live' ? ' (live)' : ''}</td>
                 <td className="num px-4 py-2.5 text-right text-ink-2">{r.historicalDaysUsed}</td>
                 <td className="num px-4 py-2.5 text-right text-ink">{fmt(r.baselineSpend, 2)}</td>
                 <td className="px-4 py-2.5 text-right"><ResultValue r={r.recovered} unit="" digits={2} /></td>
@@ -539,8 +543,8 @@ export const Horizons: React.FC<{ scenario: ScenarioId; onScenario: (s: Scenario
         </TableShell>
       </div>
       <p className="mt-3 text-xs text-muted">
-        Methodology: horizon value = (September value ÷ 30) × horizon days. Recovered spend scales the same way. Assumes September's
-        daily run rate holds, which is an arithmetic convention, not an expectation.
+        Methodology: horizon value = ({base.period} value ÷ {base.days}) × horizon days. Recovered spend scales the same way. Assumes
+        that month's daily run rate holds, which is an arithmetic convention, not an expectation.
       </p>
     </Card>
   );

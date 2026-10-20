@@ -6,7 +6,6 @@ import {
   CURRENCY_WARNING,
   EARLIER_SNAPSHOT,
   RPMBR_FORMULA,
-  SCOPE,
   SNOWFLAKE_MAPPING,
   SPEND_UNIT,
   VISIBLE_VIEW,
@@ -16,23 +15,35 @@ import type { Aggregate } from '../../lib/cfo437/publishers.ts';
 import type { ConnectionState } from '../../lib/cfo437/live.ts';
 import { Badge, Card, cx, EmptyNote, SectionHeading, TableShell, Th } from '../ui.tsx';
 import { ClassTag, compact, fmt, HBar, Notice, SectionAnchor } from './shared.tsx';
+import { useBaseline } from './baselineContext.tsx';
 
-export const ScopeBadge: React.FC = () => (
-  <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 rounded-full border border-accent/30 bg-accent-soft px-3 py-1 text-xs font-semibold text-accent-ink">
-    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-    {SCOPE.badge}
-  </span>
-);
+export const ScopeBadge: React.FC = () => {
+  const b = useBaseline();
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+      <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent-soft px-3 py-1 text-xs font-semibold text-accent-ink">
+        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+        Amazon DSP · Endpoint 437 · Americas Display · {b.period}
+      </span>
+      <Badge tone={b.source === 'live' ? 'ok' : 'neutral'} dot>
+        {b.source === 'live' ? 'Live Snowflake data' : 'Validated workbook data'}
+      </Badge>
+    </span>
+  );
+};
 
-export const ExecutiveSummary: React.FC<{ currencyValidated: boolean; connection: ConnectionState }> = ({ currencyValidated, connection }) => (
+export const ExecutiveSummary: React.FC<{ currencyValidated: boolean; connection: ConnectionState }> = ({ currencyValidated, connection }) => {
+  const b = useBaseline();
+  const V = b.view;
+  return (
   <section className="space-y-4">
     <SectionAnchor id="c4-summary" />
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
       {[
-        { label: 'Gross spend · Sep 2026', value: compact(VISIBLE_VIEW.spend), unit: SPEND_UNIT, c: 'observed' as const },
-        { label: 'Bid requests', value: compact(VISIBLE_VIEW.bidRequests), unit: 'bid requests', c: 'observed' as const },
-        { label: 'Weighted RPMBr', value: fmt(VISIBLE_VIEW.weightedRpmbr, 4), unit: 'SCU per 1M bid requests', c: 'calculated' as const },
-        { label: 'Top 16 concentration', value: `${VISIBLE_VIEW.top16SharePct.toFixed(2)}%`, unit: 'of visible spend', c: 'calculated' as const },
+        { label: `Gross spend · ${b.period}`, value: compact(V.spend), unit: SPEND_UNIT, c: 'observed' as const },
+        { label: 'Bid requests', value: compact(V.bidRequests), unit: 'bid requests', c: 'observed' as const },
+        { label: 'Weighted RPMBr', value: fmt(V.weightedRpmbr, 4), unit: 'SCU per 1M bid requests', c: 'calculated' as const },
+        { label: 'Top 16 concentration', value: `${V.top16SharePct.toFixed(2)}%`, unit: 'of visible spend', c: 'calculated' as const },
       ].map(k => (
         <div key={k.label} className="rounded-2xl border border-line bg-surface p-4 shadow-card">
           <div className="flex items-start justify-between gap-2">
@@ -40,8 +51,9 @@ export const ExecutiveSummary: React.FC<{ currencyValidated: boolean; connection
           </div>
           <p className="num mt-2 text-2xl font-bold tracking-tight text-ink">{k.value}</p>
           <p className="mt-1 text-xs text-muted">{k.unit}</p>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap gap-1.5">
             <ClassTag c={k.c} />
+            {b.source === 'live' && <Badge tone="ok">Live</Badge>}
           </div>
         </div>
       ))}
@@ -51,14 +63,14 @@ export const ExecutiveSummary: React.FC<{ currencyValidated: boolean; connection
       <SectionHeading icon={<ListChecks className="h-5 w-5" />} eyebrow="Executive CFO summary" title="What The Pitt can change on endpoint 437" />
       <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
         <Notice tone="ok">
-          <strong>Validated baseline. </strong>
-          In September 2026, the 316 visible publisher rows on Amazon DSP endpoint 437 (Americas Display) carried{' '}
-          {fmt(VISIBLE_VIEW.spend, 2)} {SPEND_UNIT} of gross spend on {fmt(VISIBLE_VIEW.bidRequests)} bid requests, a weighted
-          RPMBr of {fmt(VISIBLE_VIEW.weightedRpmbr, 4)}. 205 rows had spend and 111 had none.
+          <strong>{b.source === 'live' ? 'Live baseline. ' : 'Validated baseline. '}</strong>
+          In {b.period}, the {fmt(V.rows)} visible publisher rows on Amazon DSP endpoint 437 (Americas Display) carried{' '}
+          {fmt(V.spend, 2)} {SPEND_UNIT} of gross spend on {fmt(V.bidRequests)} bid requests, a weighted RPMBr of{' '}
+          {fmt(V.weightedRpmbr, 4)}. {fmt(V.positiveRows)} rows had spend and {fmt(V.zeroRows)} had none.
         </Notice>
         <Notice tone="info">
           <strong>Where the money sits. </strong>
-          The top 16 publishers hold {VISIBLE_VIEW.top16SharePct.toFixed(2)}% of visible spend, so resolving issues on a handful of
+          The top 16 publishers hold {V.top16SharePct.toFixed(2)}% of visible spend, so resolving issues on a handful of
           publishers moves most of the value. Snowflake confirms partner 437 is “{SNOWFLAKE_MAPPING.partnerName}”, with{' '}
           {connection.disconnected} networks disconnected ({connection.source === 'live' ? 'live' : `as of ${connection.asOf}`}).
         </Notice>
@@ -76,7 +88,8 @@ export const ExecutiveSummary: React.FC<{ currencyValidated: boolean; connection
       </div>
     </Card>
   </section>
-);
+  );
+};
 
 export const ScopeAndFreshness: React.FC<{
   currencyValidated: boolean;
@@ -84,7 +97,9 @@ export const ScopeAndFreshness: React.FC<{
   currencyCode: string;
   onCurrencyCode: (v: string) => void;
   connection: ConnectionState;
-}> = ({ currencyValidated, onCurrencyValidated, currencyCode, onCurrencyCode, connection }) => (
+}> = ({ currencyValidated, onCurrencyValidated, currencyCode, onCurrencyCode, connection }) => {
+  const b = useBaseline();
+  return (
   <Card className="p-6 sm:p-8">
     <SectionAnchor id="c4-scope" />
     <SectionHeading
@@ -93,8 +108,8 @@ export const ScopeAndFreshness: React.FC<{
       title="What this page covers"
       description={
         <>
-          Only Amazon DSP endpoint 437, Americas Display, {SCOPE.periodStart} to {SCOPE.periodEnd}. Endpoint 489, Native, Video and
-          other DSP endpoints are excluded from every CFO calculation.
+          Only Amazon DSP endpoint 437, Americas Display, {b.month}-01 to {b.month}-{b.days}. Endpoint 489, Native, Video and other
+          DSP endpoints are excluded from every CFO calculation.
         </>
       }
     />
@@ -210,9 +225,15 @@ export const ScopeAndFreshness: React.FC<{
       </TableShell>
     </div>
   </Card>
-);
+  );
+};
 
-const ViewTable: React.FC<{ agg?: Aggregate | null; aggAll?: Aggregate | null }> = ({ agg, aggAll }) => {
+const ViewTable: React.FC<{ agg?: Aggregate | null; aggAll?: Aggregate | null; loadedLabel: string; compare: boolean }> = ({
+  agg,
+  aggAll,
+  loadedLabel,
+  compare,
+}) => {
   const rows: { label: string; v: (x: typeof VISIBLE_VIEW) => string; a?: (x: Aggregate) => string }[] = [
     { label: 'Publisher rows', v: x => fmt(x.rows), a: x => fmt(x.rows) },
     { label: 'Positive-spend rows', v: x => fmt(x.positiveRows), a: x => fmt(x.positiveRows) },
@@ -230,21 +251,21 @@ const ViewTable: React.FC<{ agg?: Aggregate | null; aggAll?: Aggregate | null }>
           <Th>Metric</Th>
           <Th right>Visible view (primary)</Th>
           <Th right>All-row validation</Th>
-          {agg && <Th right>Recomputed from loaded rows</Th>}
+          {agg && <Th right>{loadedLabel}</Th>}
         </tr>
       </thead>
       <tbody className="divide-y divide-line">
         {rows.map(r => {
           const recomputed = agg && r.a ? r.a(agg) : null;
-          const match = recomputed === null || recomputed === r.v(VISIBLE_VIEW);
+          const match = !compare || recomputed === null || recomputed === r.v(VISIBLE_VIEW);
           return (
             <tr key={r.label}>
               <td className="whitespace-nowrap px-4 py-3 font-medium text-ink">{r.label}</td>
               <td className="num px-4 py-3 text-right font-semibold text-ink">{r.v(VISIBLE_VIEW)}</td>
               <td className="num px-4 py-3 text-right text-muted">{r.v(ALL_ROW_VIEW)}</td>
               {agg && (
-                <td className={cx('num px-4 py-3 text-right', match ? 'text-ok-ink' : 'font-semibold text-danger-ink')}>
-                  {recomputed} {match ? '✓' : '≠'}
+                <td className={cx('num px-4 py-3 text-right', !compare ? 'text-ink' : match ? 'text-ok-ink' : 'font-semibold text-warn-ink')}>
+                  {recomputed} {compare ? (match ? '✓' : '≠') : ''}
                   {aggAll && r.a && <span className="block text-[11px] text-muted">all rows: {r.a(aggAll)}</span>}
                 </td>
               )}
@@ -256,18 +277,34 @@ const ViewTable: React.FC<{ agg?: Aggregate | null; aggAll?: Aggregate | null }>
   );
 };
 
-export const EndpointBaseline: React.FC<{ agg: Aggregate | null; aggAll: Aggregate | null }> = ({ agg, aggAll }) => (
+export const EndpointBaseline: React.FC<{ agg: Aggregate | null; aggAll: Aggregate | null; rowsLabel: string }> = ({ agg, aggAll, rowsLabel }) => {
+  const b = useBaseline();
+  const V = b.view;
+  const metrics =
+    b.source === 'validated'
+      ? BASELINE_METRICS
+      : [
+          { label: 'Visible publisher rows', value: fmt(V.rows), unit: 'rows', classification: 'observed' as const, source: 'Snowflake, live' },
+          { label: 'Positive-spend rows', value: fmt(V.positiveRows), unit: 'rows', classification: 'calculated' as const, source: 'Visible rows' },
+          { label: 'Zero-spend rows', value: fmt(V.zeroRows), unit: 'rows', classification: 'calculated' as const, source: 'Visible rows' },
+          { label: 'Bid requests', value: fmt(V.bidRequests), unit: 'bid requests', classification: 'observed' as const, source: 'MONTH_SCO_NODES.BID_REQUESTS' },
+          { label: 'Gross spend', value: fmt(V.spend, 6), unit: SPEND_UNIT, classification: 'observed' as const, source: 'MONTH_SCO_NODES.TOTAL_PAID_PRICE_TRUE_COUNT' },
+          { label: 'Weighted RPMBr', value: fmt(V.weightedRpmbr, 8), unit: 'SCU per 1M bid requests', classification: 'calculated' as const, source: 'spend ÷ bid requests × 1,000,000' },
+          { label: 'Median positive RPMBr', value: fmt(V.medianPositiveRpmbr, 8), unit: 'SCU per 1M bid requests', classification: 'calculated' as const, source: 'Positive-spend visible rows' },
+          { label: 'Top 16 spend concentration', value: `${V.top16SharePct.toFixed(6)}%`, unit: 'share of spend', classification: 'calculated' as const, source: 'Visible rows ranked by spend' },
+        ];
+  return (
   <Card className="p-6 sm:p-8">
     <SectionAnchor id="c4-baseline" />
     <SectionHeading
       icon={<Layers className="h-5 w-5" />}
       eyebrow="Endpoint-437 display baseline"
-      title="September 2026 financial baseline"
+      title={`${b.period} financial baseline`}
       description={`Spend in ${SPEND_UNIT}. RPMBr in SCU per 1,000,000 bid requests.`}
-      aside={<ClassTag c="observed">Validated workbook values</ClassTag>}
+      aside={b.source === 'live' ? <Badge tone="ok" dot>Live Snowflake values</Badge> : <ClassTag c="observed">Validated workbook values</ClassTag>}
     />
     <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-      {BASELINE_METRICS.map(m => (
+      {metrics.map(m => (
         <div key={m.label} className="rounded-2xl border border-line p-4">
           <p className="text-xs font-medium text-muted">{m.label}</p>
           <p className="num mt-2 break-all text-lg font-bold text-ink">{m.value}</p>
@@ -279,18 +316,22 @@ export const EndpointBaseline: React.FC<{ agg: Aggregate | null; aggAll: Aggrega
         </div>
       ))}
     </div>
-    <h3 className="mt-8 font-semibold text-ink">Visible view vs all-row validation</h3>
+    <h3 className="mt-8 font-semibold text-ink">Validated workbook vs loaded rows</h3>
     <p className="mt-1 text-sm text-muted">
-      The all-row view includes every seller type ({fmt(ALL_ROW_VIEW.rows)} rows). It validates the workbook and is never used as the
-      CFO baseline.
+      The validated columns are the September 2026 workbook (visible view and all {fmt(ALL_ROW_VIEW.rows)} rows). The last column
+      recomputes the same metrics from the rows currently loaded ({rowsLabel}).
+      {b.month === '2026-09' ? ' A ≠ marks a difference from the validated figure.' : ' It is a different month, so it is not compared.'}
     </p>
     <div className="mt-3">
-      <ViewTable agg={agg} aggAll={aggAll} />
+      <ViewTable agg={agg} aggAll={aggAll} loadedLabel={`Loaded rows · ${rowsLabel}`} compare={b.month === '2026-09'} />
     </div>
   </Card>
-);
+  );
+};
 
 export const Concentration: React.FC<{ agg: Aggregate | null; top: { name: string; spend: number }[] }> = ({ agg, top }) => {
+  const b = useBaseline();
+  const V = b.view;
   const maxSpend = top[0]?.spend ?? 0;
   return (
     <Card className="p-6 sm:p-8">
@@ -299,17 +340,19 @@ export const Concentration: React.FC<{ agg: Aggregate | null; top: { name: strin
         icon={<BarChart3 className="h-5 w-5" />}
         eyebrow="Spend concentration"
         title="How concentrated endpoint-437 spend is"
-        description="Horizontal bars only. September is a single aggregate period, so there is no time series to chart."
+        description={`${b.period}, visible view. Horizontal bars for shares; the monthly trend below shows the time series.`}
         aside={<ClassTag c="calculated" />}
       />
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-line p-5">
           <h3 className="text-sm font-semibold text-ink">Top 16 share of spend</h3>
-          <p className="mt-1 text-xs text-muted">% of gross spend, SCU · source: workbook</p>
+          <p className="mt-1 text-xs text-muted">% of gross spend, SCU · source: {b.source === 'live' ? 'Snowflake, live' : 'workbook'}</p>
           <div className="mt-5 space-y-4">
-            <HBar label="Visible view · top 16" value={VISIBLE_VIEW.top16SharePct} max={100} display={`${VISIBLE_VIEW.top16SharePct.toFixed(2)}%`} />
-            <HBar label="Visible view · remaining 300 rows" value={100 - VISIBLE_VIEW.top16SharePct} max={100} display={`${(100 - VISIBLE_VIEW.top16SharePct).toFixed(2)}%`} tone="muted" />
-            <HBar label="All-row view · top 16 (validation)" value={ALL_ROW_VIEW.top16SharePct} max={100} display={`${ALL_ROW_VIEW.top16SharePct.toFixed(2)}%`} tone="warn" />
+            <HBar label="Visible view · top 16" value={V.top16SharePct} max={100} display={`${V.top16SharePct.toFixed(2)}%`} />
+            <HBar label={`Visible view · remaining ${fmt(Math.max(0, V.rows - 16))} rows`} value={100 - V.top16SharePct} max={100} display={`${(100 - V.top16SharePct).toFixed(2)}%`} tone="muted" />
+            {b.source === 'validated' && (
+              <HBar label="All-row view · top 16 (workbook validation)" value={ALL_ROW_VIEW.top16SharePct} max={100} display={`${ALL_ROW_VIEW.top16SharePct.toFixed(2)}%`} tone="warn" />
+            )}
           </div>
           <h3 className="mt-8 text-sm font-semibold text-ink">Seller-type mix</h3>
           <p className="mt-1 text-xs text-muted">Rows and spend by seller type, visible view</p>
@@ -342,7 +385,7 @@ export const Concentration: React.FC<{ agg: Aggregate | null; top: { name: strin
                   label={p.name}
                   value={p.spend}
                   max={maxSpend}
-                  display={`${compact(p.spend)} SCU · ${((p.spend / VISIBLE_VIEW.spend) * 100).toFixed(2)}%`}
+                  display={`${compact(p.spend)} SCU · ${((p.spend / V.spend) * 100).toFixed(2)}%`}
                 />
               ))}
             </div>
@@ -350,8 +393,7 @@ export const Concentration: React.FC<{ agg: Aggregate | null; top: { name: strin
             <div className="mt-4 space-y-3">
               <EmptyNote>No workbook rows are loaded. Use Refresh data or Publisher prioritization → Load workbook rows.</EmptyNote>
               <Notice tone="info" icon={<AlertTriangle className="h-4 w-4 text-info" />}>
-                The aggregate share ({VISIBLE_VIEW.top16SharePct.toFixed(2)}%) is already validated; only the per-publisher names wait
-                on the rows.
+                The aggregate share ({V.top16SharePct.toFixed(2)}%) is known; only the per-publisher names wait on the rows.
               </Notice>
             </div>
           )}

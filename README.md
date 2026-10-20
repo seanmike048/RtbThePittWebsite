@@ -21,7 +21,7 @@ npm test         # adapter guardrails + endpoint-437 CFO model tests (Node 22+)
 | --- | --- |
 | **Overview** | Incident headline, priority & confidence, KPIs, bid-request collapse, timeline, investigation, ledger |
 | **Disconnections** | Seat ledger — click a row for the full record drawer |
-| **CFO impact · 437** | Amazon DSP endpoint 437 · Americas Display · Sep 2026: validated workbook baseline, concentration, publisher prioritization, editable Conservative / Base / Upside scenarios, run-rate horizons, sensitivity, ROI availability, SQL and assumptions appendices. SSP-wide context kept in a collapsible section. **Refresh data** re-reads Snowflake (partner 437 connection history) and the workbook (Google Drive) through the viewer's connectors |
+| **CFO impact · 437** | Amazon DSP endpoint 437 · Americas Display · Sep 2026: validated workbook baseline, concentration, publisher prioritization, editable Conservative / Base / Upside scenarios, run-rate horizons, sensitivity, ROI availability, SQL and assumptions appendices. SSP-wide context kept in a collapsible section. **Refresh data** loads everything live from Snowflake through the viewer's connector: publisher rows for any month (`ANALYTICS_DATA_HUB.EQT_SSP_ACTIVITY.MONTH_SCO_NODES` + sellers.json seller types, which reproduce the workbook), the monthly trend, connection history and open alerts (`ANALYTICS.PUBLIC.VIEW_DISCONNECTION_ALERT_365DAYS`). Every section can switch to the live baseline |
 | **Signals & checklist** | Seat mapping, signal associations, policy / benchmark checklist |
 | **Validation & Slack** | Boundary C validation, Slack broadcast preview (≤ 200 words), client message |
 | **Adapter specs** | Decision boundaries, ingestion rules, n8n export steps, JSON schema |

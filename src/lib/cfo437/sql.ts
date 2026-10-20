@@ -19,37 +19,70 @@ export interface SqlEntry {
 export const SQL_ENTRIES: SqlEntry[] = [
   {
     id: 'baseline',
-    title: 'Endpoint-437 publisher baseline',
-    purpose: 'Reproduces the workbook baseline in Snowflake once the source table is identified. Row-level RPMBr is computed in a CTE so the median is valid.',
-    sql: `WITH rows_437 AS (
-    SELECT
-        PUBLISHER_ID,
-        SELLER_TYPE,
-        BID_REQUEST_COUNT,
-        SPEND_GROSS_PARTNER_REVENUE,
-        SPEND_GROSS_PARTNER_REVENUE
-            / NULLIF(BID_REQUEST_COUNT, 0) * 1000000 AS row_rpmbr
-    FROM <validated_endpoint_437_publisher_table>   -- placeholder: source not found in ANALYTICS_EXPO
-    WHERE ENDPOINT = 437
-      AND INVENTORY_TYPE = 'DISPLAY'
-      AND SELLER_TYPE IN ('BOTH', 'INTERMEDIARY')
-      AND MONTH = '2026-09'
+    title: 'Endpoint-437 publisher baseline (source of the workbook)',
+    purpose:
+      'Per-network bid requests and spend for partner 437 in one month. Run by Refresh data. For September 2026 it reproduces the workbook exactly: 861 networks, 201,042,845,839 bid requests, 7,228,721.113683 spend.',
+    sql: `WITH st AS (
+    SELECT seller_id, seller_type, name
+    FROM ANALYTICS.PUBLIC.VIEW_SELLERS_JSON_NODES
+    WHERE parent_domain = 'smartadserver.com'
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY seller_id ORDER BY last_modification_date DESC) = 1
+), pub AS (
+    SELECT network_id,
+           SUM(bid_requests) AS bid_requests,
+           SUM(total_paid_price_true_count) AS spend          -- workbook SPEND_GROSS_PARTNER_REVENUE (SCU)
+    FROM ANALYTICS_DATA_HUB.EQT_SSP_ACTIVITY.MONTH_SCO_NODES
+    WHERE partner_id = 437 AND month = '2026-09-01'
+    GROUP BY 1
 )
-SELECT
-    COUNT(*) AS publisher_rows,
-    COUNT_IF(SPEND_GROSS_PARTNER_REVENUE > 0) AS positive_spend_publishers,
-    COUNT_IF(COALESCE(SPEND_GROSS_PARTNER_REVENUE, 0) <= 0) AS zero_spend_publishers,
-    SUM(BID_REQUEST_COUNT) AS bid_request_count,
-    SUM(SPEND_GROSS_PARTNER_REVENUE) AS spend_gross_partner_revenue,   -- source currency units
-    SUM(SPEND_GROSS_PARTNER_REVENUE)
-        / NULLIF(SUM(BID_REQUEST_COUNT), 0) * 1000000 AS weighted_rpmbr,
-    MEDIAN(IFF(SPEND_GROSS_PARTNER_REVENUE > 0, row_rpmbr, NULL)) AS median_positive_rpmbr
-FROM rows_437;`,
+SELECT TO_VARCHAR(p.network_id) AS publisher_id,
+       COALESCE(st.name, '') AS publisher_name,
+       COALESCE(st.seller_type, '') AS seller_type,           -- visible view = BOTH, INTERMEDIARY
+       p.bid_requests,
+       p.spend,
+       p.spend / NULLIF(p.bid_requests, 0) * 1000000 AS rpmbr
+FROM pub p LEFT JOIN st ON st.seller_id = TO_VARCHAR(p.network_id)
+ORDER BY p.spend DESC NULLS LAST;`,
     checks: [
-      { item: 'AMAZON_DSP_PER_PUBLISHER_ID_SEPTEMBER_2026', status: 'missing', note: 'Not found in ANALYTICS_EXPO. Replaced with a placeholder.' },
-      { item: 'BID_REQUEST_COUNT, SPEND_GROSS_PARTNER_REVENUE', status: 'missing', note: 'No ANALYTICS_EXPO table has these columns.' },
-      { item: 'ENDPOINT, INVENTORY_TYPE, SELLER_TYPE, MONTH', status: 'unverified', note: 'Workbook column names; Snowflake names unknown.' },
-      { item: 'Median of row-level RPMBr', status: 'validated', note: 'Fixes the original query, which took a median of an aggregate alias.' },
+      { item: 'ANALYTICS_DATA_HUB.EQT_SSP_ACTIVITY.MONTH_SCO_NODES', status: 'validated', note: 'Table exists; partner 437 · Sep 2026 matches the workbook all-row view exactly.' },
+      { item: 'TOTAL_PAID_PRICE_TRUE_COUNT = SPEND_GROSS_PARTNER_REVENUE', status: 'validated', note: 'Sums match to 1e-6. Currency of this field is still undocumented.' },
+      { item: 'Seller type from sellers.json', status: 'validated', note: 'Visible view: 317 rows vs 316 in the workbook; spend identical. One zero-spend network has been reclassified in sellers.json since the workbook was built.' },
+      { item: 'Old placeholder AMAZON_DSP_PER_PUBLISHER_ID_SEPTEMBER_2026', status: 'missing', note: 'Does not exist; replaced by this query.' },
+    ],
+  },
+  {
+    id: 'trend',
+    title: 'Monthly trend · partner 437',
+    purpose: 'Last 12 months of spend and bid requests, all rows and visible view. Feeds the trend chart.',
+    sql: `-- same st CTE as above
+SELECT TO_VARCHAR(m.month, 'YYYY-MM') AS month,
+       COUNT(*) AS networks, SUM(br) AS bid_requests, SUM(spend) AS spend,
+       COUNT_IF(st.seller_type IN ('BOTH','INTERMEDIARY')) AS visible_networks,
+       SUM(IFF(st.seller_type IN ('BOTH','INTERMEDIARY'), br, 0)) AS visible_bid_requests,
+       SUM(IFF(st.seller_type IN ('BOTH','INTERMEDIARY'), spend, 0)) AS visible_spend
+FROM (
+    SELECT month, network_id, SUM(bid_requests) AS br, SUM(total_paid_price_true_count) AS spend
+    FROM ANALYTICS_DATA_HUB.EQT_SSP_ACTIVITY.MONTH_SCO_NODES
+    WHERE partner_id = 437 AND month >= DATEADD(month, -12, DATE_TRUNC(month, CURRENT_DATE()))
+    GROUP BY 1, 2
+) m LEFT JOIN st ON st.seller_id = TO_VARCHAR(m.network_id)
+GROUP BY 1 ORDER BY 1;`,
+    checks: [
+      { item: 'Monthly grain', status: 'validated', note: 'Months through September 2026 are loaded; October is not yet.' },
+      { item: 'Visible view for past months', status: 'unverified', note: "Uses today's sellers.json seller types for every month." },
+    ],
+  },
+  {
+    id: 'alerts',
+    title: 'Open disconnection alerts · partner 437',
+    purpose: "The Pitt's own alert view. Reconnection date 2099-12-31 means still disconnected.",
+    sql: `SELECT network_id, network_name, datedisconnection, revenue_7_days_before, business_unit
+FROM ANALYTICS.PUBLIC.VIEW_DISCONNECTION_ALERT_365DAYS
+WHERE partner_id = 437 AND datereconnection >= '2099-01-01'
+ORDER BY revenue_7_days_before DESC NULLS LAST, datedisconnection DESC;`,
+    checks: [
+      { item: 'ANALYTICS.PUBLIC.VIEW_DISCONNECTION_ALERT_365DAYS', status: 'validated', note: 'View and columns exist; 121 open alerts on 437 on 2026-10-20.' },
+      { item: 'REVENUE_7_DAYS_BEFORE currency', status: 'unverified', note: 'Not documented; treated as SCU.' },
     ],
   },
   {

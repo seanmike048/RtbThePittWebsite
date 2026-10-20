@@ -4,7 +4,7 @@
  * Nothing here is a forecast.
  */
 import type { AssumptionSet } from './assumptions.ts';
-import { SCOPE, VISIBLE_VIEW } from './baseline.ts';
+import { type BaselineView, SCOPE, VISIBLE_VIEW } from './baseline.ts';
 
 export interface Result {
   value: number | null;
@@ -40,12 +40,13 @@ export function resolveExposure(
   mode: EligibleMode,
   a: AssumptionSet,
   subset: { spend: number; bidRequests: number; publishers: number } | null,
+  baseline: BaselineView = VISIBLE_VIEW,
 ): Exposure {
   if (mode === 'all_visible') {
     return {
-      spend: VISIBLE_VIEW.spend,
-      bidRequests: VISIBLE_VIEW.bidRequests,
-      publishers: VISIBLE_VIEW.rows,
+      spend: baseline.spend,
+      bidRequests: baseline.bidRequests,
+      publishers: baseline.rows,
       mode,
       isIssueSpecific: false,
       label: 'Demonstration · all visible endpoint spend (not issue-specific exposure)',
@@ -123,7 +124,7 @@ export function effectiveDaysSaved(a: AssumptionSet): Result {
 }
 
 /** Value protected = (eligible spend ÷ historical days) × days saved × historical recovery probability. */
-export function valueProtected(e: Exposure, a: AssumptionSet): Result {
+export function valueProtected(e: Exposure, a: AssumptionSet, historicalDays = SCOPE.historicalDays): Result {
   const days = effectiveDaysSaved(a);
   const m = need({
     'eligible spend at risk': e.spend,
@@ -131,7 +132,7 @@ export function valueProtected(e: Exposure, a: AssumptionSet): Result {
     'historical recovery probability': a.historicalRecoveryProbabilityPct.value,
   });
   if (m) return unavailable('Value protected unavailable until historical detection and recovery data are provided.');
-  return ok((e.spend! / SCOPE.historicalDays) * days.value! * pct(a.historicalRecoveryProbabilityPct.value)!);
+  return ok((e.spend! / historicalDays) * days.value! * pct(a.historicalRecoveryProbabilityPct.value)!);
 }
 
 export function hoursSaved(a: AssumptionSet): Result {
@@ -270,9 +271,12 @@ export interface HorizonRow {
   incremental: Result;
 }
 
-/** Run-rate arithmetic from the September daily average. Never a forecast, never lifetime totals. */
-export function horizonRunRates(recoveredMonthly: Result, baselineMonthly = VISIBLE_VIEW.spend): HorizonRow[] {
-  const days = SCOPE.historicalDays;
+/** Run-rate arithmetic from the baseline month's daily average. Never a forecast, never lifetime totals. */
+export function horizonRunRates(
+  recoveredMonthly: Result,
+  baselineMonthly = VISIBLE_VIEW.spend,
+  days = SCOPE.historicalDays,
+): HorizonRow[] {
   const dailyBase = baselineMonthly / days;
   return HORIZONS.map(h => {
     const baselineSpend = dailyBase * h.days;
