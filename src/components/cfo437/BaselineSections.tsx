@@ -13,6 +13,7 @@ import {
   WORKBOOK,
 } from '../../lib/cfo437/baseline.ts';
 import type { Aggregate } from '../../lib/cfo437/publishers.ts';
+import type { ConnectionState } from '../../lib/cfo437/live.ts';
 import { Badge, Card, cx, EmptyNote, SectionHeading, TableShell, Th } from '../ui.tsx';
 import { ClassTag, compact, fmt, HBar, Notice, SectionAnchor } from './shared.tsx';
 
@@ -23,7 +24,7 @@ export const ScopeBadge: React.FC = () => (
   </span>
 );
 
-export const ExecutiveSummary: React.FC<{ currencyValidated: boolean }> = ({ currencyValidated }) => (
+export const ExecutiveSummary: React.FC<{ currencyValidated: boolean; connection: ConnectionState }> = ({ currencyValidated, connection }) => (
   <section className="space-y-4">
     <SectionAnchor id="c4-summary" />
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -59,7 +60,7 @@ export const ExecutiveSummary: React.FC<{ currencyValidated: boolean }> = ({ cur
           <strong>Where the money sits. </strong>
           The top 16 publishers hold {VISIBLE_VIEW.top16SharePct.toFixed(2)}% of visible spend, so resolving issues on a handful of
           publishers moves most of the value. Snowflake confirms partner 437 is “{SNOWFLAKE_MAPPING.partnerName}”, with{' '}
-          {SNOWFLAKE_MAPPING.disconnectedNetworks} networks currently disconnected.
+          {connection.disconnected} networks disconnected ({connection.source === 'live' ? 'live' : `as of ${connection.asOf}`}).
         </Notice>
         <Notice tone="warn">
           <strong>Not yet measurable. </strong>
@@ -82,7 +83,8 @@ export const ScopeAndFreshness: React.FC<{
   onCurrencyValidated: (v: boolean) => void;
   currencyCode: string;
   onCurrencyCode: (v: string) => void;
-}> = ({ currencyValidated, onCurrencyValidated, currencyCode, onCurrencyCode }) => (
+  connection: ConnectionState;
+}> = ({ currencyValidated, onCurrencyValidated, currencyCode, onCurrencyCode, connection }) => (
   <Card className="p-6 sm:p-8">
     <SectionAnchor id="c4-scope" />
     <SectionHeading
@@ -122,8 +124,8 @@ export const ScopeAndFreshness: React.FC<{
           437 = {SNOWFLAKE_MAPPING.partnerName} <Badge tone="ok">Validated</Badge>
         </p>
         <p className="mt-1 text-sm leading-relaxed text-ink-2">
-          {fmt(SNOWFLAKE_MAPPING.connectedNetworks)} connected and {SNOWFLAKE_MAPPING.disconnectedNetworks} disconnected networks; latest
-          cut {SNOWFLAKE_MAPPING.latestDisconnection}. Checked {SNOWFLAKE_MAPPING.checkedOn}.
+          {fmt(connection.connected)} connected and {connection.disconnected} disconnected networks; latest cut{' '}
+          {connection.latestCut ?? '—'}. {connection.source === 'live' ? `Refreshed ${connection.asOf}.` : `Snapshot ${connection.asOf}.`}
         </p>
       </div>
     </div>
@@ -132,7 +134,9 @@ export const ScopeAndFreshness: React.FC<{
       <Notice tone="warn" icon={<Coins className="h-4 w-4 text-warn" />}>
         <strong>{CURRENCY_WARNING} </strong>
         The workbook does not document the currency of <span className="num text-xs">SPEND_GROSS_PARTNER_REVENUE</span>. Values are
-        shown as {SPEND_UNIT} (SCU), never converted, and never added to revenue-at-risk values from other sources.
+        shown as {SPEND_UNIT} (SCU), never converted, and never added to revenue-at-risk values from other sources. The worksheet
+        formats these cells with a “$” sign; cell formatting is not documentation of the currency, so it stays unvalidated until
+        Finance confirms it.
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <label className="flex cursor-pointer items-center gap-2 text-sm">
             <input
@@ -344,7 +348,7 @@ export const Concentration: React.FC<{ agg: Aggregate | null; top: { name: strin
             </div>
           ) : (
             <div className="mt-4 space-y-3">
-              <EmptyNote>Publisher bars appear once the workbook rows are loaded (Publisher prioritization → Load workbook rows).</EmptyNote>
+              <EmptyNote>No workbook rows are loaded. Use Refresh data or Publisher prioritization → Load workbook rows.</EmptyNote>
               <Notice tone="info" icon={<AlertTriangle className="h-4 w-4 text-info" />}>
                 The aggregate share ({VISIBLE_VIEW.top16SharePct.toFixed(2)}%) is already validated; only the per-publisher names wait
                 on the rows.

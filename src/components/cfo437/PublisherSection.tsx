@@ -224,8 +224,8 @@ export const PublisherPrioritization: React.FC<{
 
       {rows.length === 0 ? (
         <EmptyNote className="mt-6">
-          Awaiting workbook rows. The 316 visible publisher rows load from “{WORKBOOK.primarySheet}” through the Google Drive connector, or
-          from a CSV export with Load workbook rows. Rankings by spend, bid requests and RPMBr, and the searchable table, appear here.
+          No workbook rows are loaded. Use Refresh data at the top of the page, or Load workbook rows with a CSV export of “
+          {WORKBOOK.primarySheet}”.
         </EmptyNote>
       ) : (
         <>

@@ -31,6 +31,8 @@ export const DataQuality: React.FC = () => (
           'The workbook source table is not in ANALYTICS_EXPO, so the baseline cannot yet be reproduced in SQL.',
           'Ads.txt failures and Not Crawled results are observations, not proof of a DSP disconnection cause.',
           'Endpoint-437 values are never mixed with endpoint 489, Native, Video or the SSP-wide EUR context below.',
+          "Two disconnection sources disagree: Snowflake's connection history for partner 437 and the workbook's own Disconected column. Both are shown; neither overrides the other.",
+          'The worksheet formats spend with a $ sign. Formatting is not documentation, so currency stays unvalidated.',
           'ROI, NPV, payback and IRR need validated implementation cost, operating cost, labour cost and currency.',
         ].map(t => (
           <li key={t} className="flex gap-3">

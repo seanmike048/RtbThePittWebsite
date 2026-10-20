@@ -76,7 +76,7 @@ Other details:
 ### 3. Save the plan in the repo
 Write this plan to `docs/cfo-437-plan.md` so the Phase B session can pick it up. Then commit and push to `claude/dazzling-feynman-clbnbi`, and republish the artifact to the same URL. Publisher sections will show the "awaiting workbook rows" state.
 
-## Phase B — new session with the Google Drive connector
+## Phase B — Google Drive rows · ✅ done (rows embedded from the xlsx export; live refresh button added)
 You connect Google Drive at https://claude.ai/customize/connectors, then start a new session on this repo and branch with: *"Continue docs/cfo-437-plan.md Phase B"*. That session will:
 1. Read `437 (Americas Display)` and `Raw Data` through the connector, then write `src/lib/cfo437/publishers.data.ts` with source rows and the sheet link.
 2. Check `aggregate()` on both views against the visible baseline (316 / 205 / 111 / 80.44%) and the all-row view (861 / 518 / 343). Any mismatch gets reported and shown, never overwritten.

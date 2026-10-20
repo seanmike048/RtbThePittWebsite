@@ -11,6 +11,10 @@ import {
 import { CURRENCY_WARNING, SCOPE, VISIBLE_VIEW } from '../../lib/cfo437/baseline.ts';
 import type { EligibleMode, OverlapStatus } from '../../lib/cfo437/model.ts';
 import { aggregate, isVisible, type PublisherRow, WORKBOOK_ROWS } from '../../lib/cfo437/publishers.ts';
+import { WORKBOOK_MODIFIED } from '../../lib/cfo437/publishers.data.ts';
+import { CONNECTION_SNAPSHOT, type ConnectionState } from '../../lib/cfo437/live.ts';
+import { LiveRefresh } from './LiveData.tsx';
+import { Disconnections437 } from './Disconnections437.tsx';
 import { runScenario } from '../../lib/cfo437/scenario.ts';
 import { Analytics } from '../Analytics.tsx';
 import { Card } from '../ui.tsx';
@@ -21,10 +25,12 @@ import { ImportRowsModal, PublisherPrioritization, type RowIssue } from './Publi
 import { Notice } from './shared.tsx';
 
 const SECTIONS = [
+  ['c4-live', 'Live data'],
   ['c4-summary', 'Summary'],
   ['c4-scope', 'Scope'],
   ['c4-baseline', 'Baseline'],
   ['c4-concentration', 'Concentration'],
+  ['c4-disconnections', 'Disconnections'],
   ['c4-priority', 'Prioritization'],
   ['c4-impact', 'Spend impact'],
   ['c4-detection', 'Detection'],
@@ -53,6 +59,15 @@ export const Cfo437Page: React.FC = () => {
   const [issues, setIssues] = useState<Record<string, RowIssue>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [importOpen, setImportOpen] = useState(false);
+  const [connection, setConnection] = useState<ConnectionState>(CONNECTION_SNAPSHOT);
+  const [workbookModified, setWorkbookModified] = useState(WORKBOOK_MODIFIED);
+  const [rowsSource, setRowsSource] = useState<'embedded' | 'live' | 'csv'>('embedded');
+  const onLiveRows = useCallback((r: PublisherRow[], modified: string) => {
+    setRows(r);
+    setSelected(new Set());
+    setWorkbookModified(modified);
+    setRowsSource('live');
+  }, []);
 
   const edit = useCallback((s: ScenarioId, id: AssumptionId, v: number | null) => {
     const today = new Date().toISOString().slice(0, 10);
@@ -129,15 +144,32 @@ export const Cfo437Page: React.FC = () => {
         ))}
       </nav>
 
-      <ExecutiveSummary currencyValidated={currencyValidated} />
+      <LiveRefresh
+        connection={connection}
+        onConnection={setConnection}
+        workbookModified={workbookModified}
+        rowsSource={rowsSource}
+        onRows={onLiveRows}
+      />
+      <ExecutiveSummary currencyValidated={currencyValidated} connection={connection} />
       <ScopeAndFreshness
         currencyValidated={currencyValidated}
         onCurrencyValidated={setCurrencyValidated}
         currencyCode={currencyCode}
         onCurrencyCode={setCurrencyCode}
+        connection={connection}
       />
       <EndpointBaseline agg={agg} aggAll={aggAll} />
       <Concentration agg={agg} top={top16} />
+      <Disconnections437
+        connection={connection}
+        rows={rows}
+        onUseSubset={ids => {
+          setSelected(new Set(ids));
+          setMode('subset');
+          document.getElementById('c4-impact')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }}
+      />
       <PublisherPrioritization
         rows={visibleRows}
         issues={issues}
@@ -203,6 +235,7 @@ export const Cfo437Page: React.FC = () => {
         onLoad={r => {
           setRows(r);
           setSelected(new Set());
+          setRowsSource('csv');
         }}
       />
     </div>

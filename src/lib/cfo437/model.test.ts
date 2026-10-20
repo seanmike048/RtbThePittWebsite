@@ -124,3 +124,58 @@ test('CSV parser maps workbook headers and recomputes RPMBr', () => {
   assert.equal(out.rows[0].publisherName, 'A, Inc');
   assert.equal(out.rows[0].rpmbr, 25);
 });
+
+import { isVisible, parseSheetMatrix, WORKBOOK_ROWS } from './publishers.ts';
+import { snowflakeRows, toConnectionState } from './live.ts';
+
+test('Embedded workbook rows reproduce the validated visible and all-row baselines', () => {
+  const vis = aggregate(WORKBOOK_ROWS.filter(isVisible));
+  assert.equal(vis.rows, VISIBLE_VIEW.rows);
+  assert.equal(vis.positiveRows, VISIBLE_VIEW.positiveRows);
+  assert.equal(vis.zeroRows, VISIBLE_VIEW.zeroRows);
+  assert.equal(vis.bidRequests, VISIBLE_VIEW.bidRequests);
+  assert.ok(Math.abs(vis.spend - VISIBLE_VIEW.spend) < 1e-4);
+  assert.ok(Math.abs(vis.weightedRpmbr - VISIBLE_VIEW.weightedRpmbr) < 1e-6);
+  assert.ok(Math.abs(vis.medianPositiveRpmbr - VISIBLE_VIEW.medianPositiveRpmbr) < 1e-6);
+  assert.ok(Math.abs(vis.top16SharePct - VISIBLE_VIEW.top16SharePct) < 1e-4);
+  const all = aggregate(WORKBOOK_ROWS);
+  assert.equal(all.rows, ALL_ROW_VIEW.rows);
+  assert.equal(all.positiveRows, ALL_ROW_VIEW.positiveRows);
+  assert.ok(Math.abs(all.spend - ALL_ROW_VIEW.spend) < 1e-4);
+  assert.ok(Math.abs(all.medianPositiveRpmbr - ALL_ROW_VIEW.medianPositiveRpmbr) < 1e-6);
+});
+
+test('Sheet matrix parser finds the header row under the summary block', () => {
+  const m = [
+    [null, null, 'total', null, 10, 5],
+    ['PUBLISHER_ID', 'Publisher Name', 'Seller Type', '% Reseller Supply', 'BID_REQUEST_COUNT', 'SPEND_GROSS_PARTNER_REVENUE', 'RPMBr', 'KAM', 'TAM', 'In Scope', 'Disconected'],
+    [5026, 'Thunder', 'INTERMEDIARY', 1, 2_000_000, 50, 25, 'x', 'y', '1', null],
+  ];
+  const out = parseSheetMatrix(m);
+  assert.equal(out.rows.length, 1);
+  assert.equal(out.rows[0].publisherId, '5026');
+  assert.equal(out.rows[0].rpmbr, 25);
+  assert.equal(out.rows[0].inScope, true);
+  assert.equal(out.rows[0].resellerPct, 100);
+});
+
+test('Snowflake payload maps to connection state', () => {
+  const summary = snowflakeRows({
+    result_set: {
+      data: [['Connected', '2174', null], ['Disconnected', '104', '2026-10-01 08:28:00.000']],
+      resultSetMetaData: { rowType: [{ name: 'STATUS' }, { name: 'NETWORKS' }, { name: 'LATEST_CUT' }] },
+    },
+  });
+  const list = snowflakeRows({
+    result_set: {
+      data: [['5339', 'Raptive STR', '2026-10-01 08:28:00.000', 'US']],
+      resultSetMetaData: { rowType: [{ name: 'NETWORK_ID' }, { name: 'NETWORK_NAME' }, { name: 'DATE_DISCONNECTION' }, { name: 'SUPPLY_BUSINESS_UNIT' }] },
+    },
+  });
+  const s = toConnectionState(summary, list, '2026-10-20T20:00Z');
+  assert.equal(s.connected, 2174);
+  assert.equal(s.disconnected, 104);
+  assert.equal(s.latestCut, '2026-10-01 08:28');
+  assert.equal(s.networks[0].networkName, 'Raptive STR');
+  assert.throws(() => snowflakeRows({ nope: 1 }));
+});
