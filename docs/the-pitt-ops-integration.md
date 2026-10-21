@@ -124,3 +124,13 @@ The non-secret settings are already in `.env.n8n-dev.example`: n8n dev host, W1 
 5. In the n8n editor, press **Listen for test event** on W1. The Test URL only accepts a call while that is active, and the Production URL needs the workflow published, which it is not. Then press **Launch investigation** on the site.
 
 Every launch uses one of the project's 25 n8n executions per week. The site path posts nothing to Slack and creates no Jira ticket.
+
+## 8. n8n pushes results to the site (applied 2026-10-21)
+
+The hosted site cannot call n8n dev: `n8n.eqtv.dev` resolves to the private address `10.70.36.2`, even in public DNS. n8n can call out, so the main workflow now **pushes** its results to the site.
+
+- **n8n dev, workflow `FRYm3m0UAffFyJLq`:** two nodes were added after M5, with the user's approval. The workflow is still unpublished, and M1–M11 and W1–W5 are unchanged. The only new connections are M5 → P1 and P1 → P2.
+  - **P1 Build site push** groups M5's Final Report items by DSP and builds one `pitt.push.v1` event per DSP, with `environment: 'dev'`. It skips synthetic cases and strips the Slack rendering. It sits above M6, so execution order v1 runs it before the Slack branches (M9 can wait up to 2 hours).
+  - **P2 POST results to The Pitt** sends each event to `/api/investigation-results` with the callback credential ("Header Auth account 12", the same as W5). It retries 3 times, and its errors never block the Slack branches.
+- **Site:** `POST /api/investigation-results` is service-only. It checks the callback key, refuses a repeated `event_id`, checks `sent_at` against the clock window and checks the environment. It turns each push into a finished run marked "Pushed by n8n", and the open items feed Optimization. The run list refreshes every 20 seconds while signed in.
+- **Use:** run the main workflow from M1 in the n8n editor, and its results appear on the site. The Slack digest, cards and Jira approval run as before. Each run uses one of the project's 25 weekly n8n executions.
