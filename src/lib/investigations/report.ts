@@ -1,9 +1,18 @@
 /**
- * Parser for The Pitt workflow output ("THE PITT | APPROVED INVESTIGATION" text).
+ * Parser for The Pitt workflow output. Two formats are read:
+ * - the approved narrative ("THE PITT | APPROVED INVESTIGATION" text);
+ * - the Investigator v4.6 Slack card built by node "15 Final Report" ("THE PITT | <network> · Network #<id> · <DSP>").
  * The text is kept verbatim; parsing only structures it for display. Nothing here changes a field's meaning.
  */
 
 export type CheckResult = 'PASS' | 'FAIL' | 'NO_DATA' | string;
+
+export interface ActionItem {
+  /** The open item as written (seat, status, share, inventory). */
+  signal: string;
+  /** The "↳" next step under it, when the card gives one. */
+  next: string | null;
+}
 
 export interface ReportAction {
   team: string;
@@ -11,9 +20,27 @@ export interface ReportAction {
   ownerIsPerson: boolean;
   text: string;
   confidence: string | null;
+  /** v4.6 card only: one entry per open item; empty for the narrative format. */
+  items: ActionItem[];
+}
+
+/** "RPMBr before the cut" line of the v4.6 card; values as written, never recomputed. */
+export interface RpmbrLine {
+  /** Per million bid requests sent to the partner's seats; null when the card says n/a. */
+  partner: number | null;
+  /** Same measure for the whole network, all DSPs. */
+  network: number | null;
+  /** Taken from the card's own currency statement on the spend line, never from a symbol alone. */
+  currency: string | null;
+  windowStart: string | null;
+  windowEnd: string | null;
+  /** Revenue measure named on the line, e.g. "gross exchange price". */
+  basis: string | null;
+  text: string;
 }
 
 export interface InvestigationReport {
+  format: 'narrative' | 'v4.6-card';
   status: string;
   network: string;
   networkId: string;
@@ -22,6 +49,7 @@ export interface InvestigationReport {
   priority: string;
   summary: { label: string; value: string }[];
   revenue7d: { amount: number | null; note: string | null };
+  rpmbr: RpmbrLine | null;
   checks: { name: string; result: CheckResult }[];
   evidenceConfidence: string | null;
   rootCauseConfidence: string | null;
@@ -30,6 +58,8 @@ export interface InvestigationReport {
   actions: ReportAction[];
   publisherDraft: { reviewer: string | null; text: string } | null;
   approval: string | null;
+  /** Warning lines the card itself carries (unsupported numbers, AI unavailable, omitted detail). */
+  warnings: string[];
   /** Structured flags, only when the text states them; null means the text does not say. */
   meta: {
     /** Time as written ("08:11"); never given a zone the text does not state. */
@@ -38,7 +68,10 @@ export interface InvestigationReport {
     /** ISO code or symbol only if the text names one; "unverified" wording keeps this null. */
     revenueCurrency: string | null;
     revenueCurrencyStated: boolean;
+    /** Qualifier written next to the currency, e.g. "source-documented, not Finance-validated". */
+    revenueCurrencyStatus: string | null;
     hypothesisConfirmed: boolean | null;
+    hypothesisLikelihood: string | null;
     approvalCompleted: boolean | null;
     externalMessageSent: boolean | null;
     draftSent: boolean | null;
@@ -67,6 +100,10 @@ const CURRENCY = /(?:\b(EUR|USD|GBP|JPY|CAD|AUD)\b|([€$£¥]))/;
 const SECTION = /^(EXECUTIVE SUMMARY|LEADING HYPOTHESIS.*|RECOMMENDED INTERNAL ACTIONS|PUBLISHER COMMUNICATION.*)$/i;
 
 export function parseInvestigation(raw: string): InvestigationReport {
+  return isCard(raw) ? parseCard(raw) : parseNarrative(raw);
+}
+
+function parseNarrative(raw: string): InvestigationReport {
   const text = normalizeText(raw);
   const lines = text.split('\n').map(l => l.trim());
   const sections: Record<string, string[]> = { head: [] };
@@ -129,7 +166,7 @@ export function parseInvestigation(raw: string): InvestigationReport {
     const h = l.match(/^(.+?)\s*(?:→|->)\s*(.+)$/);
     if (h) {
       const owner = h[2].trim();
-      actions.push({ team: h[1].trim(), owner, ownerIsPerson: /@/.test(owner), text: '', confidence: null });
+      actions.push({ team: h[1].trim(), owner, ownerIsPerson: /@/.test(owner), text: '', confidence: null, items: [] });
     } else if (l && actions.length) {
       const a = actions[actions.length - 1];
       a.text = (a.text ? `${a.text} ` : '') + l;
@@ -161,7 +198,9 @@ export function parseInvestigation(raw: string): InvestigationReport {
     timezone: timeMatch?.[2] ?? null,
     revenueCurrency: currencyMatch ? (currencyMatch[1] ?? currencyMatch[2]) : null,
     revenueCurrencyStated: !!currencyMatch && !/unverified/i.test(revenueRaw ?? ''),
+    revenueCurrencyStatus: null,
     hypothesisConfirmed: /NOT A CONFIRMED CAUSE/i.test(hypHeading) ? false : null,
+    hypothesisLikelihood: null,
     approvalCompleted: approval ? /approval completed/i.test(approval) : null,
     externalMessageSent: approval ? (/no external .*message was sent/i.test(approval) ? false : null) : null,
     draftSent: /NOT SENT/i.test(draftHeading) ? false : null,
@@ -169,6 +208,7 @@ export function parseInvestigation(raw: string): InvestigationReport {
   };
 
   return {
+    format: 'narrative',
     status,
     network,
     networkId,
@@ -177,6 +217,7 @@ export function parseInvestigation(raw: string): InvestigationReport {
     priority,
     summary,
     revenue7d: { amount: revMatch ? Number(revMatch[1].replace(/,/g, '')) : null, note: revMatch?.[2] ?? null },
+    rpmbr: null,
     checks,
     evidenceConfidence: find(/evidence confidence/i),
     rootCauseConfidence: find(/root-?cause confidence/i),
@@ -185,7 +226,188 @@ export function parseInvestigation(raw: string): InvestigationReport {
     actions,
     publisherDraft,
     approval,
+    warnings: [],
     meta,
     raw: raw,
+  };
+}
+
+/* ---------------- Investigator v4.6 card (node "15 Final Report") ---------------- */
+
+const CARD_HEAD = /^THE PITT \|\s*(.+?)\s+·\s+Network #(\d+)\s+·\s+(.+?)$/;
+
+/**
+ * Slack mrkdwn as node 15 writes it (*bold*, _italic_, :emoji: shortcodes). Text copied out of Slack is already
+ * rendered, so every step is optional. The raw payload is kept separately, unchanged.
+ */
+function normalizeCard(raw: string): string {
+  return raw
+    .replace(/\r\n?/g, '\n')
+    .replace(/\*([^*\n]+)\*/g, '$1')
+    .replace(/(^|[\s(])_([^_\n]+)_(?=$|[\s).,;:])/gm, '$1$2')
+    .replace(/:(?:white_check_mark|warning|pencil2):\s*/g, '')
+    .replace(/(?:✅|⚠|✏)️?\s*/g, '');
+}
+
+export function isCard(raw: string): boolean {
+  return normalizeCard(raw)
+    .split('\n')
+    .some(l => CARD_HEAD.test(l.trim()));
+}
+
+const TEAMS: Record<string, string> = { TECHOPS: 'TechOps', 'PUBLISHER KAM': 'Publisher KAM', PARTNERSHIPS: 'Partnerships' };
+const TEAM_HEAD = /^([A-Z][A-Z ]*[A-Z])(?:\s*(?:→|->)\s*(.+))?$/;
+const CHECK_NAMES: Record<string, string> = { 'ads.txt': 'ads_txt', 'supply chain': 'sco', 'blocked inventory': 'blocked_inventory', ivt: 'ivt' };
+const CARD_WARNING = /^(AI investigation unavailable:|Numbers not found in the evidence:|Some detail omitted|\.\.\. \[truncated)/i;
+const num = (s: string | undefined) => (s === undefined ? null : Number(s.replace(/,/g, '')));
+
+function parseCard(raw: string): InvestigationReport {
+  const lines = normalizeCard(raw)
+    .split('\n')
+    .map(l => l.trim());
+  type Section = 'head' | 'summary' | 'seats' | 'team' | 'claims' | 'other';
+  let section: Section = 'head';
+  const head: string[] = [];
+  const bullets: string[] = [];
+  const actions: ReportAction[] = [];
+  const warnings: string[] = [];
+  const draft: string[] = [];
+  let draftTeam: ReportAction | null = null;
+  let draftNotSent = false;
+  let hypothesis: string | null = null;
+  let hypothesisTags = '';
+
+  for (const l of lines) {
+    if (!l) {
+      if (section !== 'head' || head.length) section = 'other';
+      continue;
+    }
+    if (CARD_WARNING.test(l)) {
+      warnings.push(l);
+      continue;
+    }
+    if (/^EXECUTIVE SUMMARY$/.test(l)) {
+      section = 'summary';
+      continue;
+    }
+    if (/^SEATS BEFORE THE CUT\b/.test(l)) {
+      section = 'seats';
+      continue;
+    }
+    if (/^CLAIMS CHECKED$/.test(l)) {
+      section = 'claims';
+      continue;
+    }
+    const hyp = l.match(/^Leading hypothesis\s*\(([^)]*)\):\s*(.+)$/i);
+    if (hyp) {
+      hypothesisTags = hyp[1];
+      hypothesis = hyp[2].trim();
+      section = 'other';
+      continue;
+    }
+    const team = section !== 'head' ? l.match(TEAM_HEAD) : null;
+    if (team && (TEAMS[team[1]] || team[2])) {
+      const owner = team[2]?.trim() ?? '';
+      actions.push({ team: TEAMS[team[1]] ?? team[1], owner, ownerIsPerson: /@/.test(owner), text: '', confidence: null, items: [] });
+      section = 'team';
+      continue;
+    }
+    if (section === 'head') head.push(l);
+    else if (section === 'summary' && l.startsWith('•')) bullets.push(l.replace(/^•\s*/, ''));
+    else if (section === 'team') {
+      const a = actions[actions.length - 1];
+      if (/^Message to the publisher\b/i.test(l)) {
+        draftTeam = a;
+        draftNotSent = /not sent/i.test(l);
+      } else if (l.startsWith('>')) draft.push(l.replace(/^>\s?/, ''));
+      else if (l.startsWith('•')) a.items.push({ signal: l.replace(/^•\s*/, ''), next: null });
+      else if (l.startsWith('↳') && a.items.length) a.items[a.items.length - 1].next = l.replace(/^↳\s*/, '');
+    }
+  }
+
+  // Header: "THE PITT | <network> · Network #<id> · <DSP>", then "Disconnected <date> <time> · Priority <p> · <status>".
+  const id = head.map(l => l.match(CARD_HEAD)).find(Boolean);
+  const metaParts = (head.find(l => /^Disconnected\b/i.test(l)) ?? '').split(/\s+·\s+/);
+  const when = metaParts[0]?.match(/^Disconnected\s+(\d{4}-\d{2}-\d{2})(?:\s+(\d{1,2}:\d{2}))?(?:\s*(\S+))?/i);
+  const tz = when?.[3]?.match(TZ)?.[1] ?? null;
+  const priority = metaParts.find(p => /^Priority\b/i.test(p))?.replace(/^Priority\s*/i, '').trim() ?? '';
+  const status = metaParts.length > 1 && !/^Priority\b/i.test(metaParts[metaParts.length - 1]) ? metaParts[metaParts.length - 1] : '';
+
+  const summary = bullets.map(b => {
+    const i = b.indexOf(':');
+    return i < 0 ? { label: b, value: '' } : { label: b.slice(0, i).trim(), value: b.slice(i + 1).trim() };
+  });
+  const find = (re: RegExp) => summary.find(s => re.test(s.label))?.value ?? null;
+
+  // Spend line: "€16,037 per week of <DSP> spend before the cut (<source> · EUR, <status>); about …".
+  // Node 15 prints "€" whatever the source, so the currency is read only from the words in the parentheses.
+  const spend = find(/^spend at stake/i);
+  const amount = spend?.match(/^[€$£¥]?\s*([\d,.]+)/)?.[1];
+  const note = spend?.match(/\(([^)]*)\)/)?.[1].trim() ?? null;
+  const stated = note?.match(/\b(EUR|USD|GBP|JPY|CAD|AUD)\b,?\s*([^·;]*)$/);
+  const revenueCurrency = stated?.[1] ?? null;
+
+  const rpmbrRaw = find(/^RPMBr/i);
+  const window = rpmbrRaw?.match(/(\d{4}-\d{2}-\d{2}) to (\d{4}-\d{2}-\d{2})/);
+  const rpmbr: RpmbrLine | null = rpmbrRaw
+    ? {
+        partner: num(rpmbrRaw.match(/^[€$£¥]?\s*([\d,.]+)\s+per million/i)?.[1]),
+        network: num(rpmbrRaw.match(/network, all DSPs:\s*[€$£¥]?\s*([\d,.]+)/i)?.[1]),
+        currency: revenueCurrency,
+        windowStart: window?.[1] ?? null,
+        windowEnd: window?.[2] ?? null,
+        basis: rpmbrRaw.match(/\d{4}-\d{2}-\d{2},\s*([^·]+)$/)?.[1].trim() ?? null,
+        text: rpmbrRaw,
+      }
+    : null;
+
+  const checks = (find(/^quality checks/i) ?? '')
+    .split(/\s+·\s+/)
+    .map(s => s.match(/^(.+?)\s+(PASS|FAIL|NO DATA)$/i))
+    .filter((m): m is RegExpMatchArray => !!m)
+    .map(m => ({ name: CHECK_NAMES[m[1].toLowerCase()] ?? m[1], result: m[2].toUpperCase().replace(' ', '_') }));
+
+  // "Cause of the cut: <what the connection log records> · cause from the data: <verdict> (confidence <level>)".
+  const cause = find(/^cause of the cut/i);
+  const exactReason = cause?.split(/\s+·\s+/)[0].trim() || null;
+  const rootCauseConfidence = cause?.match(/\(confidence\s+([a-z]+)\)/i)?.[1].toLowerCase() ?? null;
+
+  for (const a of actions) a.text = a.items.map(i => `${i.signal}.${i.next ? ` ${i.next}` : ''}`).join(' ');
+  const publisherDraft = draft.length ? { reviewer: draftTeam?.ownerIsPerson ? draftTeam.owner : null, text: draft.join(' ') } : null;
+
+  return {
+    format: 'v4.6-card',
+    status,
+    network: id?.[1].trim() ?? '',
+    networkId: id?.[2] ?? '',
+    dsp: id?.[3].trim() ?? '',
+    disconnectedOn: when?.[1] ?? '',
+    priority,
+    summary,
+    revenue7d: { amount: num(amount), note },
+    rpmbr,
+    checks,
+    evidenceConfidence: null,
+    rootCauseConfidence,
+    exactReason,
+    leadingHypothesis: hypothesis,
+    actions,
+    publisherDraft,
+    approval: null,
+    warnings,
+    meta: {
+      disconnectedTime: when?.[2] ?? null,
+      timezone: tz,
+      revenueCurrency,
+      revenueCurrencyStated: !!revenueCurrency,
+      revenueCurrencyStatus: stated?.[2].trim() || null,
+      hypothesisConfirmed: /not confirmed/i.test(hypothesisTags) ? false : null,
+      hypothesisLikelihood: hypothesisTags.split(',')[0].trim().toLowerCase() || null,
+      approvalCompleted: null,
+      externalMessageSent: null,
+      draftSent: draftNotSent ? false : null,
+      seatCount: null,
+    },
+    raw,
   };
 }
