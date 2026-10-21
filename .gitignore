@@ -8,3 +8,4 @@ coverage/
 !.env.example
 !.env.n8n-dev.example
 .pitt-data/
+.claude/

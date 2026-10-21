@@ -20,6 +20,7 @@ npm run api:dev  # API on :8080 with local dev sign-in; `npm run dev` proxies /a
 
 | Tab | What it shows |
 | --- | --- |
+| **Disconnection Room** | Amazon DSP disconnection room: filters, KPI strip, revenue-at-risk Sankey, risk table by age, demand funnel, revenue waterfall, what-if, network drill-down (checks before/after, traffic, AI Investigator, readiness, read-only draft), publisher view. Synthetic demo set + the real 21 Oct run. See `docs/disconnection-room.md` |
 | **Investigations** | The Pitt workflow's approved investigation (pasted text, kept verbatim) with Snowflake context: Equativ's connection-log reason for the cut, revenue reconciliation to the alert view, daily traffic around the cut, every DSP connection change for the network, related networks, actions by team and the unsent publisher draft |
 | **At risk** | Amazon DSP watchlist: networks cut in the last 60 days with the logged reason, and connected seats showing the low-RPMBr signal that preceded past cuts |
 | **Financial impact** | Spend after resolution, incremental spend vs no intervention, RPMBr change, faster recovery, hours released and Finance metrics, for the 437 Display portfolio and the #5100 case as separate scopes. Scenarios run only on entered or labelled illustrative inputs; blocked outputs say which input unblocks them. See `docs/financial-impact.md` |

@@ -18,6 +18,7 @@ import { OptimizationPage } from './components/optimization/OptimizationPage.tsx
 import { RunsPanel } from './components/ops/RunsPanel.tsx';
 import { ScopeBar } from './components/ops/ScopeBar.tsx';
 import { useOps } from './components/ops/useOps.ts';
+import { RoomPage } from './components/room/RoomPage.tsx';
 
 export default function App() {
   const [tab, setTab] = useState<TabId>('investigations');
@@ -41,11 +42,12 @@ export default function App() {
         onOpenImport={() => setPasteOpen(true)}
         counts={{ investigations: reports.length, atRisk: watchlist.atRisk.length }}
         /* Sticky only when a backend answers; on static hosting the one-line notice sits in the page instead. */
-        toolbar={ops.backend === 'ok' ? <ScopeBar ops={ops} /> : undefined}
+        toolbar={ops.backend === 'ok' && tab !== 'room' ? <ScopeBar ops={ops} /> : undefined}
       />
 
       <main key={tab} className="anim-fade-up mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        {ops.backend === 'none' && <ScopeBar ops={ops} />}
+        {ops.backend === 'none' && tab !== 'room' && <ScopeBar ops={ops} />}
+        {tab === 'room' && <RoomPage />}
         {tab === 'investigations' && <RunsPanel ops={ops} />}
         {tab === 'investigations' && (
           <InvestigationPage

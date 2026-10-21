@@ -187,3 +187,8 @@
 @media (prefers-reduced-motion: reduce) {
   .anim-fade-up, .anim-slide-in, .anim-grow-x { animation: none; }
 }
+
+/* Disconnection Room: links draw in once; no motion when the viewer asks for less. */
+.room-flow { stroke-dasharray: 4000; stroke-dashoffset: 4000; animation: room-flow 1.1s ease-out forwards; }
+@keyframes room-flow { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .room-flow { animation: none; stroke-dashoffset: 0; } }

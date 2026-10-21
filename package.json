@@ -11,15 +11,19 @@
     "api:n8n-dev": "node --env-file=.env.n8n-dev server.mjs",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "test": "node --test src/lib/cfo437/model.test.ts src/lib/investigations/investigations.test.ts src/lib/finance/finance.test.ts src/lib/ops/ops.test.ts server/server.test.mjs"
+    "test": "node --test src/lib/cfo437/model.test.ts src/lib/investigations/investigations.test.ts src/lib/finance/finance.test.ts src/lib/ops/ops.test.ts src/lib/pitt/engine.test.ts server/server.test.mjs"
   },
   "dependencies": {
+    "d3-sankey": "^0.12.3",
     "lucide-react": "^0.546.0",
     "react": "^19.0.1",
-    "react-dom": "^19.0.1"
+    "react-dom": "^19.0.1",
+    "react-is": "^19.3.1",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.0",
+    "@types/d3-sankey": "^0.12.5",
     "@types/node": "^22.14.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
