@@ -49,6 +49,29 @@ test('1. Authorised Amazon launch posts the exact scope to the configured webhoo
   assert.equal(run.state, 'running');
 });
 
+test('1b. The launch answers only after n8n answered; a dispatch that never got an answer does not block the scope', async () => {
+  const ctx = setup();
+  const out = await ctx.inv.launch(launcher, body());
+  assert.equal(out.run.state, 'running'); // dispatched inside the request
+  assert.equal(out.run.dispatch_outcome, 'accepted');
+  let t = Date.now();
+  const store = new MemoryStore();
+  const f = fakeFetch({ 'https://n8n.example.test/': () => new Promise(() => {}) }); // never answers, never times out (frozen instance)
+  const cfg = testConfig();
+  const inv = createInvestigations({ cfg, store, fetchImpl: f, now: () => t });
+  void inv.launch(launcher, body()); // hangs like the frozen call
+  await flush();
+  const stuck = store.all('runs')[0];
+  assert.equal(stuck.state, 'dispatching');
+  t += cfg.n8n.dispatchTimeoutMs + 31_000;
+  const inv2 = createInvestigations({ cfg, store, fetchImpl: fakeFetch({ 'https://n8n.example.test/': async () => okJson(404, {}) }), now: () => t });
+  const again = await inv2.launch(launcher, body({ idempotency_key: 'n'.repeat(20) }));
+  assert.notEqual(again.run.run_id, stuck.run_id);
+  assert.equal(store.get('runs', stuck.run_id).dispatch_outcome, 'interrupted_no_answer');
+  assert.equal(again.run.state, 'dispatch_failed');
+  assert.equal(again.run.dispatch_outcome, 'rejected_404');
+});
+
 test('2. Unsupported DSP never falls back to Amazon; nothing is dispatched', async () => {
   const ctx = setup();
   await assert.rejects(ctx.inv.launch(launcher, body({ dsp: 'ttd', partner_ids: [75] })), (e) => e.code === 'unsupported');

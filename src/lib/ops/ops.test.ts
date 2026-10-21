@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fmtMoney, isTerminal, launchBlockers, parseNetworkIds, track, trackedRuns } from './runs.ts';
+import { dispatchHint, fmtMoney, isTerminal, launchBlockers, parseNetworkIds, track, trackedRuns } from './runs.ts';
 import type { Dsp } from './types.ts';
 
 const amazon: Dsp = { key: 'amazon_dsp', name: 'Amazon DSP', status: 'supported', note: '', seats: [{ id: 437, name: 'Amazon DSP AMER Display B', format: 'display', region: 'AMER' }] };
@@ -38,4 +38,11 @@ test('Money keeps an unknown currency visible', () => {
   assert.equal(fmtMoney(3100, 'EUR'), '€3,100');
   assert.equal(fmtMoney(3100, null), '3,100 (currency unknown)');
   assert.equal(fmtMoney(null, 'EUR'), 'n/a');
+});
+
+test('A refused launch says why, in plain words', () => {
+  assert.match(dispatchHint('rejected_404') ?? '', /Listen for test event/);
+  assert.match(dispatchHint('rejected_403') ?? '', /x-pitt-launch-key/);
+  assert.equal(dispatchHint('accepted'), null);
+  assert.equal(dispatchHint(null), null);
 });

@@ -51,7 +51,7 @@ export function createApi({ cfg, store, fetchImpl = fetch, manageAdapter, capabi
   const optimizations = createOptimizations({ cfg, store, adapter: manageAdapter, capabilities, schedule });
   const snowflake = createSnowflake(cfg, fetchImpl);
   const refresh = createRefresh({ cfg, store, snowflake, onPromote: (snap) => optimizations.onSnapshot(snap), schedule });
-  const investigations = createInvestigations({ cfg, store, fetchImpl, schedule });
+  const investigations = createInvestigations({ cfg, store, fetchImpl });
   const authGaps = missing(cfg, 'auth');
 
   function session(req, mutating) {

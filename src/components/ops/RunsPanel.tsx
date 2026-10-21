@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, EyeOff } from 'lucide-react';
 import { Badge, Button, Card, EmptyNote, Eyebrow, SectionHeading, cx } from '../ui.tsx';
-import { RUN_LABEL, fmtMoney, isTerminal } from '../../lib/ops/runs.ts';
+import { RUN_LABEL, dispatchHint, fmtMoney, isTerminal } from '../../lib/ops/runs.ts';
 import type { CaseResult, Run } from '../../lib/ops/types.ts';
 import type { Ops } from './useOps.ts';
 
@@ -41,6 +41,7 @@ const RunRow: React.FC<{ run: Run; onStop: () => void }> = ({ run, onStop }) => 
           {run.stage ? ' · ' + run.stage : ''}
         </span>
         {run.dispatch_outcome === 'unknown_timeout' && <Badge tone="warn">n8n did not confirm receipt; waiting for its callback, not resending</Badge>}
+        {run.state === 'dispatch_failed' && dispatchHint(run.dispatch_outcome) && <p className="basis-full text-xs text-danger-ink">{dispatchHint(run.dispatch_outcome)}</p>}
         <div className="ml-auto flex gap-1">
           {!isTerminal(run.state) && (
             <Button size="sm" variant="ghost" onClick={onStop} title="Stops following this run in this browser. It does not stop the n8n execution.">

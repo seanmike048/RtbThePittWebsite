@@ -21,7 +21,7 @@ export function publicRun(r) {
   return rest;
 }
 
-export function createInvestigations({ cfg, store, fetchImpl = fetch, now = () => Date.now(), schedule = (fn) => setImmediate(fn) }) {
+export function createInvestigations({ cfg, store, fetchImpl = fetch, now = () => Date.now() }) {
   function audit(e) {
     store.audit({ kind: 'investigation', environment: cfg.environment, ...e });
   }
@@ -35,6 +35,10 @@ export function createInvestigations({ cfg, store, fetchImpl = fetch, now = () =
     const scopeKey = sha256({ dsp: scope.dsp_key, p: scope.partner_ids, n: scope.network_ids });
 
     const result = await store.tx((s) => {
+      // A dispatch that never got an answer (e.g. the instance was frozen or restarted mid-call) must not block the scope.
+      const staleMs = cfg.n8n.dispatchTimeoutMs + 30_000;
+      for (const r of s.all('runs', (x) => x.state === 'dispatching' && !x.dispatch_outcome && Date.parse(x.history.at(-1).at) < now() - staleMs))
+        transition(s, r.run_id, 'dispatch_failed', { dispatch_outcome: 'interrupted_no_answer' });
       const existing = s.all('runs', (r) => r.idem_hash === idem)[0];
       if (existing) return { run: existing, duplicate: true };
       const inFlight = s.all('runs', (r) => r.scope_key === scopeKey && !RUN_TERMINAL.includes(r.state))[0];
@@ -70,7 +74,10 @@ export function createInvestigations({ cfg, store, fetchImpl = fetch, now = () =
 
     if (!result.duplicate) {
       audit({ action: 'launch_accepted', run_id: result.run.run_id, actor: user.id, scope: result.run.scope });
-      schedule(() => dispatch(result.run.run_id, result.token, user).catch(() => {}));
+      // Dispatch inside the request (bounded by PITT_N8N_DISPATCH_TIMEOUT_MS): Cloud Run only gives the app CPU while a
+      // request is open, so a call started after the response can freeze. The investigation itself still runs async in n8n.
+      await dispatch(result.run.run_id, result.token, user).catch(() => {});
+      return { run: publicRun(store.get('runs', result.run.run_id)), duplicate: false };
     }
     return { run: publicRun(result.run), duplicate: result.duplicate };
   }

@@ -92,3 +92,16 @@ export function fmtMoney(n: number | null, currency: string | null): string {
   const v = Math.round(n).toLocaleString('en-US');
   return currency === 'EUR' ? '€' + v : v + ' (currency unknown)';
 }
+
+/** Plain-language reason for a launch n8n did not accept, from the server's dispatch_outcome. */
+export function dispatchHint(outcome: string | null): string | null {
+  if (!outcome || outcome === 'accepted') return null;
+  if (outcome === 'rejected_404') return 'n8n answered 404: the webhook was not listening. In n8n dev, press "Listen for test event" on W1, then launch within about 2 minutes.';
+  if (outcome === 'rejected_403' || outcome === 'rejected_401') return 'n8n answered ' + outcome.slice(9) + ': the launch key did not match. W1\'s credential needs Name x-pitt-launch-key and the value of the pitt-n8n-launch-key secret.';
+  if (outcome.startsWith('rejected_')) return 'n8n answered ' + outcome.slice(9) + '.';
+  if (outcome === 'connection_failed') return 'n8n could not be reached from the server.';
+  if (outcome === 'unknown_timeout') return 'n8n did not answer in time; the run may still have started, so it is not resent.';
+  if (outcome === 'interrupted_no_answer') return 'The server never got an answer from n8n (the call was interrupted). Launch again.';
+  if (outcome === 'destination_not_allowed') return 'The configured n8n host is not in PITT_ALLOWED_OUTBOUND_HOSTS.';
+  return outcome;
+}
