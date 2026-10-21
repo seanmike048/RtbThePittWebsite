@@ -55,6 +55,7 @@ export const AssumptionsPanel: React.FC<{
   onSave: () => void;
   saveState: 'idle' | 'saved' | 'failed';
   onExport: () => void;
+  exportState: 'idle' | 'saved' | 'failed';
   horizon: HorizonKey;
   onHorizon: (h: HorizonKey) => void;
   manualDate: string | null;
@@ -179,7 +180,7 @@ export const AssumptionsPanel: React.FC<{
           <Save className="h-3.5 w-3.5" /> {p.saveState === 'saved' ? 'Saved in this browser' : p.saveState === 'failed' ? 'Browser storage unavailable' : 'Save in this browser'}
         </Button>
         <Button size="sm" variant="ghost" onClick={p.onExport}>
-          <Download className="h-3.5 w-3.5" /> Export assumptions
+          <Download className="h-3.5 w-3.5" /> {p.exportState === 'saved' ? 'Exported' : p.exportState === 'failed' ? 'Export unavailable here' : 'Export assumptions'}
         </Button>
       </div>
       <p className={cx('mt-2 text-[11px] leading-snug text-muted')}>

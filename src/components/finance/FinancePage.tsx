@@ -85,6 +85,7 @@ export const FinancePage: React.FC = () => {
   const [manualDate, setManualDate] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<'idle' | 'saved' | 'failed'>('idle');
   const [healthOpen, setHealthOpen] = useState(false);
+  const [exportState, setExportState] = useState<'idle' | 'saved' | 'failed'>('idle');
   const [portfolio, setPortfolio] = useState<{ data: PortfolioDay[]; source: 'snapshot' | 'live'; asOf: string; lastError: string | null }>({ data: PORTFOLIO_DAILY, source: 'snapshot', asOf: '2026-10-21 01:59 UTC', lastError: null });
   const [caseData, setCaseData] = useState<{ data: CaseData; source: 'snapshot' | 'live'; asOf: string; lastError: string | null }>({ data: CASE_SNAPSHOT, source: 'snapshot', asOf: '2026-10-21 01:57 UTC', lastError: null });
   const [loading, setLoading] = useState(false);
@@ -135,14 +136,33 @@ export const FinancePage: React.FC = () => {
     setLoading(false);
   };
 
-  const exportAssumptions = () => {
+  /** In claude.ai the file goes through the `downloads` capability (the viewer confirms); elsewhere a plain browser download. */
+  const exportAssumptions = async () => {
     const bundle = buildExport([...scenarios.portfolio, ...scenarios.case], new Date().toISOString());
-    const url = URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' }));
+    const filename = `pitt-scenario-assumptions-${new Date().toISOString().slice(0, 10)}.json`;
+    const text = JSON.stringify(bundle, null, 2);
+    const use = (window as unknown as { claude?: { use: (n: string) => Promise<unknown> } }).claude?.use;
+    const downloads = use ? ((await use('downloads').catch(() => null)) as { save: (r: { filename: string; data: string }) => Promise<unknown> } | null) : null;
+    if (downloads) {
+      try {
+        await downloads.save({ filename, data: text });
+        setExportState('saved');
+      } catch (e) {
+        setExportState((e as { code?: string })?.code === 'declined' ? 'idle' : 'failed');
+      }
+      return;
+    }
+    if (use) {
+      setExportState('failed');
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = `pitt-scenario-assumptions-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = filename;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setExportState('saved');
   };
 
   const data = scope === 'portfolio' ? portfolio : caseData;
@@ -369,6 +389,7 @@ export const FinancePage: React.FC = () => {
           onSave={() => setSaveState(saveAll([...scenarios.portfolio, ...scenarios.case]) ? 'saved' : 'failed')}
           saveState={saveState}
           onExport={exportAssumptions}
+          exportState={exportState}
           horizon={horizon}
           onHorizon={setHorizon}
           manualDate={manualDate}
