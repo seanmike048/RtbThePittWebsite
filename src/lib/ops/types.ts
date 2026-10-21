@@ -4,7 +4,14 @@ export type DspStatus = 'supported' | 'read_only' | 'not_integrated';
 export interface Seat { id: number; name: string; format: string | null; region: string | null }
 export interface Dsp { key: string; name: string; status: DspStatus; note: string; seats: Seat[] }
 
-export interface SessionInfo { user: { id: string; roles: string[] } | null; csrf?: string; auth_configured: boolean; missing?: string[] }
+export interface SessionInfo {
+  user: { id: string; roles: string[] } | null;
+  csrf?: string;
+  auth_configured: boolean;
+  missing?: string[];
+  /** Signed-out only: names of the variables each feature still needs (never values). */
+  setup?: { environment: string; auth: string[]; launch: string[]; snowflake: string[] };
+}
 
 export interface ServerStatus {
   environment: 'local' | 'dev' | 'staging' | 'production';

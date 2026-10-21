@@ -1,7 +1,56 @@
 # Firebase App Hosting: builds with `npm run build`, starts with `npm start` (server.mjs on $PORT).
 runConfig:
   minInstances: 0
-  maxInstances: 2
+  # One instance: the API's file store and run tracking live on the instance's disk (see docs/the-pitt-ops-deployment.md).
+  # Raise this only after the store is backed by a managed database.
+  maxInstances: 1
   concurrency: 80
   cpu: 1
   memoryMiB: 512
+
+# Server settings (names documented in .env.example). Plain values are not secret; the four secrets live in
+# Cloud Secret Manager and must exist before a rollout, or the build fails. Create them with:
+#   firebase apphosting:secrets:set pitt-session-secret
+#   firebase apphosting:secrets:set pitt-users-json
+#   firebase apphosting:secrets:set pitt-n8n-launch-key
+#   firebase apphosting:secrets:set pitt-callback-key
+# (each command offers to grant the "thepitt" backend access). Nothing here is exposed to the browser bundle.
+env:
+  - variable: PITT_ENV
+    value: dev
+    availability: [RUNTIME]
+  - variable: PITT_AUTH_MODE
+    value: tokens
+    availability: [RUNTIME]
+  - variable: PITT_ALLOWED_OUTBOUND_HOSTS
+    value: n8n.eqtv.dev
+    availability: [RUNTIME]
+  # n8n dev, main workflow FRYm3m0UAffFyJLq, node W1. Test URL: only answers while "Listen for test event" is on in the editor.
+  - variable: PITT_N8N_LAUNCH_URL
+    value: https://n8n.eqtv.dev/webhook-test/the-pitt-launch-f95a59df
+    availability: [RUNTIME]
+  - variable: PITT_N8N_LAUNCH_HEADER_NAME
+    value: x-pitt-launch-key
+    availability: [RUNTIME]
+  - variable: PITT_N8N_WORKFLOW_ID
+    value: FRYm3m0UAffFyJLq
+    availability: [RUNTIME]
+  - variable: PITT_CALLBACK_HEADER_NAME
+    value: x-pitt-callback-key
+    availability: [RUNTIME]
+  # The n8n project has 25 executions per week in total.
+  - variable: PITT_WEEKLY_LAUNCH_BUDGET
+    value: "5"
+    availability: [RUNTIME]
+  - variable: PITT_MAX_CONCURRENT_RUNS
+    value: "1"
+    availability: [RUNTIME]
+  # No external write of any kind.
+  - variable: PITT_MANAGE_WRITES_ENABLED
+    value: "false"
+    availability: [RUNTIME]
+  - variable: PITT_WRITE_KILL_SWITCH
+    value: "true"
+    availability: [RUNTIME]
+  # Secret references (PITT_SESSION_SECRET, PITT_USERS_JSON, PITT_N8N_LAUNCH_HEADER_VALUE, PITT_CALLBACK_HEADER_VALUE)
+  # are added in the next commit, once the four secrets above exist: a missing secret fails the build.

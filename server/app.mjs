@@ -86,9 +86,11 @@ export function createApi({ cfg, store, fetchImpl = fetch, manageAdapter, capabi
       return json(res, 200, { user: { id: s.user.id, roles: s.user.roles }, csrf: s.csrf }, { 'set-cookie': auth.cookieHeader(s.cookie, auth.ttlSeconds) });
     }
     if (p === '/api/session' && m === 'GET') {
-      if (authGaps.length) return json(res, 200, { user: null, auth_configured: false, missing: authGaps });
+      // Setup gaps are variable names only (already public in .env.example), so a signed-out page can show what is missing.
+      const setup = { environment: cfg.environment, auth: authGaps, launch: missing(cfg, 'launch'), snowflake: missing(cfg, 'snowflake') };
+      if (authGaps.length) return json(res, 200, { user: null, auth_configured: false, missing: authGaps, setup });
       const s = auth.fromRequest(req);
-      return json(res, 200, s ? { user: { id: s.user.id, roles: s.user.roles }, csrf: s.csrf, auth_configured: true } : { user: null, auth_configured: true });
+      return json(res, 200, s ? { user: { id: s.user.id, roles: s.user.roles }, csrf: s.csrf, auth_configured: true } : { user: null, auth_configured: true, setup });
     }
     if (p === '/api/session' && m === 'DELETE') return json(res, 200, { ok: true }, { 'set-cookie': auth.cookieHeader('', 0) });
 

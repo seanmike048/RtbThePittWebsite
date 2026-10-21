@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Database, LogIn, Play, RefreshCw, ServerOff } from 'lucide-react';
+import { Check, Database, LogIn, Play, RefreshCw, ServerOff, X } from 'lucide-react';
 import { Badge, Button, Modal, cx } from '../ui.tsx';
 import { launchBlockers } from '../../lib/ops/runs.ts';
+import type { SessionInfo } from '../../lib/ops/types.ts';
 import type { Ops } from './useOps.ts';
 
 const ENV_TONE = { local: 'neutral', dev: 'info', staging: 'warn', production: 'danger' } as const;
@@ -24,26 +25,31 @@ export const ScopeBar: React.FC<{ ops: Ops }> = ({ ops }) => {
         </span>
       </div>
     );
-  if (session && !session.auth_configured)
-    return <p className="py-2 text-xs text-warn-ink">Sign-in is not configured on this server. Missing: {(session.missing ?? []).join(', ')}.</p>;
   if (!session?.user)
     return (
-      <form
-        className="flex flex-wrap items-center gap-2 py-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void ops.signIn(token).then(() => setToken(''));
-        }}
-      >
-        <label htmlFor="pitt-token" className="text-xs text-muted">
-          Sign in with your Pitt access token
-        </label>
-        <input id="pitt-token" type="password" autoComplete="current-password" value={token} onChange={(e) => setToken(e.target.value)} className={cx(field, 'w-64')} />
-        <Button size="sm" variant="secondary" type="submit" disabled={token.length < 24}>
-          <LogIn className="h-4 w-4" /> Sign in
-        </Button>
-        {ops.error && <span className="text-xs text-danger-ink">{ops.error}</span>}
-      </form>
+      <LockedBar
+        session={session}
+        signInForm={
+          session?.auth_configured ? (
+            <form
+              className="flex flex-wrap items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void ops.signIn(token).then(() => setToken(''));
+              }}
+            >
+              <label htmlFor="pitt-token" className="text-xs text-muted">
+                Sign in with your Pitt access token
+              </label>
+              <input id="pitt-token" type="password" autoComplete="current-password" value={token} onChange={(e) => setToken(e.target.value)} className={cx(field, 'w-64')} />
+              <Button size="sm" variant="secondary" type="submit" disabled={token.length < 24}>
+                <LogIn className="h-4 w-4" /> Sign in
+              </Button>
+            </form>
+          ) : null
+        }
+        error={ops.error}
+      />
     );
 
   const roles = session.user.roles;
@@ -176,6 +182,75 @@ export const ScopeBar: React.FC<{ ops: Ops }> = ({ ops }) => {
           <dd className="text-ink">Read-only investigation. This launch path posts nothing to Slack, creates no Jira ticket and changes no setting. Each launch uses one n8n execution from the project's weekly quota.</dd>
         </dl>
       </Modal>
+    </div>
+  );
+};
+
+/**
+ * Shown until someone is signed in: the same two actions, disabled, with what the server still needs.
+ * Only variable names come from the server; values never do. n8n-side setup cannot be checked from here and is listed as a reminder.
+ */
+const LockedBar: React.FC<{ session: SessionInfo | null; signInForm: React.ReactNode; error: string | null }> = ({ session, signInForm, error }) => {
+  const setup = session?.setup;
+  const authOk = !!session?.auth_configured;
+  const items: { label: string; ok: boolean; detail: string }[] = [
+    {
+      label: 'Sign-in',
+      ok: authOk,
+      detail: authOk ? 'Configured. Sign in to launch or refresh.' : 'Set ' + (setup?.auth ?? session?.missing ?? []).join(', ') + ' (App Hosting secrets pitt-users-json, pitt-session-secret).',
+    },
+    {
+      label: 'n8n launch',
+      ok: !!setup && setup.launch.length === 0,
+      detail: setup && setup.launch.length === 0 ? 'Server side configured.' : 'Set ' + (setup?.launch ?? ['the n8n launch settings']).join(', ') + '.',
+    },
+    {
+      label: 'n8n dev workflow',
+      ok: false,
+      detail: 'Check in n8n: Header Auth credentials on W1, W5 and W5p, the callback URL on W5 and W5p, and "Listen for test event" on W1 before each test launch.',
+    },
+    {
+      label: 'Snowflake refresh',
+      ok: !!setup && setup.snowflake.length === 0,
+      detail: setup && setup.snowflake.length === 0 ? 'Configured.' : 'Set ' + (setup?.snowflake ?? ['the Snowflake settings']).join(', ') + ' (read-only service user from Analytics).',
+    },
+  ];
+  const why = authOk ? 'Sign in first.' : 'Sign-in is not configured on this server.';
+  return (
+    <div className="space-y-2 py-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        {setup && (
+          <Badge tone={ENV_TONE[setup.environment as keyof typeof ENV_TONE] ?? 'neutral'} dot>
+            {setup.environment === 'production' ? 'PRODUCTION' : setup.environment}
+          </Badge>
+        )}
+        {signInForm}
+        <div className="ml-auto flex items-center gap-2">
+          <Button size="sm" variant="secondary" disabled title={why}>
+            <RefreshCw className="h-4 w-4" /> Refresh Snowflake data
+          </Button>
+          <Button size="sm" variant="primary" disabled title={why}>
+            <Play className="h-4 w-4" /> Launch investigation
+          </Button>
+        </div>
+      </div>
+      <details className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-xs" open={!authOk}>
+        <summary className="cursor-pointer font-medium text-ink-2">
+          Launch and Refresh are disabled: {why} Setup checklist ({items.filter((i) => i.ok).length}/{items.length} done)
+        </summary>
+        <ul className="mt-2 space-y-1">
+          {items.map((i) => (
+            <li key={i.label} className="flex items-start gap-2">
+              {i.ok ? <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ok" aria-label="done" /> : <X className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warn" aria-label="to do" />}
+              <span>
+                <strong className="font-semibold text-ink-2">{i.label}:</strong> <span className="text-muted">{i.detail}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-muted">Steps: docs/the-pitt-ops-integration.md, section 7.</p>
+      </details>
+      {error && <p className="text-xs text-danger-ink">{error}</p>}
     </div>
   );
 };

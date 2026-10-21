@@ -433,6 +433,12 @@ test('HTTP: sign-in, CSRF and same-origin checks guard every mutation', async ()
   try {
     const anon = await fetch(base + '/api/investigations');
     assert.equal(anon.status, 401);
+    // Signed out: the page learns which variables are missing (names only), never their values.
+    const pre = await (await fetch(base + '/api/session')).json();
+    assert.equal(pre.user, null);
+    assert.deepEqual(pre.setup.launch, []);
+    assert.ok(pre.setup.snowflake.includes('PITT_SNOWFLAKE_ACCOUNT'));
+    assert.ok(!JSON.stringify(pre).includes('fixture-launch-key-value') && !JSON.stringify(pre).includes('fixture-callback-key-value'));
     const bad = await fetch(base + '/api/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: 'wrong-token-wrong-token-xx' }) });
     assert.equal(bad.status, 401);
     const login = await fetch(base + '/api/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token }) });
