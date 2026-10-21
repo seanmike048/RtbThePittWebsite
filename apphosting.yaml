@@ -52,5 +52,16 @@ env:
   - variable: PITT_WRITE_KILL_SWITCH
     value: "true"
     availability: [RUNTIME]
-  # Secret references (PITT_SESSION_SECRET, PITT_USERS_JSON, PITT_N8N_LAUNCH_HEADER_VALUE, PITT_CALLBACK_HEADER_VALUE)
-  # are added in the next commit, once the four secrets above exist: a missing secret fails the build.
+  # Secrets (Cloud Secret Manager).
+  - variable: PITT_SESSION_SECRET
+    secret: pitt-session-secret
+    availability: [RUNTIME]
+  - variable: PITT_USERS_JSON
+    secret: pitt-users-json
+    availability: [RUNTIME]
+  - variable: PITT_N8N_LAUNCH_HEADER_VALUE
+    secret: pitt-n8n-launch-key
+    availability: [RUNTIME]
+  - variable: PITT_CALLBACK_HEADER_VALUE
+    secret: pitt-callback-key
+    availability: [RUNTIME]
