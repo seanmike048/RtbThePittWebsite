@@ -9,7 +9,7 @@ import { sha256Hex } from './hash.ts';
 import { excluded, unavailable, val, type Val } from './values.ts';
 import { EPISODES_5100, PRE_CUT_FULL_DAYS } from './snapshot.data.ts';
 
-export const PARSER_VERSION = 'pitt-narrative/2';
+export const PARSER_VERSION = 'pitt-report/3';
 
 export interface IngestedCase {
   /** App-local key derived from the payload hash; the workflow supplied no case or execution ID. */

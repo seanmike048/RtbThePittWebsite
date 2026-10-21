@@ -142,7 +142,7 @@ export const InvestigationPage: React.FC<{
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">{report.network}</h1>
             <p className="num mt-1 text-sm text-muted">
               Network #{report.networkId} · {report.dsp} · disconnected {report.disconnectedOn}
-              {amazonCut[0] ? ` at ${amazonCut[0].cutAt.slice(11)}` : ''}
+              {amazonCut[0] ? ` at ${amazonCut[0].cutAt.slice(11)}` : report.meta.disconnectedTime ? ` at ${report.meta.disconnectedTime}` : ''}
             </p>
             {report.approval && (
               <p className="mt-4 flex items-center gap-2 text-sm text-ok-ink">
@@ -169,6 +169,13 @@ export const InvestigationPage: React.FC<{
         </div>
       </Card>
 
+      {report.warnings.length > 0 && (
+        <Notice tone="warn" icon={<AlertTriangle className="h-4 w-4 text-warn" />}>
+          <strong>The workflow card carries {report.warnings.length === 1 ? 'a warning' : `${report.warnings.length} warnings`}: </strong>
+          {report.warnings.join(' · ')}
+        </Notice>
+      )}
+
       {/* Log finding */}
       {finding && (
         <Notice tone={finding.internal ? 'danger' : 'warn'} icon={<GitCompare className={cx('h-4 w-4', finding.internal ? 'text-danger' : 'text-warn')} />}>
@@ -188,6 +195,26 @@ export const InvestigationPage: React.FC<{
           <p className="text-xs font-medium text-muted">Revenue in the 7 days before disconnection</p>
           <p className="num mt-2 text-3xl font-bold text-ink">{report.revenue7d.amount === null ? '—' : fmt(report.revenue7d.amount)}</p>
           <p className="mt-1 text-xs text-warn-ink">{report.revenue7d.note ?? 'Currency unverified'}</p>
+          {report.rpmbr && (
+            <div className="mt-3 border-t border-line pt-3">
+              <p className="text-xs font-medium text-muted">RPMBr before the cut</p>
+              <p className="mt-1 text-sm text-ink-2">
+                <span className="num text-lg font-semibold text-ink">{report.rpmbr.partner === null ? 'n/a' : fmt(report.rpmbr.partner, 2)}</span>
+                {report.rpmbr.currency ? ` ${report.rpmbr.currency}` : ''} per million bid requests sent to {report.dsp} seats
+                {report.rpmbr.network !== null && (
+                  <>
+                    {' '}
+                    · network, all DSPs <span className="num font-medium text-ink">{fmt(report.rpmbr.network, 2)}</span>
+                  </>
+                )}
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                {report.rpmbr.windowStart && report.rpmbr.windowEnd ? `UTC days ${report.rpmbr.windowStart} to ${report.rpmbr.windowEnd}` : 'Window not stated'}
+                {report.rpmbr.basis ? ` · ${report.rpmbr.basis}` : ''}
+                {report.meta.revenueCurrencyStatus ? ` · ${report.rpmbr.currency ?? 'currency'} ${report.meta.revenueCurrencyStatus}` : ''}
+              </p>
+            </div>
+          )}
           {amazonCut.length > 0 && (
             <p className={cx('mt-3 flex items-start gap-1.5 border-t border-line pt-3 text-xs', revenueMatches ? 'text-ok-ink' : 'text-ink-2')}>
               {revenueMatches ? <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" /> : <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />}
@@ -445,11 +472,24 @@ export const InvestigationPage: React.FC<{
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <Eyebrow tone="accent">{a.team}</Eyebrow>
-                    <p className={cx('mt-1 text-sm font-medium [overflow-wrap:anywhere]', a.ownerIsPerson ? 'text-ink' : 'text-warn-ink')}>{a.owner}</p>
+                    <p className={cx('mt-1 text-sm font-medium [overflow-wrap:anywhere]', a.ownerIsPerson ? 'text-ink' : 'text-warn-ink')}>{a.owner || 'No owner named on the card'}</p>
                   </div>
                   {a.confidence && <Badge tone={confTone(a.confidence)}>Confidence {a.confidence}</Badge>}
                 </div>
-                <p className="mt-3 flex-1 text-sm leading-relaxed text-ink-2 [overflow-wrap:anywhere]">{a.text}</p>
+                {a.items.length > 0 ? (
+                  <ul className="mt-3 flex-1 space-y-3 text-sm leading-relaxed">
+                    {a.items.map(item => (
+                      <li key={item.signal} className="[overflow-wrap:anywhere]">
+                        <p className="text-ink">{item.signal}</p>
+                        {item.next && <p className="mt-1 text-ink-2">→ {item.next}</p>}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-3 flex-1 text-sm leading-relaxed text-ink-2 [overflow-wrap:anywhere]">
+                    {a.text || (report.publisherDraft && /publisher kam/i.test(a.team) ? 'No open item; the publisher draft is below.' : 'No open item.')}
+                  </p>
+                )}
                 {note && <p className="mt-3 rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger-ink">{note}</p>}
                 <div className="mt-4 flex justify-end">
                   <CopyButton text={`${a.team} → ${a.owner}\n${a.text}${a.confidence ? ` Confidence: ${a.confidence}.` : ''}`} label="Copy" />

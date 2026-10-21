@@ -8,7 +8,8 @@ export const PasteInvestigation: React.FC<{ open: boolean; onClose: () => void; 
   const [error, setError] = useState<string | null>(null);
   const add = () => {
     const r = parseInvestigation(text);
-    if (!r.networkId || !r.network) return setError('Could not find the “<name> | Network #<id> | <DSP>” line. Paste the full workflow output.');
+    if (!r.networkId || !r.network)
+      return setError('Could not find the network line (“<name> | Network #<id> | <DSP>”, or “THE PITT | <name> · Network #<id> · <DSP>” on a v4.6 card). Paste the full workflow output.');
     onAdd(r);
     setText('');
     setError(null);
@@ -19,7 +20,7 @@ export const PasteInvestigation: React.FC<{ open: boolean; onClose: () => void; 
       onClose={onClose}
       icon={<FileText className="h-5 w-5" />}
       title="Paste an investigation"
-      subtitle="The approved text output of The Pitt workflow, exactly as posted."
+      subtitle="The approved text output of The Pitt workflow, or its v4.6 Slack card, exactly as posted."
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
