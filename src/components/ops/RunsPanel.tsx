@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronDown, EyeOff } from 'lucide-react';
 import { Badge, Button, Card, EmptyNote, Eyebrow, SectionHeading, cx } from '../ui.tsx';
+import { api } from '../../lib/ops/api.ts';
 import { RUN_LABEL, dispatchHint, fmtMoney, isTerminal } from '../../lib/ops/runs.ts';
 import type { CaseResult, Run } from '../../lib/ops/types.ts';
 import type { Ops } from './useOps.ts';
@@ -13,9 +14,13 @@ export const RunsPanel: React.FC<{ ops: Ops }> = ({ ops }) => {
   if (ops.backend !== 'ok' || !ops.session?.user) return null;
   return (
     <Card className="p-5 sm:p-6">
-      <SectionHeading eyebrow="Launched from this site" title="Investigation runs" description="Status comes from the server and the n8n callback; stages are only those n8n reported." />
+      <SectionHeading
+        eyebrow="From this site and from n8n"
+        title="Investigation runs"
+        description="Runs launched here, and results n8n pushes after its own runs. The list refreshes every 20 seconds; stages are only those n8n reported."
+      />
       <div className="mt-4 space-y-3">
-        {ops.runs.length === 0 && <EmptyNote>No run yet. Choose a scope above and press Launch investigation.</EmptyNote>}
+        {ops.runs.length === 0 && <EmptyNote>No run yet. Launch one above, or run the main workflow in n8n: its results appear here.</EmptyNote>}
         {ops.runs.map((r) => (
           <RunRow key={r.run_id} run={r} onStop={() => ops.stopTracking(r.run_id)} />
         ))}
@@ -24,8 +29,16 @@ export const RunsPanel: React.FC<{ ops: Ops }> = ({ ops }) => {
   );
 };
 
-const RunRow: React.FC<{ run: Run; onStop: () => void }> = ({ run, onStop }) => {
-  const [open, setOpen] = useState(isTerminal(run.state));
+const RunRow: React.FC<{ run: Run; onStop: () => void }> = ({ run: listed, onStop }) => {
+  const [open, setOpen] = useState(isTerminal(listed.state));
+  const [full, setFull] = useState<Run | null>(null);
+  // An older run in the list only carries a summary: fetch the full result when it is opened.
+  const summaryOnly = !!listed.result && 'summary_only' in listed.result;
+  useEffect(() => {
+    if (open && summaryOnly && !full) api.run(listed.run_id).then((x) => setFull(x.run)).catch(() => {});
+  }, [open, summaryOnly, full, listed.run_id]);
+  const run = full ?? listed;
+  const result = run.result && !('summary_only' in run.result) ? run.result : null;
   const l = RUN_LABEL[run.state];
   return (
     <div className="rounded-xl border border-line">
@@ -33,6 +46,7 @@ const RunRow: React.FC<{ run: Run; onStop: () => void }> = ({ run, onStop }) => 
         <Badge tone={l.tone} dot>
           {l.label}
         </Badge>
+        {run.source === 'n8n_push' && <Badge tone="info">Pushed by n8n</Badge>}
         <span className="text-sm text-ink">
           {run.scope.dsp_name} · seats <span className="num">{run.scope.partner_ids.join(', ')}</span> · networks <span className="num">{run.scope.network_ids.join(', ')}</span>
         </span>
@@ -55,11 +69,12 @@ const RunRow: React.FC<{ run: Run; onStop: () => void }> = ({ run, onStop }) => 
           )}
         </div>
       </div>
-      {open && run.result && (
+      {open && run.result && !result && <p className="border-t border-line px-4 py-3 text-sm text-muted">Loading the result…</p>}
+      {open && result && (
         <div className="space-y-4 border-t border-line px-4 py-4">
-          {run.result.error && <p className="text-sm text-danger-ink">Workflow error: {run.result.error}</p>}
-          {run.result.cases.length === 0 && <EmptyNote>The workflow returned no case.</EmptyNote>}
-          {run.result.cases.map((c) => (
+          {result.error && <p className="text-sm text-danger-ink">Workflow error: {result.error}</p>}
+          {result.cases.length === 0 && <EmptyNote>The workflow returned no case.</EmptyNote>}
+          {result.cases.map((c) => (
             <CaseView key={c.case_id ?? c.network.id} c={c} />
           ))}
         </div>

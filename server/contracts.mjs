@@ -120,6 +120,34 @@ export function validateEvent(ev, run, { now = Date.now(), skewSeconds = 300 } =
   return ev;
 }
 
+// ---------- Results pushed by n8n (no site-initiated run) ----------
+export const PUSH_SCHEMA = 'pitt.push.v1';
+const PARTNER_NAME_TO_KEY = { 'amazon dsp': 'amazon_dsp', beeswax: 'beeswax', 'google dv360': 'dv360', 'the trade desk': 'ttd', 'yahoo dsp': 'yahoo_dsp', 'microsoft ads (xandr)': 'xandr' };
+export const partnerKeyOf = (v) => (dspByKey(String(v || '')) ? String(v) : PARTNER_NAME_TO_KEY[String(v || '').trim().toLowerCase()] ?? null);
+
+export function validatePush(ev, { environment, now = Date.now(), skewSeconds = 300 } = {}) {
+  if (!ev || typeof ev !== 'object') fail('invalid', 'Push must be an object');
+  if (ev.schema_version !== PUSH_SCHEMA) fail('invalid', 'schema_version must be ' + PUSH_SCHEMA);
+  if (typeof ev.event_id !== 'string' || !/^[A-Za-z0-9_.:-]{8,120}$/.test(ev.event_id)) fail('invalid', 'event_id');
+  if (ev.environment !== environment) fail('forbidden', 'Environment mismatch');
+  const sent = Date.parse(ev.sent_at);
+  if (!Number.isFinite(sent) || Math.abs(now - sent) > skewSeconds * 1000) fail('stale', 'sent_at outside the accepted window');
+  if (!['succeeded', 'partial', 'failed'].includes(ev.status)) fail('invalid', 'status');
+  const s = ev.scope || {};
+  const dsp = dspByKey(partnerKeyOf(s.dsp_key));
+  if (!dsp) fail('invalid', 'Unknown DSP in scope');
+  const nids = Array.isArray(s.network_ids) ? [...new Set(s.network_ids.map(Number))].sort((a, b) => a - b) : [];
+  if (!nids.length || nids.length > 50 || !nids.every((n) => Number.isInteger(n) && n > 0)) fail('invalid', 'scope.network_ids');
+  const seatIds = dsp.seats.map((x) => x.id);
+  const pids = Array.isArray(s.partner_ids) && s.partner_ids.length ? [...new Set(s.partner_ids.map(Number))].sort((a, b) => a - b) : seatIds;
+  if (!pids.every((p) => seatIds.includes(p))) fail('invalid', 'scope.partner_ids must be ' + dsp.name + ' seats');
+  if (!ev.result || !Array.isArray(ev.result.cases)) fail('invalid', 'result.cases must be an array');
+  return {
+    ...ev,
+    scope: { dsp_key: dsp.key, dsp_name: dsp.name, partner_ids: pids, network_ids: nids, timezone: 'UTC', window: 'workflow_defined', snapshot_id: null },
+  };
+}
+
 // ---------- Structured result ----------
 const CHECK = { PASS: 'pass', FAIL: 'fail', 'NO DATA': 'unknown', NO_DATA: 'unknown' };
 const CASE_STATUS = ['READY_FOR_APPROVAL', 'INVESTIGATION_INVALID', 'DRAFTS_INVALID', 'EVIDENCE_NOT_FOUND'];

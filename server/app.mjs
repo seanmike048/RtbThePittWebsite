@@ -82,7 +82,7 @@ export function createApi({ cfg, store, fetchImpl = fetch, manageAdapter, capabi
     const p = url.pathname;
     const seg = p.split('/').filter(Boolean); // ['api', ...]
     const mutating = m !== 'GET' && m !== 'HEAD';
-    if (mutating && p !== '/api/investigation-events' && !/^application\/json\b/i.test(req.headers['content-type'] || '')) throw new ContractError('invalid', 'Content-Type must be application/json');
+    if (mutating && !['/api/investigation-events', '/api/investigation-results'].includes(p) && !/^application\/json\b/i.test(req.headers['content-type'] || '')) throw new ContractError('invalid', 'Content-Type must be application/json');
 
     // ---- session
     if (p === '/api/session' && m === 'POST') {
@@ -106,6 +106,11 @@ export function createApi({ cfg, store, fetchImpl = fetch, manageAdapter, capabi
     if (p === '/api/session' && m === 'DELETE') return json(res, 200, { ok: true }, { 'set-cookie': auth.cookieHeader('', 0) });
 
     // ---- service-only callback from n8n (no browser session)
+    if (p === '/api/investigation-results' && m === 'POST') {
+      const out = await investigations.receivePush(req.headers, await readBody(req, cfg.n8n.maxResultBytes));
+      await optimizations.syncFromRun(store.get('runs', out.run.run_id));
+      return json(res, 200, { applied: true, run_id: out.run.run_id, state: out.run.state, cases: out.run.result.cases.length });
+    }
     if (p === '/api/investigation-events' && m === 'POST') {
       const body = await readBody(req, cfg.n8n.maxResultBytes);
       const out = await investigations.receiveEvent(req.headers, body);

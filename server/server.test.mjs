@@ -141,6 +141,32 @@ test('7. Failed and partial results are reported as such', async () => {
   assert.equal(partial.run.state, 'partial');
 });
 
+test('7b. Results n8n pushes on its own become finished runs; bad key, replay, stale clock and wrong environment are refused', async () => {
+  const ctx = setup();
+  const push = (over = {}) => ({
+    schema_version: 'pitt.push.v1', event_id: 'exec-77-push-amazon_dsp', environment: ctx.cfg.environment, sent_at: new Date().toISOString(),
+    execution_id: '77', workflow_id: 'FRYm3m0UAffFyJLq', status: 'succeeded', selection: 'amazon_demo',
+    scope: { dsp_key: 'Amazon DSP', network_ids: [5412] }, result: { cases: [FIXTURE_CASE] }, ...over,
+  });
+  const key = { [ctx.cfg.n8n.callbackHeaderName]: ctx.cfg.n8n.callbackHeaderValue };
+  await assert.rejects(ctx.inv.receivePush({ [ctx.cfg.n8n.callbackHeaderName]: 'nope' }, push()), (e) => e.code === 'unauthorized');
+  await assert.rejects(ctx.inv.receivePush(key, push({ sent_at: '2020-01-01T00:00:00Z' })), (e) => e.code === 'stale');
+  await assert.rejects(ctx.inv.receivePush(key, push({ environment: 'production' })), (e) => e.code === 'forbidden');
+  await assert.rejects(ctx.inv.receivePush(key, push({ scope: { dsp_key: 'amazon_dsp', network_ids: [9999] } })), (e) => e.code === 'forbidden'); // case outside scope
+  const { run } = await ctx.inv.receivePush(key, push());
+  assert.equal(run.source, 'n8n_push');
+  assert.equal(run.state, 'succeeded');
+  assert.deepEqual(run.scope.partner_ids, [437, 489, 490, 491, 492]); // registry seats when n8n gives a partner name only
+  assert.equal(run.result.cases[0].network.id, 5412);
+  await assert.rejects(ctx.inv.receivePush(key, push()), (e) => e.code === 'duplicate');
+  const listed = ctx.inv.list(launcher);
+  assert.equal(listed[0].run_id, run.run_id);
+  assert.ok(Array.isArray(listed[0].result.cases)); // newest runs carry the full result
+  const opt = createOptimizations({ cfg: ctx.cfg, store: ctx.store });
+  const recs = await opt.syncFromRun(ctx.store.get('runs', run.run_id));
+  assert.equal(recs.length, 1);
+});
+
 test('8. Result keeps currency status, unconfirmed hypotheses, separate confidences and unsent drafts', () => {
   const c = normalizeCase(FIXTURE_CASE, { network_ids: [5412], partner_ids: [437] });
   assert.equal(c.exposure.currency.code, null); // basis says "currency not documented"
@@ -481,6 +507,16 @@ test('HTTP: sign-in, CSRF and same-origin checks guard every mutation', async ()
     assert.equal(ok.status, 200); // same scope still in flight: the server returns the existing run
     const injected = await fetch(base + '/api/investigations', { method: 'POST', headers: { cookie, 'x-pitt-csrf': csrf, 'content-type': 'application/json' }, body: JSON.stringify({ ...body(), webhook_url: 'https://evil.example/hook' }) });
     assert.equal(injected.status, 400); // a browser cannot choose the destination
+    // n8n push: service key only, no browser session; the run then shows in the signed-in list.
+    const pushBody = { schema_version: 'pitt.push.v1', event_id: 'exec-88-push-amazon_dsp', environment: cfg.environment, sent_at: new Date().toISOString(), status: 'succeeded', scope: { dsp_key: 'Amazon DSP', network_ids: [5412] }, result: { cases: [FIXTURE_CASE] } };
+    const noKey = await fetch(base + '/api/investigation-results', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(pushBody) });
+    assert.equal(noKey.status, 401);
+    const pushed = await fetch(base + '/api/investigation-results', { method: 'POST', headers: { 'content-type': 'application/json', [cfg.n8n.callbackHeaderName]: cfg.n8n.callbackHeaderValue }, body: JSON.stringify(pushBody) });
+    assert.equal(pushed.status, 200);
+    const runsNow = await (await fetch(base + '/api/investigations', { headers: { cookie } })).json();
+    assert.ok(runsNow.runs.some((r) => r.source === 'n8n_push'));
+    const optNow = await (await fetch(base + '/api/optimizations', { headers: { cookie } })).json();
+    assert.ok(optNow.recommendations.length >= 1);
     const caps = await (await fetch(base + '/api/manage-capabilities', { headers: { cookie } })).json();
     assert.ok(caps.capabilities.every((c) => c.status !== 'verified'));
   } finally {

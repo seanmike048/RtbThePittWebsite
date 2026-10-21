@@ -5,7 +5,7 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { hostAllowed, missing } from './config.mjs';
 import {
-  ContractError, RUN_TERMINAL, buildLaunchPayload, canTransitionRun, canonical, newId, normalizeResult, sha256, validateEvent, validateLaunchInput,
+  ContractError, RUN_TERMINAL, buildLaunchPayload, canTransitionRun, canonical, newId, normalizeResult, sha256, validateEvent, validateLaunchInput, validatePush,
 } from './contracts.mjs';
 
 const same = (a, b) => {
@@ -153,6 +153,53 @@ export function createInvestigations({ cfg, store, fetchImpl = fetch, now = () =
     });
   }
 
+  /**
+   * Service-only receiver for results n8n pushes on its own (manual or scheduled runs of the main workflow), with no
+   * site-initiated run. n8n dev is on a private network the hosted site cannot call, but n8n can call out to the site.
+   * Auth = the same service key as callbacks; replay = unique event_id + clock window. Each push becomes a finished run.
+   */
+  async function receivePush(headers, body) {
+    if (!cfg.n8n.callbackHeaderValue || !same(headers[cfg.n8n.callbackHeaderName.toLowerCase()], cfg.n8n.callbackHeaderValue))
+      throw new ContractError('unauthorized', 'Invalid service credential');
+    const ev = validatePush(body, { environment: cfg.environment, now: now(), skewSeconds: cfg.n8n.callbackSkewSeconds });
+    const out = await store.tx((s) => {
+      const key = 'push:' + ev.event_id;
+      if (s.get('events', key)) throw new ContractError('duplicate', 'Push already received');
+      const at = new Date(now()).toISOString();
+      const run = {
+        run_id: newId('run'),
+        request_id: newId('req'),
+        environment: cfg.environment,
+        workflow_id: ev.workflow_id ?? null,
+        source: 'n8n_push',
+        created_at: at,
+        created_by: 'n8n',
+        scope: ev.scope,
+        scope_key: sha256({ dsp: ev.scope.dsp_key, p: ev.scope.partner_ids, n: ev.scope.network_ids }),
+        idem_hash: sha256('push|' + ev.event_id),
+        callback_token_hash: null,
+        state: 'queued',
+        stage: ev.selection ? 'pushed by n8n (' + String(ev.selection).slice(0, 40) + ')' : 'pushed by n8n',
+        last_sequence: -1,
+        dispatch_attempted: false,
+        dispatch_outcome: null,
+        execution_id: ev.execution_id ?? null,
+        history: [{ at, state: 'pushed', source: 'n8n' }],
+        result: null,
+        rejected_events: 0,
+      };
+      const result = normalizeResult(ev, run);
+      if (canonical(result).length > cfg.n8n.maxResultBytes) throw new ContractError('invalid', 'Result exceeds the configured size limit');
+      const status = ev.status === 'succeeded' && result.cases.some((c) => c.status !== 'READY_FOR_APPROVAL') ? 'partial' : ev.status;
+      // Recorded only once the push is valid, so a corrected resend with the same event_id is still accepted.
+      s.insert('events', key, { event_id: ev.event_id, type: 'push', status: ev.status, received_at: at });
+      s.insert('runs', run.run_id, { ...run, state: status, result, history: [...run.history, { at, state: status, source: 'n8n' }] });
+      return s.get('runs', run.run_id);
+    });
+    audit({ action: 'result_pushed', run_id: out.run_id, status: out.state, execution_id: out.execution_id, cases: out.result.cases.length });
+    return { run: publicRun(out) };
+  }
+
   function canView(user, run) {
     return run && (run.created_by === user.id || run.scope.network_ids.every((n) => user.canSeeNetwork(n))) && user.canSeePartner(run.scope.dsp_key);
   }
@@ -170,7 +217,8 @@ export function createInvestigations({ cfg, store, fetchImpl = fetch, now = () =
       .all('runs', (r) => canView(user, r))
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
       .slice(0, 50)
-      .map((r) => ({ ...publicRun(r), result: r.result ? { status: r.result.status, cases: r.result.cases.length } : null }));
+      // The 10 newest carry their full result so the page can show them without another call; older ones a summary.
+      .map((r, i) => (i < 10 ? publicRun(r) : { ...publicRun(r), result: r.result ? { status: r.result.status, cases: r.result.cases.length, summary_only: true } : null }));
   }
 
   async function sweep() {
@@ -180,5 +228,5 @@ export function createInvestigations({ cfg, store, fetchImpl = fetch, now = () =
     });
   }
 
-  return { launch, receiveEvent, get, list, sweep, dispatch };
+  return { launch, receiveEvent, receivePush, get, list, sweep, dispatch };
 }

@@ -69,6 +69,29 @@ export function useOps() {
     return () => clearTimeout(t);
   }, [runs]);
 
+  // Results n8n pushes on its own arrive without a launch from this page: re-read the run list every 20 s while signed in.
+  const signedIn = !!session?.user;
+  useEffect(() => {
+    if (!signedIn) return;
+    const t = setInterval(() => {
+      api
+        .runs()
+        .then(({ runs: list }) =>
+          setRuns((prev) => {
+            const byId = new Map(prev.map((r) => [r.run_id, r]));
+            for (const r of list) {
+              const old = byId.get(r.run_id);
+              // Keep a full result already on screen when the list only carries a summary.
+              byId.set(r.run_id, old && r.result && 'summary_only' in r.result && old.result && !('summary_only' in old.result) ? { ...r, result: old.result } : r);
+            }
+            return [...byId.values()].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 20);
+          }),
+        )
+        .catch(() => {});
+    }, 20_000);
+    return () => clearInterval(t);
+  }, [signedIn]);
+
   useEffect(() => {
     if (!refreshJob || !['queued', 'running'].includes(refreshJob.state)) return;
     const t = setTimeout(() => api.refreshStatus(refreshJob.refresh_id).then((x) => setRefreshJob(x.refresh)).catch((e) => setError(describe(e))), 3000);

@@ -66,7 +66,12 @@ export interface Run {
   execution_id?: string | null;
   dispatch_outcome: string | null;
   history: { at: string; state: string; source: string }[];
-  result: { status: string; error: string | null; received_at: string; workflow: { id: string | null; execution_id: string | null }; cases: CaseResult[] } | null;
+  /** 'n8n_push' when n8n sent the result on its own (no launch from this site). */
+  source?: string;
+  result:
+    | { status: string; error: string | null; received_at: string; workflow: { id: string | null; execution_id: string | null }; cases: CaseResult[] }
+    | { status: string; cases: number; summary_only: true }
+    | null;
 }
 
 export interface RefreshJob {
