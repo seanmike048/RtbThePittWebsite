@@ -30,19 +30,52 @@ export interface InvestigationReport {
   actions: ReportAction[];
   publisherDraft: { reviewer: string | null; text: string } | null;
   approval: string | null;
+  /** Structured flags, only when the text states them; null means the text does not say. */
+  meta: {
+    /** Time as written ("08:11"); never given a zone the text does not state. */
+    disconnectedTime: string | null;
+    timezone: string | null;
+    /** ISO code or symbol only if the text names one; "unverified" wording keeps this null. */
+    revenueCurrency: string | null;
+    revenueCurrencyStated: boolean;
+    hypothesisConfirmed: boolean | null;
+    approvalCompleted: boolean | null;
+    externalMessageSent: boolean | null;
+    draftSent: boolean | null;
+    seatCount: number | null;
+  };
   raw: string;
 }
+
+/** Markdown links keep their text; emphasis and heading markers go. The raw payload is kept separately, unchanged. */
+export function normalizeText(raw: string): string {
+  return raw
+    .replace(/\r\n?/g, '\n')
+    .replace(/\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)/g, '$1')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/\*\*|__/g, '')
+    .replace(/[ \t]*(EXECUTIVE SUMMARY|RECOMMENDED INTERNAL ACTIONS)[ \t:]*/g, '\n$1\n')
+    .replace(/[ \t]*(LEADING HYPOTHESIS(?:[ \t]*[—–-][ \t]*NOT A CONFIRMED CAUSE)?)[ \t:]*/g, '\n$1\n')
+    .replace(/[ \t]*(PUBLISHER COMMUNICATION(?:[ \t]*[—–-][ \t]*DRAFT ONLY,?[ \t]*NOT SENT)?)[ \t:]*/g, '\n$1\n')
+    .replace(/[ \t]+•[ \t]*/g, '\n• ')
+    .replace(/[ \t]*(Human approval completed\.)/g, '\n$1');
+}
+
+const TZ = /\b(UTC|GMT|CET|CEST|EST|EDT|PST|PDT|Z|[+-]\d{2}:\d{2})\b/;
+const CURRENCY = /(?:\b(EUR|USD|GBP|JPY|CAD|AUD)\b|([€$£¥]))/;
 
 const SECTION = /^(EXECUTIVE SUMMARY|LEADING HYPOTHESIS.*|RECOMMENDED INTERNAL ACTIONS|PUBLISHER COMMUNICATION.*)$/i;
 
 export function parseInvestigation(raw: string): InvestigationReport {
-  const text = raw.replace(/\r\n?/g, '\n');
+  const text = normalizeText(raw);
   const lines = text.split('\n').map(l => l.trim());
   const sections: Record<string, string[]> = { head: [] };
   let current = 'head';
+  const headings: string[] = [];
   for (const l of lines) {
     const m = l.match(SECTION);
     if (m) {
+      headings.push(m[1]);
       current = m[1].toUpperCase().startsWith('LEADING')
         ? 'hypothesis'
         : m[1].toUpperCase().startsWith('PUBLISHER')
@@ -117,6 +150,24 @@ export function parseInvestigation(raw: string): InvestigationReport {
   const rv = body.match(/^For\s+(\S+)\s+to review:\s*/i);
   const publisherDraft = body ? { reviewer: rv?.[1] ?? null, text: rv ? body.slice(rv[0].length).trim() : body } : null;
 
+  const actionText = actions.map(a => a.text).join(' ');
+  const timeMatch = actionText.match(new RegExp(`${disconnectedOn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+at\\s+(\\d{1,2}:\\d{2})(?:\\s*${TZ.source})?`));
+  const currencyMatch = revenueRaw?.match(CURRENCY);
+  const seats = actionText.match(/disconnected\s+(\d+)\s+(?:partner\s+)?seats/i);
+  const hypHeading = headings.find(h => /^LEADING/i.test(h)) ?? '';
+  const draftHeading = headings.find(h => /^PUBLISHER/i.test(h)) ?? '';
+  const meta: InvestigationReport['meta'] = {
+    disconnectedTime: timeMatch?.[1] ?? null,
+    timezone: timeMatch?.[2] ?? null,
+    revenueCurrency: currencyMatch ? (currencyMatch[1] ?? currencyMatch[2]) : null,
+    revenueCurrencyStated: !!currencyMatch && !/unverified/i.test(revenueRaw ?? ''),
+    hypothesisConfirmed: /NOT A CONFIRMED CAUSE/i.test(hypHeading) ? false : null,
+    approvalCompleted: approval ? /approval completed/i.test(approval) : null,
+    externalMessageSent: approval ? (/no external .*message was sent/i.test(approval) ? false : null) : null,
+    draftSent: /NOT SENT/i.test(draftHeading) ? false : null,
+    seatCount: seats ? Number(seats[1]) : null,
+  };
+
   return {
     status,
     network,
@@ -134,6 +185,7 @@ export function parseInvestigation(raw: string): InvestigationReport {
     actions,
     publisherDraft,
     approval,
-    raw: text.trim(),
+    meta,
+    raw: raw,
   };
 }

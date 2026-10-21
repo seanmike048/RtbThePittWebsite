@@ -29,6 +29,9 @@
   --ok-soft: #ecfdf5;
   --info: #0284c7;
   --info-soft: #f0f9ff;
+  /* Chart series (validated with the dataviz palette checker against #ffffff) */
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
 
   --shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px -4px rgb(15 23 42 / 0.06);
   color-scheme: light;
@@ -59,6 +62,8 @@
     --ok-soft: #0f2620;
     --info: #38bdf8;
     --info-soft: #0f2130;
+    --viz-1: #3987e5;
+    --viz-2: #d95926;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -8px rgb(0 0 0 / 0.4);
     color-scheme: dark;
   }
@@ -88,6 +93,8 @@
   --ok-soft: #0f2620;
   --info: #38bdf8;
   --info-soft: #0f2130;
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -8px rgb(0 0 0 / 0.4);
   color-scheme: dark;
 }
@@ -119,6 +126,8 @@
   --color-ok-soft: var(--ok-soft);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
+  --color-viz-1: var(--viz-1);
+  --color-viz-2: var(--viz-2);
   --shadow-card: var(--shadow);
 }
 

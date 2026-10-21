@@ -392,8 +392,8 @@ export const InvestigationPage: React.FC<{
           </div>
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
             <span className="min-w-0 [overflow-wrap:anywhere]">
-              Highlighted rows were cut on {report.disconnectedOn} and are listed first. Reason codes come from MAPPING_NETWORK_PARTNER_CONNECTION_SCD; hover a code for what it was
-              used for in the log (not an official legend).
+              Highlighted rows were cut on {report.disconnectedOn} and are listed first. Reason codes come from MAPPING_NETWORK_PARTNER_CONNECTION_SCD; hover a code for its documented
+              label (column comment on BLOCKING_REASON).
             </span>
             {events.length > 10 && (
               <Button size="sm" variant="ghost" onClick={() => setShowAllEvents(s => !s)}>

@@ -12,6 +12,7 @@ import { InvestigationPage } from './components/investigations/InvestigationPage
 import { WatchlistPage } from './components/investigations/WatchlistPage.tsx';
 import { PasteInvestigation } from './components/investigations/PasteInvestigation.tsx';
 import { Cfo437Page } from './components/cfo437/Cfo437Page.tsx';
+import { FinancePage } from './components/finance/FinancePage.tsx';
 
 export default function App() {
   const [tab, setTab] = useState<TabId>('investigations');
@@ -58,6 +59,7 @@ export default function App() {
             }}
           />
         )}
+        {tab === 'impact' && <FinancePage />}
         {tab === 'analytics' && <Cfo437Page />}
       </main>
 

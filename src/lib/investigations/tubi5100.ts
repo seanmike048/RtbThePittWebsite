@@ -141,7 +141,7 @@ export const TUBI_CONTEXT: NetworkContext = {
       networkId: '5524',
       name: 'Tubi',
       amazonSeatsConnected: 5,
-      note: 'Same publisher, non-STR network. All 5 Amazon seats are still connected.',
+      note: 'Named “Tubi”, non-STR network; publisher identity and inventory overlap with #5100 not verified. All 5 Amazon seats are still connected.',
       riskSeat: { partnerName: 'Amazon DSP CTV B', bidRequests7d: 170812889, spend7d: 10.99614, rpmbr7d: 0.064375 },
     },
   ],

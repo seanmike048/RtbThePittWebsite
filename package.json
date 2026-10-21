@@ -9,7 +9,7 @@
     "start": "node server.mjs",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "test": "node --test src/lib/cfo437/model.test.ts src/lib/investigations/investigations.test.ts"
+    "test": "node --test src/lib/cfo437/model.test.ts src/lib/investigations/investigations.test.ts src/lib/finance/finance.test.ts"
   },
   "dependencies": {
     "lucide-react": "^0.546.0",

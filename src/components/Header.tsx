@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FileText, Moon, Sun } from 'lucide-react';
 import { Button, cx } from './ui.tsx';
 
-export type TabId = 'investigations' | 'watchlist' | 'analytics';
+export type TabId = 'investigations' | 'watchlist' | 'impact' | 'analytics';
 
 function useTheme() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -32,6 +32,7 @@ export const Header: React.FC<{
   const tabs: { id: TabId; label: string; count?: number }[] = [
     { id: 'investigations', label: 'Investigations', count: counts.investigations },
     { id: 'watchlist', label: 'At risk', count: counts.atRisk },
+    { id: 'impact', label: 'Financial impact' },
     { id: 'analytics', label: 'CFO impact · 437' },
   ];
 

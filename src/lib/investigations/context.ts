@@ -44,12 +44,16 @@ export interface NetworkContext {
 export const AMAZON_PARTNERS = [437, 489, 490, 491, 492];
 export const isAmazon = (id: number) => AMAZON_PARTNERS.includes(id);
 
-/** Codes as observed with their comments in the connection log (2026); not an official legend. */
+/**
+ * MAPPING_NETWORK_PARTNER_CONNECTION_SCD.BLOCKING_REASON, as documented in the column comment
+ * (read 2026-10-21, query 01c7de54-020c-f8bc-0000-08896b3302fe). The free-text COMMENT carries the detail.
+ */
 export const REASON_CODE_SEEN: Record<number, string> = {
-  0: 'Connected / reconnection',
-  1: 'Manual block (e.g. “Reauct”, “Reauct phase out”)',
-  2: 'Low RPMBr (e.g. “Under $0.10 RPMBR”, “$0 RPMBR”)',
-  3: 'Optimization (e.g. “No spend”, “Zero bid networks”, RPMA)',
-  4: 'Quality / agreement (e.g. “IVT”, “Partner block request”)',
-  5: 'High CTR',
+  0: 'Connected',
+  1: 'Other',
+  2: 'LowProfitabilityBidder',
+  3: 'LowProfitabilityEquativ',
+  4: 'QualityIssueBidder',
+  5: 'QualityIssuePublisher',
+  6: 'DirectIntegrationBidder',
 };

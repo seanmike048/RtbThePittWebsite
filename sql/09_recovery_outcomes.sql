@@ -1,0 +1,6 @@
+/* 09_recovery_outcomes.sql — Disconnection cohort with follow-up, unresolved cuts included.
+   Read-only. Executed statements below are verbatim, with the query ID returned by Snowflake. */
+
+/* EXECUTED 2026-10-21T01:58:49Z · query_id 01c7de56-020c-f8bd-0000-08896b3314be · rows 6 · Partner 437 disconnections with 30 days of follow-up, by blocking reason
+   Purpose: Reconnection outcomes including unresolved cuts */
+WITH s AS (SELECT NETWORK_ID, PARTNER_ID, START_DATE, END_DATE, BLOCKING_REASON, LEAD(BLOCKING_REASON) OVER (PARTITION BY NETWORK_ID, PARTNER_ID ORDER BY START_DATE) AS next_reason, LAG(BLOCKING_REASON) OVER (PARTITION BY NETWORK_ID, PARTNER_ID ORDER BY START_DATE) AS prev_reason FROM ANALYTICS_DATA_HUB.EQT_SSP_MAPPING.MAPPING_NETWORK_PARTNER_CONNECTION_SCD WHERE PARTNER_ID = 437), cuts AS (SELECT * FROM s WHERE BLOCKING_REASON <> 0 AND COALESCE(prev_reason, -1) = 0 AND START_DATE >= '2025-10-19' AND START_DATE < '2026-09-19') SELECT BLOCKING_REASON, COUNT(*) AS cuts_with_30d_followup, COUNT_IF(next_reason = 0 AND END_DATE <= DATEADD(day, 30, START_DATE)) AS reconnected_30d, COUNT_IF(next_reason = 0 AND END_DATE > DATEADD(day, 30, START_DATE)) AS reconnected_later, COUNT_IF(END_DATE IS NULL) AS still_disconnected, COUNT_IF(next_reason <> 0) AS changed_to_other_block FROM cuts GROUP BY 1 ORDER BY 1;

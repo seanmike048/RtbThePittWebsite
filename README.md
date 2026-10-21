@@ -12,7 +12,7 @@ what to do next, and the validated Slack / client messages produced by the
 npm install
 npm run dev      # http://localhost:3000
 npm run build    # static site in dist/
-npm test         # adapter guardrails + endpoint-437 CFO model tests (Node 22+)
+npm test         # financial-impact acceptance tests, parser and CFO model tests (Node 22+)
 ```
 
 ## Views
@@ -21,6 +21,7 @@ npm test         # adapter guardrails + endpoint-437 CFO model tests (Node 22+)
 | --- | --- |
 | **Investigations** | The Pitt workflow's approved investigation (pasted text, kept verbatim) with Snowflake context: Equativ's connection-log reason for the cut, revenue reconciliation to the alert view, daily traffic around the cut, every DSP connection change for the network, related networks, actions by team and the unsent publisher draft |
 | **At risk** | Amazon DSP watchlist: networks cut in the last 60 days with the logged reason, and connected seats showing the low-RPMBr signal that preceded past cuts |
+| **Financial impact** | Spend after resolution, incremental spend vs no intervention, RPMBr change, faster recovery, hours released and Finance metrics, for the 437 Display portfolio and the #5100 case as separate scopes. Scenarios run only on entered or labelled illustrative inputs; blocked outputs say which input unblocks them. See `docs/financial-impact.md` |
 | **CFO impact · 437** | Endpoint-437 CFO model (live from Snowflake, or the validated September workbook) |
 
 Use **Paste investigation** to add another workflow output. **Refresh context** / **Refresh data** query Snowflake read-only
@@ -40,13 +41,17 @@ src/
 ├── App.tsx                       # Tabs and shared state
 ├── components/
 │   ├── investigations/           # Investigation page, watchlist, daily chart, paste dialog
+│   ├── finance/                  # Financial impact page, chart kit, assumptions panel
 │   ├── cfo437/                   # CFO impact · 437 sections
 │   ├── live/useSnowflake.ts      # Read-only Snowflake access through the viewer's connector
 │   └── ui.tsx                    # Card, Badge, Button, Modal, tables…
 └── lib/
     ├── investigations/           # Workflow-output parser, Tubi case + context snapshot, watchlist, SQL
+    ├── finance/                  # Value states, currency gating, daily scenario engine, cash flow, evidence, provenance
     ├── cfo437/                   # Endpoint-437 baseline, scenario model, SQL
     └── analytics/                # SSP-wide context data
+sql/                              # 01–10 query files: executed SQL with query IDs, templates labelled
+scripts/                          # Generators for the snapshot data and the SQL files
 ```
 
 The original AI Studio export is kept as `rtb-command-center.zip` for reference.
