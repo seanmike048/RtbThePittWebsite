@@ -424,6 +424,7 @@ test('24. Refresh SQL binds only the selected seats; rows of another seat are fl
 test('HTTP: sign-in, CSRF and same-origin checks guard every mutation', async () => {
   const token = 'tok_' + 'a'.repeat(30);
   const cfg = testConfig();
+  cfg.publicOrigins = ['https://thepitt.example.hosted.app'];
   cfg.auth.usersJson = JSON.stringify([{ id: 'alice', token_sha256: sha256(token), roles: ['viewer', 'launcher'], networks: ['*'], partners: ['*'] }]);
   const f = fakeFetch({ 'https://n8n.example.test/': async () => okJson(200, {}) });
   const api = createApi({ cfg, store: new MemoryStore(), fetchImpl: f });
@@ -450,8 +451,11 @@ test('HTTP: sign-in, CSRF and same-origin checks guard every mutation', async ()
     assert.equal(noCsrf.status, 403);
     const cross = await fetch(base + '/api/investigations', { method: 'POST', headers: { cookie, 'x-pitt-csrf': csrf, origin: 'https://evil.example', 'content-type': 'application/json' }, body: JSON.stringify(body()) });
     assert.equal(cross.status, 403);
-    const ok = await fetch(base + '/api/investigations', { method: 'POST', headers: { cookie, 'x-pitt-csrf': csrf, 'content-type': 'application/json' }, body: JSON.stringify(body()) });
-    assert.equal(ok.status, 202);
+    // Behind App Hosting the Host header is internal: the configured public origin is accepted, an unknown one is not.
+    const proxied = await fetch(base + '/api/investigations', { method: 'POST', headers: { cookie, 'x-pitt-csrf': csrf, origin: 'https://thepitt.example.hosted.app', 'content-type': 'application/json' }, body: JSON.stringify(body()) });
+    assert.equal(proxied.status, 202);
+    const ok = await fetch(base + '/api/investigations', { method: 'POST', headers: { cookie, 'x-pitt-csrf': csrf, 'content-type': 'application/json' }, body: JSON.stringify(body({ idempotency_key: 'q'.repeat(20) })) });
+    assert.equal(ok.status, 200); // same scope still in flight: the server returns the existing run
     const injected = await fetch(base + '/api/investigations', { method: 'POST', headers: { cookie, 'x-pitt-csrf': csrf, 'content-type': 'application/json' }, body: JSON.stringify({ ...body(), webhook_url: 'https://evil.example/hook' }) });
     assert.equal(injected.status, 400); // a browser cannot choose the destination
     const caps = await (await fetch(base + '/api/manage-capabilities', { headers: { cookie } })).json();

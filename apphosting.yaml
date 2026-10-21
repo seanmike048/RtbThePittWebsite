@@ -22,6 +22,10 @@ env:
   - variable: PITT_AUTH_MODE
     value: tokens
     availability: [RUNTIME]
+  # Public origin of this site: the browser's Origin for Launch / Refresh / Yes-No. Cloud Run's Host header is internal.
+  - variable: PITT_PUBLIC_ORIGINS
+    value: https://thepitt--gen-lang-client-0329123136.us-east4.hosted.app
+    availability: [RUNTIME]
   - variable: PITT_ALLOWED_OUTBOUND_HOSTS
     value: n8n.eqtv.dev
     availability: [RUNTIME]

@@ -30,6 +30,8 @@ export function loadConfig(env = process.env) {
       sessionTtlMinutes: int(env.PITT_SESSION_TTL_MINUTES, 480),
     },
     allowedHosts: hostAllowlist(env.PITT_ALLOWED_OUTBOUND_HOSTS),
+    // Browser origins allowed to call mutating routes, e.g. https://thepitt--<project>.<region>.hosted.app
+    publicOrigins: (env.PITT_PUBLIC_ORIGINS || '').split(',').map((o) => o.trim().replace(/\/+$/, '').toLowerCase()).filter(Boolean),
     n8n: {
       // The approved webhook URL for this environment (n8n "Production URL" of the Webhook node, or its Test URL in dev).
       // It is never derived from the editor URL of the workflow.

@@ -60,8 +60,19 @@ export function createApi({ cfg, store, fetchImpl = fetch, manageAdapter, capabi
     if (!s) throw new ContractError('unauthorized', 'Sign in required');
     if (mutating) {
       if (req.headers['x-pitt-csrf'] !== s.csrf) throw new ContractError('forbidden', 'Missing or invalid CSRF token');
+      // Behind App Hosting / Cloud Run the Host header is the internal service name, so the public origin comes from
+      // PITT_PUBLIC_ORIGINS; the request's own Host and X-Forwarded-Host are accepted too. The CSRF value above is the main guard.
       const origin = req.headers.origin;
-      if (origin && new URL(origin).host !== req.headers.host) throw new ContractError('forbidden', 'Cross-origin request refused');
+      if (origin) {
+        let o;
+        try {
+          o = new URL(origin);
+        } catch {
+          throw new ContractError('forbidden', 'Cross-origin request refused');
+        }
+        const hosts = [req.headers.host, ...String(req.headers['x-forwarded-host'] || '').split(',')].map((h) => String(h || '').trim().toLowerCase()).filter(Boolean);
+        if (!cfg.publicOrigins.includes(o.origin.toLowerCase()) && !hosts.includes(o.host.toLowerCase())) throw new ContractError('forbidden', 'Cross-origin request refused');
+      }
     }
     return s.user;
   }
