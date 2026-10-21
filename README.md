@@ -12,7 +12,8 @@ what to do next, and the validated Slack / client messages produced by the
 npm install
 npm run dev      # http://localhost:3000
 npm run build    # static site in dist/
-npm test         # financial-impact acceptance tests, parser and CFO model tests (Node 22+)
+npm test         # financial-impact, parser, CFO model, ops and API acceptance tests (Node 22.18+ / 23.6+ for .ts)
+npm run api:dev  # API on :8080 with local dev sign-in; `npm run dev` proxies /api to it
 ```
 
 ## Views
@@ -23,6 +24,9 @@ npm test         # financial-impact acceptance tests, parser and CFO model tests
 | **At risk** | Amazon DSP watchlist: networks cut in the last 60 days with the logged reason, and connected seats showing the low-RPMBr signal that preceded past cuts |
 | **Financial impact** | Spend after resolution, incremental spend vs no intervention, RPMBr change, faster recovery, hours released and Finance metrics, for the 437 Display portfolio and the #5100 case as separate scopes. Scenarios run only on entered or labelled illustrative inputs; blocked outputs say which input unblocks them. See `docs/financial-impact.md` |
 | **CFO impact · 437** | Endpoint-437 CFO model (live from Snowflake, or the validated September workbook) |
+| **Optimization** | Recommendations from investigations launched on the site. Tasks stay tasks; a typed change needs a preview of the exact diff and an explicit Yes, and stays **Manual action required** until a Manage API is verified. See `docs/manage-capability-matrix.md` |
+
+With the API configured, a scope bar under the tabs selects DSP, partner seat, networks and a refresh window, and offers **Launch investigation** (n8n webhook, see `n8n/`) and **Refresh Snowflake data** (server-side, read-only, versioned snapshots). Details: `docs/the-pitt-ops-integration.md`; deployment: `docs/the-pitt-ops-deployment.md`; variables: `.env.example`.
 
 Use **Paste investigation** to add another workflow output. **Refresh context** / **Refresh data** query Snowflake read-only
 through the viewer's claude.ai connector; elsewhere the page shows the embedded snapshot from 2026-10-20.

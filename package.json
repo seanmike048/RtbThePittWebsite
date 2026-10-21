@@ -7,9 +7,10 @@
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "start": "node server.mjs",
+    "api:dev": "PITT_ENV=local PITT_AUTH_MODE=dev PORT=8080 node server.mjs",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "test": "node --test src/lib/cfo437/model.test.ts src/lib/investigations/investigations.test.ts src/lib/finance/finance.test.ts"
+    "test": "node --test src/lib/cfo437/model.test.ts src/lib/investigations/investigations.test.ts src/lib/finance/finance.test.ts src/lib/ops/ops.test.ts server/server.test.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.546.0",

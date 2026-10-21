@@ -1,13 +1,18 @@
-// Minimal static server for Firebase App Hosting / Cloud Run: serves the Vite build in dist/ on $PORT.
+// Minimal server for Firebase App Hosting / Cloud Run: serves the Vite build in dist/ on $PORT and The Pitt API under /api.
 // No dependencies, so it runs even after the buildpack prunes devDependencies.
 import { createServer } from 'node:http';
 import { createReadStream, statSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createApi } from './server/app.mjs';
+import { loadConfig } from './server/config.mjs';
+import { FileStore } from './server/store.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), 'dist');
 const INDEX = join(ROOT, 'index.html');
-const PORT = Number(process.env.PORT) || 8080;
+const cfg = loadConfig();
+const PORT = cfg.port;
+const api = createApi({ cfg, store: new FileStore(resolve(cfg.dataDir)) });
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -43,6 +48,7 @@ function send(res, path, status = 200) {
 }
 
 const server = createServer((req, res) => {
+  if ((req.url ?? '').startsWith('/api/')) return void api.handle(req, res);
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.writeHead(405, { Allow: 'GET, HEAD' }).end();
     return;

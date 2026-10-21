@@ -1,0 +1,314 @@
+{
+  "kind": "the-pitt.n8n-change-set.v1",
+  "target": {
+    "workflow_id": "FRYm3m0UAffFyJLq",
+    "versionId": "cf043f3d-cc9d-49fb-ac35-1f80e66d8fd9",
+    "versionCounter": 4,
+    "updatedAt": "2026-10-21T14:16:20.122Z",
+    "read_at": "2026-10-21"
+  },
+  "summary": "Adds a second, independent entry point (W1-W5) for launches from The Pitt site. M1-M11 are untouched.",
+  "add_nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "the-pitt-launch-f95a59df",
+        "authentication": "headerAuth",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "40a5ca2a-8945-5d68-8c85-5bdfba7b7869",
+      "name": "W1 Webhook - The Pitt site launch",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        720
+      ],
+      "webhookId": "665807e7-75a4-5bc7-a8dd-cd3e5e238d6a",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "The Pitt - launch webhook key (TO CREATE)"
+        }
+      },
+      "notes": "Site launch entry point. Header Auth. Responds immediately; the result comes back through W5. Does not post to Slack or create Jira tickets."
+    },
+    {
+      "parameters": {
+        "jsCode": "// W2 Validate launch & build cases (site launch path). Rejects anything outside pitt.launch.v1; builds the same case\n// shape M4 gives the Investigator. Destinations, credentials and workflow IDs are fixed in this workflow, never read from the body.\nconst b = $json.body || {};\nconst fail = (m) => { throw new Error('Rejected launch: ' + m); };\nif (b.schema_version !== 'pitt.launch.v1') fail('schema_version');\nif (!/^run_[a-f0-9]{20}$/.test(b.run_id || '') || !/^req_[a-f0-9]{20}$/.test(b.request_id || '')) fail('run_id / request_id');\nconst s = b.scope || {};\n// Only Amazon DSP is enabled for site launches (same seats as Investigator node 02 PARTNERS.amazon_dsp).\nconst SEATS = { amazon_dsp: [437, 489, 490, 491, 492] };\nif (!SEATS[s.dsp_key]) fail('dsp_key not enabled for site launches');\nconst pids = Array.isArray(s.partner_ids) ? s.partner_ids : [];\nconst nids = Array.isArray(s.network_ids) ? s.network_ids : [];\nif (!pids.length || pids.length > 10 || !pids.every((p) => SEATS[s.dsp_key].includes(p))) fail('partner_ids');\nif (!nids.length || nids.length > 10 || !nids.every((n) => Number.isInteger(n) && n > 0)) fail('network_ids');\nif (typeof (b.callback || {}).token !== 'string' || b.callback.token.length < 24) fail('callback token');\n// Ingestion de-duplication: static data persists only for production (activated) executions; the site de-duplicates too.\nconst seen = $getWorkflowStaticData('global');\nseen.pitt_runs = (seen.pitt_runs || []).filter((r) => Date.now() - r.at < 86400000);\nif (seen.pitt_runs.some((r) => r.run_id === b.run_id)) fail('duplicate run_id');\nseen.pitt_runs.push({ run_id: b.run_id, at: Date.now() });\nconst pitt = { run_id: b.run_id, request_id: b.request_id, environment: b.environment, callback_token: b.callback.token, scope: { dsp_key: s.dsp_key, partner_ids: pids, network_ids: nids } };\nreturn nids.map((n) => ({ json: { network_id: n, partner: 'Amazon DSP', partner_ids: pids, data_mode: 'live', selection: 'site_launch', pitt } }));\n"
+      },
+      "id": "cffa9420-232c-56fc-84b6-6f638986d885",
+      "name": "W2 Validate launch & build cases",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        720
+      ],
+      "notes": "Validates pitt.launch.v1 and builds Investigator cases (Amazon DSP only for now)."
+    },
+    {
+      "parameters": {
+        "jsCode": "// W2p Build progress event: one 'running' event so the site shows that n8n picked the run up.\nconst p = $('W2 Validate launch & build cases').first().json.pitt;\nreturn [{ json: { token: p.callback_token, event: { schema_version: 'pitt.event.v1', event_id: 'exec-' + $execution.id + '-running', run_id: p.run_id, request_id: p.request_id,\n  environment: p.environment, sequence: 1, type: 'progress', status: 'running', stage: 'investigator_started', sent_at: new Date().toISOString(),\n  execution_id: String($execution.id), workflow_id: $workflow.id, scope: p.scope } } }];\n"
+      },
+      "id": "b43182b3-7c8c-5c6f-bb23-801f72476597",
+      "name": "W2p Build progress event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        560
+      ],
+      "notes": "One running event. Placed above W3 so execution order v1 runs it before the Investigator."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://REPLACE-WITH-APPROVED-PITT-HOST/api/investigation-events",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-pitt-run-token",
+              "value": "={{ $json.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.event) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "6f2093d4-108a-5bed-9ab6-20afb91f7678",
+      "name": "W5p Callback - progress",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        576,
+        560
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "The Pitt - callback service key (TO CREATE)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput",
+      "notes": "POSTs to The Pitt (fixed URL, set per environment by the platform owner). Retries are safe: the site rejects a repeated event_id."
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "4JGsgrMbBGWqcev7",
+          "mode": "id",
+          "cachedResultUrl": "/workflow/4JGsgrMbBGWqcev7"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "e7ada054-c323-5742-aed4-17ce9f670294",
+      "name": "W3 Run Investigator (site launch)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        720
+      ],
+      "onError": "continueErrorOutput",
+      "notes": "Same Investigator as M5. Error output goes to W4e so a failure is reported."
+    },
+    {
+      "parameters": {
+        "jsCode": "// W4 Build result event: the Investigator's Final Report items, minus the Slack rendering, as pitt.result.v1 cases.\nconst p = $('W2 Validate launch & build cases').first().json.pitt;\nconst cases = $input.all().map((x) => { const { slack_blocks, slack_text, slack_text_full, approval_text, ...c } = x.json; return c; });\nconst status = cases.length && cases.every((c) => c.status === 'READY_FOR_APPROVAL') ? 'succeeded' : cases.length ? 'partial' : 'failed';\nreturn [{ json: { token: p.callback_token, event: { schema_version: 'pitt.event.v1', event_id: 'exec-' + $execution.id + '-result', run_id: p.run_id, request_id: p.request_id,\n  environment: p.environment, sequence: 100, type: 'result', status, sent_at: new Date().toISOString(), execution_id: String($execution.id), workflow_id: $workflow.id,\n  workflow_revision: null, scope: p.scope, result: { cases } } } }];\n"
+      },
+      "id": "6d59ced3-f08e-55ce-93e5-8a223376642d",
+      "name": "W4 Build result event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        640
+      ],
+      "notes": "Final Report items as pitt.result.v1 cases (Slack rendering removed)."
+    },
+    {
+      "parameters": {
+        "jsCode": "// W4e Build failure event: the Investigator failed; report it instead of going silent.\nconst p = $('W2 Validate launch & build cases').first().json.pitt;\nconst err = $input.first().json.error;\nreturn [{ json: { token: p.callback_token, event: { schema_version: 'pitt.event.v1', event_id: 'exec-' + $execution.id + '-failed', run_id: p.run_id, request_id: p.request_id,\n  environment: p.environment, sequence: 100, type: 'result', status: 'failed', sent_at: new Date().toISOString(), execution_id: String($execution.id), workflow_id: $workflow.id,\n  scope: p.scope, result: { cases: [] }, error: { message: String((err && (err.message || err)) || 'Investigator failed').slice(0, 300) } } } }];\n"
+      },
+      "id": "a7557cf0-e2b1-55be-847a-0a1be29e8b8d",
+      "name": "W4e Build failure event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        800
+      ],
+      "notes": "Failure as a result event."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://REPLACE-WITH-APPROVED-PITT-HOST/api/investigation-events",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-pitt-run-token",
+              "value": "={{ $json.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.event) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "25fb86fa-ed5d-5734-ba81-ee2f6b5dadc4",
+      "name": "W5 Callback - result",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1056,
+        720
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "The Pitt - callback service key (TO CREATE)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput",
+      "notes": "POSTs to The Pitt (fixed URL, set per environment by the platform owner). Retries are safe: the site rejects a repeated event_id."
+    }
+  ],
+  "add_connections": {
+    "W1 Webhook - The Pitt site launch": {
+      "main": [
+        [
+          {
+            "node": "W2 Validate launch & build cases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "W2 Validate launch & build cases": {
+      "main": [
+        [
+          {
+            "node": "W2p Build progress event",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "W3 Run Investigator (site launch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "W2p Build progress event": {
+      "main": [
+        [
+          {
+            "node": "W5p Callback - progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "W3 Run Investigator (site launch)": {
+      "main": [
+        [
+          {
+            "node": "W4 Build result event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "W4e Build failure event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "W4 Build result event": {
+      "main": [
+        [
+          {
+            "node": "W5 Callback - result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "W4e Build failure event": {
+      "main": [
+        [
+          {
+            "node": "W5 Callback - result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "credentials_to_create": [
+    {
+      "node": "W1 Webhook - The Pitt site launch",
+      "type": "httpHeaderAuth",
+      "name": "The Pitt - launch webhook key (TO CREATE)",
+      "matches_site_env": [
+        "PITT_N8N_LAUNCH_HEADER_NAME",
+        "PITT_N8N_LAUNCH_HEADER_VALUE"
+      ]
+    },
+    {
+      "node": "W5 / W5p callbacks",
+      "type": "httpHeaderAuth",
+      "name": "The Pitt - callback service key (TO CREATE)",
+      "header_name": "x-pitt-callback-key",
+      "matches_site_env": [
+        "PITT_CALLBACK_HEADER_NAME",
+        "PITT_CALLBACK_HEADER_VALUE"
+      ]
+    }
+  ],
+  "placeholders": {
+    "callback_url": "https://REPLACE-WITH-APPROVED-PITT-HOST/api/investigation-events"
+  },
+  "rollback": "Delete nodes W1, W2, W2p, W5p, W3, W4, W4e, W5 and their connections; the workflow is then identical to the base revision."
+}

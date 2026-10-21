@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FileText, Moon, Sun } from 'lucide-react';
 import { Button, cx } from './ui.tsx';
 
-export type TabId = 'investigations' | 'watchlist' | 'impact' | 'analytics';
+export type TabId = 'investigations' | 'watchlist' | 'impact' | 'analytics' | 'optimization';
 
 function useTheme() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -25,8 +25,10 @@ export const Header: React.FC<{
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
   onOpenImport: () => void;
-  counts: { investigations: number; atRisk: number };
-}> = ({ activeTab, onTabChange, onOpenImport, counts }) => {
+  counts: { investigations: number; atRisk: number; optimization?: number };
+  /** Scope and action toolbar, sticky with the header. */
+  toolbar?: React.ReactNode;
+}> = ({ activeTab, onTabChange, onOpenImport, counts, toolbar }) => {
   const [theme, toggleTheme] = useTheme();
 
   const tabs: { id: TabId; label: string; count?: number }[] = [
@@ -34,6 +36,7 @@ export const Header: React.FC<{
     { id: 'watchlist', label: 'At risk', count: counts.atRisk },
     { id: 'impact', label: 'Financial impact' },
     { id: 'analytics', label: 'CFO impact · 437' },
+    { id: 'optimization', label: 'Optimization', count: counts.optimization },
   ];
 
   return (
@@ -95,6 +98,7 @@ export const Header: React.FC<{
             </button>
           ))}
         </nav>
+        {toolbar && <div className="border-t border-line">{toolbar}</div>}
       </div>
     </header>
   );

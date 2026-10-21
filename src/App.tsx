@@ -1,6 +1,7 @@
 /**
  * The Pitt — Equativ TechOps
- * Approved investigations of DSP disconnections, with Snowflake context, the Amazon watchlist, and the CFO impact model.
+ * Approved investigations of DSP disconnections, with Snowflake context, the Amazon watchlist, the CFO impact model,
+ * site launches of the investigation workflow and the Optimization review.
  */
 import { useState } from 'react';
 import type { NetworkContext } from './lib/investigations/context.ts';
@@ -13,6 +14,10 @@ import { WatchlistPage } from './components/investigations/WatchlistPage.tsx';
 import { PasteInvestigation } from './components/investigations/PasteInvestigation.tsx';
 import { Cfo437Page } from './components/cfo437/Cfo437Page.tsx';
 import { FinancePage } from './components/finance/FinancePage.tsx';
+import { OptimizationPage } from './components/optimization/OptimizationPage.tsx';
+import { RunsPanel } from './components/ops/RunsPanel.tsx';
+import { ScopeBar } from './components/ops/ScopeBar.tsx';
+import { useOps } from './components/ops/useOps.ts';
 
 export default function App() {
   const [tab, setTab] = useState<TabId>('investigations');
@@ -21,6 +26,7 @@ export default function App() {
   const [contexts, setContexts] = useState<Record<string, NetworkContext>>({ [TUBI_CONTEXT.networkId]: TUBI_CONTEXT });
   const [watchlist, setWatchlist] = useState<Watchlist>(WATCHLIST_SNAPSHOT);
   const [pasteOpen, setPasteOpen] = useState(false);
+  const ops = useOps();
 
   const changeTab = (t: TabId) => {
     setTab(t);
@@ -34,9 +40,13 @@ export default function App() {
         onTabChange={changeTab}
         onOpenImport={() => setPasteOpen(true)}
         counts={{ investigations: reports.length, atRisk: watchlist.atRisk.length }}
+        /* Sticky only when a backend answers; on static hosting the one-line notice sits in the page instead. */
+        toolbar={ops.backend === 'ok' ? <ScopeBar ops={ops} /> : undefined}
       />
 
       <main key={tab} className="anim-fade-up mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+        {ops.backend === 'none' && <ScopeBar ops={ops} />}
+        {tab === 'investigations' && <RunsPanel ops={ops} />}
         {tab === 'investigations' && (
           <InvestigationPage
             reports={reports}
@@ -61,6 +71,7 @@ export default function App() {
         )}
         {tab === 'impact' && <FinancePage />}
         {tab === 'analytics' && <Cfo437Page />}
+        {tab === 'optimization' && <OptimizationPage ops={ops} />}
       </main>
 
       <footer className="border-t border-line">
