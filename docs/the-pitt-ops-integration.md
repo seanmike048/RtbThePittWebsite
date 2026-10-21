@@ -106,3 +106,21 @@ A local smoke run of `server.mjs` confirmed sign-in, `/api/status` (it names eve
 4. The Manage API specification and write scope, plus an owner approval policy (see the matrix doc).
 5. A managed database for production storage, because the file store is per instance.
 6. A Node 20.19+ install to run `npm install && npm run lint && npm run build` and to check the UI in a browser.
+
+## 7. Connecting the site to n8n dev
+
+The non-secret settings are already in `.env.n8n-dev.example`: n8n dev host, W1 path `the-pitt-launch-f95a59df`, header names, workflow ID and launch budget.
+
+1. Generate two secrets on your machine. Don't paste them into chat:
+   ```bash
+   openssl rand -base64 32   # launch key
+   openssl rand -base64 32   # callback key
+   ```
+2. In n8n dev, create two **Header Auth** credentials and select them on the nodes:
+   - Name `x-pitt-launch-key` with the launch key, selected on **W1**.
+   - Name `x-pitt-callback-key` with the callback key, selected on **W5** and **W5p**.
+3. In W5 and W5p, replace `https://REPLACE-WITH-APPROVED-PITT-HOST` with a site address that n8n dev can reach. A laptop's `localhost` is not reachable: use the deployed dev site, or a tunnel approved for the purpose.
+4. Copy `.env.n8n-dev.example` to `.env.n8n-dev`. Fill in the two keys, `PITT_SESSION_SECRET` and `PITT_USERS_JSON`. Then run `npm run api:n8n-dev`.
+5. In the n8n editor, press **Listen for test event** on W1. The Test URL only accepts a call while that is active, and the Production URL needs the workflow published, which it is not. Then press **Launch investigation** on the site.
+
+Every launch uses one of the project's 25 n8n executions per week. The site path posts nothing to Slack and creates no Jira ticket.

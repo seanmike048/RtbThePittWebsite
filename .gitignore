@@ -6,4 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+!.env.n8n-dev.example
 .pitt-data/

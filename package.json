@@ -8,6 +8,7 @@
     "build": "vite build",
     "start": "node server.mjs",
     "api:dev": "PITT_ENV=local PITT_AUTH_MODE=dev PORT=8080 node server.mjs",
+    "api:n8n-dev": "node --env-file=.env.n8n-dev server.mjs",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "test": "node --test src/lib/cfo437/model.test.ts src/lib/investigations/investigations.test.ts src/lib/finance/finance.test.ts src/lib/ops/ops.test.ts server/server.test.mjs"
