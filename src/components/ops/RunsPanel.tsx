@@ -9,18 +9,18 @@ import type { Ops } from './useOps.ts';
 const CHECK_TONE = { pass: 'ok', fail: 'danger', unknown: 'neutral' } as const;
 const CHECK_TEXT = { pass: 'PASS', fail: 'FAIL', unknown: 'UNKNOWN (no data)' } as const;
 
-/** Launched runs from this site: live status from the server, then the typed result. Older results stay visible during new runs. */
+/** Investigation runs pushed by n8n (and any earlier site launches): status from the server, then the typed result. */
 export const RunsPanel: React.FC<{ ops: Ops }> = ({ ops }) => {
   if (ops.backend !== 'ok' || !ops.session?.user) return null;
   return (
     <Card className="p-5 sm:p-6">
       <SectionHeading
-        eyebrow="From this site and from n8n"
+        eyebrow="From n8n"
         title="Investigation runs"
-        description="Runs launched here, and results n8n pushes after its own runs. The list refreshes every 20 seconds; stages are only those n8n reported."
+        description="Results n8n pushes after each run of The Pitt main workflow. The list refreshes every 20 seconds."
       />
       <div className="mt-4 space-y-3">
-        {ops.runs.length === 0 && <EmptyNote>No run yet. Launch one above, or run the main workflow in n8n: its results appear here.</EmptyNote>}
+        {ops.runs.length === 0 && <EmptyNote>No run yet. Run The Pitt main workflow in n8n (from M1): its results appear here.</EmptyNote>}
         {ops.runs.map((r) => (
           <RunRow key={r.run_id} run={r} onStop={() => ops.stopTracking(r.run_id)} />
         ))}

@@ -1,16 +1,28 @@
 import React, { useState } from 'react';
-import { Check, Database, LogIn, Play, RefreshCw, ServerOff, X } from 'lucide-react';
-import { Badge, Button, Modal, cx } from '../ui.tsx';
-import { launchBlockers } from '../../lib/ops/runs.ts';
+import { Check, Database, LogIn, RefreshCw, ServerOff, Workflow, X } from 'lucide-react';
+import { Badge, Button, cx } from '../ui.tsx';
 import type { SessionInfo } from '../../lib/ops/types.ts';
 import type { Ops } from './useOps.ts';
 
 const ENV_TONE = { local: 'neutral', dev: 'info', staging: 'warn', production: 'danger' } as const;
 const field = 'h-9 rounded-lg border border-line bg-surface px-2.5 text-sm text-ink focus:border-accent focus:outline-none';
 
-/** Scope and actions shared by every tab: DSP, partner seats, networks, refresh window, Launch and Refresh. */
+/**
+ * Where investigations start: in n8n. The hosted site cannot reach n8n dev (private network), so there is no launch
+ * button; n8n pushes each run's results here (P1/P2 after M5) and the run list picks them up.
+ */
+const N8nNote: React.FC = () => (
+  <p className="flex items-start gap-2 text-xs text-muted">
+    <Workflow className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
+    <span>
+      <strong className="font-semibold text-ink-2">Start investigations in n8n</strong> (The Pitt main workflow, run from M1). Results appear here automatically, under Investigation
+      runs and in Optimization.
+    </span>
+  </p>
+);
+
+/** Scope and actions shared by every tab: DSP, partner seats, networks and the refresh window for Refresh Snowflake data. */
 export const ScopeBar: React.FC<{ ops: Ops }> = ({ ops }) => {
-  const [confirm, setConfirm] = useState(false);
   const [token, setToken] = useState('');
   const { backend, session, status, dsps, dsp, scope, setScope, networks } = ops;
 
@@ -20,8 +32,8 @@ export const ScopeBar: React.FC<{ ops: Ops }> = ({ ops }) => {
       <div className="flex items-start gap-2 py-2 text-xs text-muted">
         <ServerOff className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
         <span>
-          No Pitt backend behind this page (static hosting or the claude.ai artifact). <strong className="font-semibold text-ink-2">Launch investigation</strong> and the server-side{' '}
-          <strong className="font-semibold text-ink-2">Refresh Snowflake data</strong> run only on the hosted app with its API configured; the in-page connector refresh on each tab still works.
+          No Pitt backend behind this page (static hosting or the claude.ai artifact). Results pushed by n8n and the server-side{' '}
+          <strong className="font-semibold text-ink-2">Refresh Snowflake data</strong> are only on the hosted app; the in-page connector refresh on each tab still works.
         </span>
       </div>
     );
@@ -54,7 +66,6 @@ export const ScopeBar: React.FC<{ ops: Ops }> = ({ ops }) => {
 
   const roles = session.user.roles;
   const can = (r: string) => roles.includes(r) || roles.includes('admin');
-  const blockers = launchBlockers(dsp, scope.seats, networks.ids, { configured: !!status?.launch.configured, canLaunch: can('launcher'), busy: ops.busy === 'launch' });
   const refreshBlockers = [
     ...(!scope.seats.length || !networks.ids.length ? ['Choose seats and networks.'] : []),
     ...(!status?.snowflake.configured ? ['Snowflake refresh is not configured on this server.'] : []),
@@ -75,7 +86,7 @@ export const ScopeBar: React.FC<{ ops: Ops }> = ({ ops }) => {
           <select className={field} value={scope.dsp} onChange={(e) => setScope({ ...scope, dsp: e.target.value, seats: [] })}>
             {dsps.map((d) => (
               <option key={d.key} value={d.key}>
-                {d.name} · {d.status === 'supported' ? 'supported' : d.status === 'read_only' ? 'read-only' : 'not integrated'}
+                {d.name}
               </option>
             ))}
           </select>
@@ -116,15 +127,13 @@ export const ScopeBar: React.FC<{ ops: Ops }> = ({ ops }) => {
           <Button size="sm" variant="secondary" disabled={!!refreshBlockers.length || ops.busy !== null} onClick={() => void ops.refresh()} title={refreshBlockers.join(' ')}>
             <RefreshCw className={cx('h-4 w-4', job && ['queued', 'running'].includes(job.state) && 'animate-spin motion-reduce:animate-none')} /> Refresh Snowflake data
           </Button>
-          <Button size="sm" variant="primary" disabled={!!blockers.length} onClick={() => setConfirm(true)} title={blockers.join(' ')}>
-            <Play className="h-4 w-4" /> Launch investigation
-          </Button>
         </div>
       </div>
-      {(networks.invalid.length > 0 || blockers.length > 0 || ops.error || job) && (
+      <N8nNote />
+      {(networks.invalid.length > 0 || refreshBlockers.length > 0 || ops.error || job) && (
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
           {networks.invalid.length > 0 && <span className="text-danger-ink">Not a network ID: {networks.invalid.join(', ')}</span>}
-          {blockers.length > 0 && <span className="text-muted">Launch unavailable: {blockers.join(' ')}</span>}
+          {refreshBlockers.length > 0 && <span className="text-muted">Refresh unavailable: {refreshBlockers.join(' ')}</span>}
           {ops.error && <span className="text-danger-ink">{ops.error}</span>}
           {job && (
             <span className="text-muted">
@@ -144,51 +153,13 @@ export const ScopeBar: React.FC<{ ops: Ops }> = ({ ops }) => {
         </div>
       )}
 
-      <Modal
-        open={confirm}
-        onClose={() => setConfirm(false)}
-        title="Launch an investigation?"
-        subtitle="Review the exact scope sent to n8n."
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button size="sm" variant="secondary" onClick={() => setConfirm(false)}>
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              variant="primary"
-              disabled={ops.busy === 'launch'}
-              onClick={() => {
-                void ops.launch().then(() => setConfirm(false));
-              }}
-            >
-              Launch
-            </Button>
-          </div>
-        }
-      >
-        <dl className="grid grid-cols-[minmax(0,12rem)_1fr] gap-x-4 gap-y-2 px-5 py-4 text-sm">
-          <dt className="text-muted">Environment</dt>
-          <dd className="font-medium text-ink">{status?.environment}</dd>
-          <dt className="text-muted">DSP</dt>
-          <dd className="text-ink">{dsp?.name}</dd>
-          <dt className="text-muted">Partner seats</dt>
-          <dd className="text-ink">{scope.seats.map((id) => (dsp?.seats.find((s) => s.id === id)?.name ?? 'seat') + ' (' + id + ')').join(', ')}</dd>
-          <dt className="text-muted">Networks</dt>
-          <dd className="num text-ink">{networks.ids.join(', ')}</dd>
-          <dt className="text-muted">Time window</dt>
-          <dd className="text-ink">Set by the workflow: 14 days before each cut to up to 30 days after it (UTC days). The refresh dates above do not apply.</dd>
-          <dt className="text-muted">Side effects</dt>
-          <dd className="text-ink">Read-only investigation. This launch path posts nothing to Slack, creates no Jira ticket and changes no setting. Each launch uses one n8n execution from the project's weekly quota.</dd>
-        </dl>
-      </Modal>
     </div>
   );
 };
 
 /**
- * Shown until someone is signed in: the same two actions, disabled, with what the server still needs.
- * Only variable names come from the server; values never do. n8n-side setup cannot be checked from here and is listed as a reminder.
+ * Shown until someone is signed in: Refresh, disabled, with what the server still needs. Only variable names come from
+ * the server; values never do.
  */
 const LockedBar: React.FC<{ session: SessionInfo | null; signInForm: React.ReactNode; error: string | null }> = ({ session, signInForm, error }) => {
   const setup = session?.setup;
@@ -197,17 +168,7 @@ const LockedBar: React.FC<{ session: SessionInfo | null; signInForm: React.React
     {
       label: 'Sign-in',
       ok: authOk,
-      detail: authOk ? 'Configured. Sign in to launch or refresh.' : 'Set ' + (setup?.auth ?? session?.missing ?? []).join(', ') + ' (App Hosting secrets pitt-users-json, pitt-session-secret).',
-    },
-    {
-      label: 'n8n launch',
-      ok: !!setup && setup.launch.length === 0,
-      detail: setup && setup.launch.length === 0 ? 'Server side configured.' : 'Set ' + (setup?.launch ?? ['the n8n launch settings']).join(', ') + '.',
-    },
-    {
-      label: 'n8n dev workflow',
-      ok: false,
-      detail: 'Check in n8n: Header Auth credentials on W1, W5 and W5p, the callback URL on W5 and W5p, and "Listen for test event" on W1 before each test launch.',
+      detail: authOk ? 'Configured. Sign in to see results and refresh.' : 'Set ' + (setup?.auth ?? session?.missing ?? []).join(', ') + ' (App Hosting secrets pitt-users-json, pitt-session-secret).',
     },
     {
       label: 'Snowflake refresh',
@@ -229,14 +190,12 @@ const LockedBar: React.FC<{ session: SessionInfo | null; signInForm: React.React
           <Button size="sm" variant="secondary" disabled title={why}>
             <RefreshCw className="h-4 w-4" /> Refresh Snowflake data
           </Button>
-          <Button size="sm" variant="primary" disabled title={why}>
-            <Play className="h-4 w-4" /> Launch investigation
-          </Button>
         </div>
       </div>
+      <N8nNote />
       <details className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-xs" open={!authOk}>
         <summary className="cursor-pointer font-medium text-ink-2">
-          Launch and Refresh are disabled: {why} Setup checklist ({items.filter((i) => i.ok).length}/{items.length} done)
+          Refresh is disabled: {why} Setup checklist ({items.filter((i) => i.ok).length}/{items.length} done)
         </summary>
         <ul className="mt-2 space-y-1">
           {items.map((i) => (

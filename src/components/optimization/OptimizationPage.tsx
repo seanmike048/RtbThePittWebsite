@@ -28,7 +28,7 @@ export const OptimizationPage: React.FC<{ ops: Ops }> = ({ ops }) => {
     return (
       <Card className="p-6">
         <SectionHeading eyebrow="Optimization" title="Recommendations and approved changes" icon={<SlidersHorizontal className="h-5 w-5" />} />
-        <EmptyNote className="mt-4">This page has no Pitt backend, so there are no recommendations to review here. They come from investigations launched on the hosted app.</EmptyNote>
+        <EmptyNote className="mt-4">This page has no Pitt backend, so there are no recommendations to review here. They come from n8n runs pushed to the hosted app.</EmptyNote>
       </Card>
     );
   if (!ops.session?.user) return <EmptyNote>Sign in (top bar) to see recommendations.</EmptyNote>;
@@ -55,7 +55,7 @@ export const OptimizationPage: React.FC<{ ops: Ops }> = ({ ops }) => {
           eyebrow="Optimization"
           title="Recommendations and approved changes"
           icon={<SlidersHorizontal className="h-5 w-5" />}
-          description="Each row comes from a launched investigation. Contacting a partner, checking a setup or asking a publisher stays a task with an owner. A change runs only after you review its exact diff and answer Yes."
+          description="Each row comes from an n8n investigation run. Contacting a partner, checking a setup or asking a publisher stays a task with an owner. A change runs only after you review its exact diff and answer Yes."
           aside={
             <Badge tone={writes?.writes_enabled ? 'danger' : 'neutral'} dot>
               {writes?.kill_switch ? 'External writes off (kill switch)' : writes?.writes_enabled ? 'External writes enabled' : 'External writes disabled'}
@@ -74,7 +74,7 @@ export const OptimizationPage: React.FC<{ ops: Ops }> = ({ ops }) => {
           {!recs ? (
             <p className="text-sm text-muted">Loading…</p>
           ) : !recs.length ? (
-            <EmptyNote>No recommendation yet. Launch an investigation; its open items appear here when the result arrives.</EmptyNote>
+            <EmptyNote>No recommendation yet. Run The Pitt main workflow in n8n (from M1); its open items appear here when the result arrives.</EmptyNote>
           ) : (
             <TableShell minWidth="960px">
               <thead>

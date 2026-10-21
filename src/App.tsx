@@ -1,7 +1,7 @@
 /**
  * The Pitt — Equativ TechOps
  * Approved investigations of DSP disconnections, with Snowflake context, the Amazon watchlist, the CFO impact model,
- * site launches of the investigation workflow and the Optimization review.
+ * investigation results pushed by n8n and the Optimization review.
  */
 import { useState } from 'react';
 import type { NetworkContext } from './lib/investigations/context.ts';
