@@ -310,5 +310,14 @@
   "placeholders": {
     "callback_url": "https://REPLACE-WITH-APPROVED-PITT-HOST/api/investigation-events"
   },
-  "rollback": "Delete nodes W1, W2, W2p, W5p, W3, W4, W4e, W5 and their connections; the workflow is then identical to the base revision."
+  "rollback": "Delete nodes W1, W2, W2p, W5p, W3, W4, W4e, W5 and their connections; the workflow is then identical to the base revision.",
+  "applied": {
+    "environment": "n8n dev",
+    "at": "2026-10-21T15:35:23.460Z",
+    "approved_by": "user, in chat",
+    "resulting_versionId": "9aafd6be-b920-42ce-98b5-746368469e30",
+    "versionCounter": 5,
+    "active": false,
+    "notes": "Applied without credential references (none exist yet): select the Header Auth credentials on W1, W5 and W5p in n8n. Node ids and the W1 webhookId were assigned by n8n."
+  }
 }

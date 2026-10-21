@@ -22,7 +22,7 @@ This follows the internal process in "Deploying Workflows to Production" (2026-1
 ## n8n (dev first)
 
 1. Record the base revision. Expected: `FRYm3m0UAffFyJLq` version `cf043f3d-cc9d-49fb-ac35-1f80e66d8fd9`. If it has changed, regenerate the change set from the new export and review the diff.
-2. Get approval to edit dev. Add W1–W5 from `n8n/FRYm3m0UAffFyJLq.webhook-change-set.json`, leaving M1–M11 unchanged.
+2. Get approval to edit dev. Add W1–W5 from `n8n/FRYm3m0UAffFyJLq.webhook-change-set.json`, leaving M1–M11 unchanged. **Done on 2026-10-21** (revision `9aafd6be-b920-42ce-98b5-746368469e30`, unpublished).
 3. Create two Header Auth credentials in n8n: "The Pitt - launch webhook key" for W1 and "The Pitt - callback service key" for W5/W5p, with header `x-pitt-callback-key`. Values go only in the n8n credential store and the site's secret manager.
 4. Replace the placeholder callback URL in W5 and W5p with the approved site URL for this environment. Confirm that n8n can reach it.
 5. Test with the Webhook **Test URL** in dev and one Amazon network. Check that one `running` and one `result` event arrive, and that nothing is posted to Slack.
