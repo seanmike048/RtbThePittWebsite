@@ -1,3 +1,4 @@
+import { StateNote } from '../ui.tsx';
 import React, { useMemo } from 'react';
 import { CHECK_LABEL, networkSummary, readiness, type Row } from '../../lib/pitt/engine.ts';
 import type { Dataset } from '../../lib/pitt/types.ts';
@@ -13,10 +14,10 @@ export const PublisherView: React.FC<{ ds: Dataset; rows: Row[]; networkId: numb
   const id = networkId ?? nets[0]?.[0] ?? null;
   const s = useMemo(() => (id == null ? null : networkSummary(ds, id)), [ds, id]);
   const ready = useMemo(() => (id == null ? [] : readiness(ds, id)), [ds, id]);
-  if (id == null || !s) return <p className="text-sm italic text-muted">No network in the current filters.</p>;
+  if (id == null || !s) return <StateNote kind="empty" title="No network in the current filters" />;
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-info/40 bg-info-soft px-3 py-2 text-xs text-ink-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-info/40 bg-info-soft px-3 py-2 text-xs text-ink-2">
         <span>Publisher view: one network at a time. Owners, other publishers, Equativ revenue and AI internals are hidden.</span>
         <label className="flex items-center gap-1.5">
           Preview as

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, BookOpen, FileText, FlaskConical, LayoutGrid } from 'lucide-react';
-import { cx } from '../ui.tsx';
+import { cx, fieldClass, StateNote, table as tbl } from '../ui.tsx';
 import { DATASETS } from '../../lib/pitt/data.ts';
 import {
   AGE_BUCKETS, NO_FILTERS, PRIORITY_RULES, defaultFilters, applyFilters, bucketTotals, cohortSummary, cohortVariance, deriveRows, filterOptions, fmtCompact, fmtMoney, fmtNum, kpis, priorFilters,
@@ -18,7 +18,7 @@ import { PublisherView } from './PublisherView.tsx';
 import { UseYourData } from './UseYourData.tsx';
 
 type View = { page: 'room' } | { page: 'network'; networkId: number } | { page: 'data' };
-const field = 'h-8 rounded-md border border-line bg-surface-2 px-2 text-xs text-ink focus:border-accent focus:outline-none';
+const field = fieldClass('sm');
 
 /** The Disconnection Room: one cohort (filters first), every section derived from engine.ts. */
 export const RoomPage: React.FC = () => {
@@ -116,7 +116,7 @@ export const RoomPage: React.FC = () => {
         </div>
 
         {/* Filters: applied before every derivation. Hidden in the publisher view, which shows one network only. */}
-        <div role="group" aria-label="Filters" hidden={mode === 'publisher'} className="flex flex-wrap items-end gap-2 rounded-xl border border-line bg-surface p-3">
+        <div role="group" aria-label="Filters" hidden={mode === 'publisher'} className="flex flex-wrap items-end gap-2 border-y border-line py-3">
           <Sel label="Business unit" value={filters.businessUnit ?? ''} onChange={(v) => set({ businessUnit: v || null })} options={opts.businessUnits.map((b) => [b, b])} />
           <Sel label="Amazon partner" value={filters.partnerId?.toString() ?? ''} onChange={(v) => set({ partnerId: v ? Number(v) : null })} options={opts.partners.map((p) => [String(p.id), p.id + ' · ' + p.name.replace('Amazon DSP ', '')])} />
           <Sel label="Region" value={filters.region ?? ''} onChange={(v) => set({ region: v || null })} options={opts.regions.map((r) => [r, r])} />
@@ -150,11 +150,11 @@ export const RoomPage: React.FC = () => {
       ) : (
         <>
           {!ds.synthetic && <RunStrip />}
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+          <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line md:grid-cols-5" aria-label="Key figures">
             {k.map((x) => (
               <KpiCard key={x.id} k={x} symbol={sym} hasPrior={!!prior} />
             ))}
-          </div>
+          </dl>
           <p className="text-[11px] text-muted">{ds.currency.note}</p>
 
           <Panel
@@ -191,22 +191,23 @@ export const RoomPage: React.FC = () => {
               </div>
             }
           >
-            <div className="mb-3 grid grid-cols-5 gap-1.5" aria-label="Revenue at risk by age bucket">
+            <dl className="mb-3 flex flex-wrap gap-x-6 gap-y-2 border-b border-divider pb-3" aria-label="Revenue at risk by age bucket">
               {buckets.map((b) => (
-                <div key={b.id} className="rounded-lg border border-line bg-surface-2 px-2 py-1.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{b.label} days</p>
-                  <p className="num text-sm font-semibold text-ink">{fmtMoney(b.value, sym)}</p>
-                  <p className="num text-[10px] text-muted">{b.count} seat(s)</p>
+                <div key={b.id}>
+                  <dt className="text-xs text-muted">{b.label === 'Current' ? 'Cut today' : b.label + ' days'}</dt>
+                  <dd className="num text-sm text-ink">
+                    <span className="font-semibold">{b.count ? fmtMoney(b.value, sym) : '—'}</span> <span className="text-xs text-muted">· {b.count} seat{b.count === 1 ? '' : 's'}</span>
+                  </dd>
                 </div>
               ))}
-            </div>
+            </dl>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[880px] text-left text-xs">
                 <caption className="sr-only">Disconnection risk table; select a row to open the network page.</caption>
                 <thead>
-                  <tr className="text-[10px] uppercase tracking-wider text-muted">
+                  <tr className={tbl.head}>
                     {['Publisher', 'Amazon partner', 'Bucket', 'Days', 'Revenue at risk', 'Priority', 'Risk', 'Owner'].map((h, i) => (
-                      <th key={h} scope="col" className={cx('border-b border-line px-2 py-2 font-semibold', [3, 4].includes(i) && 'text-right')}>
+                      <th key={h} scope="col" className={cx('border-b border-line px-2 py-2 font-medium', [3, 4].includes(i) && 'text-right')}>
                         {h}
                       </th>
                     ))}
@@ -246,8 +247,8 @@ export const RoomPage: React.FC = () => {
                   ))}
                   {!table.length && (
                     <tr>
-                      <td colSpan={8} className="px-2 py-4 text-center italic text-muted">
-                        No seat matches the filters.
+                      <td colSpan={8} className="px-2 py-3">
+                        <StateNote kind="empty" compact title="No seat matches the filters" action={<button onClick={() => setFilters(NO_FILTERS)} className="text-xs text-accent-ink hover:underline cursor-pointer">Clear filters</button>} />
                       </td>
                     </tr>
                   )}
@@ -297,18 +298,18 @@ const KpiCard: React.FC<{ k: Kpi; symbol: string; hasPrior: boolean }> = ({ k, s
   // More disconnections, revenue at risk or failing checks is bad; more reconnected or saved is good.
   const good = k.id === 'reconnected' || k.id === 'saved' ? up : !up;
   return (
-    <div className="rounded-xl border border-line bg-surface p-3">
-      <p className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-muted">
+    <div className="bg-surface px-4 py-3">
+      <dt className="flex items-center gap-1 text-xs text-muted">
         {k.label}
         <Tip label={'Definition of ' + k.label}>{k.definition}</Tip>
-      </p>
-      <p className="num mt-1 text-2xl font-bold text-ink" aria-label={k.label + ': ' + (k.value == null ? 'No data' : k.kind === 'money' ? fmtMoney(k.value, symbol) : fmtNum(k.value))}>
+      </dt>
+      <dd className="num mt-1 text-xl font-semibold text-ink" aria-label={k.label + ': ' + (k.value == null ? 'No data' : k.kind === 'money' ? fmtMoney(k.value, symbol) : fmtNum(k.value))}>
         {shown}
-      </p>
-      {k.sub && <p className="text-[11px] text-muted">{k.sub}</p>}
-      <p className="num mt-1 flex items-center gap-1 text-[11px]">
+      </dd>
+      {k.sub && <dd className="text-[11px] text-muted">{k.sub}</dd>}
+      <dd className="num mt-1 flex items-center gap-1 text-[11px]">
         {!hasPrior || k.delta == null ? (
-          <span className="text-faint">vs prior period: No data</span>
+          <span className="text-muted">No prior period</span>
         ) : k.delta === 0 ? (
           <span className="text-muted">= prior period</span>
         ) : (
@@ -317,7 +318,7 @@ const KpiCard: React.FC<{ k: Kpi; symbol: string; hasPrior: boolean }> = ({ k, s
             {k.kind === 'money' ? fmtMoney(Math.abs(k.delta), symbol) : fmtCompact(Math.abs(k.delta))} vs prior period
           </span>
         )}
-      </p>
+      </dd>
     </div>
   );
 };

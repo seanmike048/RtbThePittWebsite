@@ -4,7 +4,8 @@ import { caseFinancials } from '../../lib/cases/financials.ts';
 import { fmtUsd, showUsd } from '../../lib/cases/fx.ts';
 import { BLANK, ILLUSTRATIVE, project, validate, type Scenario } from '../../lib/cases/projection.ts';
 import type { CaseRecord } from '../../lib/cases/types.ts';
-import { Button } from '../ui.tsx';
+import { axisTick, chartTooltip, theme } from '../../lib/theme.ts';
+import { Button, fieldClass, StateNote } from '../ui.tsx';
 import { PageHeader, Prov, RequirePublisher, Section } from './bits.tsx';
 import { useScenario } from './useScenario.ts';
 
@@ -50,7 +51,8 @@ const Projection: React.FC<{ c: CaseRecord }> = ({ c }) => {
                   max={x.unit === '%' ? 100 : undefined}
                   value={s[x.k] ?? ''}
                   onChange={(e) => set(x.k, e.target.value)}
-                  className="num mt-1 h-9 w-full rounded-md border border-line bg-surface px-2 text-sm text-ink focus:border-accent focus:outline-none"
+                  aria-invalid={missing.some((m) => m.startsWith(x.label)) && s.origin !== 'blank' ? true : undefined}
+                  className={fieldClass() + ' num mt-1 w-full'}
                 />
                 <span className="text-[11px] text-muted">{x.help}</span>
               </label>
@@ -69,11 +71,10 @@ const Projection: React.FC<{ c: CaseRecord }> = ({ c }) => {
 
         <Section title="Projected spend back" aside={pr.kind === 'ok' ? <Prov p={pr.illustrative ? 'Illustrative' : 'Projected'} /> : <Prov p="Unavailable" />}>
           {pr.kind !== 'ok' ? (
-            <div className="rounded-lg border border-dashed border-line-strong p-4 text-sm text-ink-2">
-              <p className="font-medium text-ink">No projection yet</p>
-              <p className="mt-1 text-muted">{pr.reason}</p>
-              {missing.length > 0 && <p className="mt-1 text-muted">Missing: {missing.join(', ')}.</p>}
-            </div>
+            <StateNote kind={pr.reason === 'Scenario incomplete.' ? 'empty' : 'unavailable'} title="No projection yet">
+              {pr.reason}
+              {missing.length > 0 && <> Missing: {missing.join(', ')}.</>}
+            </StateNote>
           ) : (
             <>
               <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -93,18 +94,17 @@ const Projection: React.FC<{ c: CaseRecord }> = ({ c }) => {
               <div className="mt-4 h-64" role="img" aria-label={`Cumulative expected spend back over 90 days: ${fmtUsd(pr.points[pr.points.length - 1].expected)}`}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={pr.points} margin={{ top: 8, right: 12, bottom: 4, left: 4 }}>
-                    <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
-                    <XAxis dataKey="day" tick={{ fill: 'var(--muted)', fontSize: 11 }} tickLine={false} axisLine={{ stroke: 'var(--line)' }} ticks={[1, 30, 60, 90]} tickFormatter={(d) => `Day ${d}`} />
-                    <YAxis tick={{ fill: 'var(--muted)', fontSize: 11 }} tickLine={false} axisLine={false} width={64} tickFormatter={(v) => fmtUsd(v as number)} />
+                    <CartesianGrid stroke={theme.chart.grid} vertical={false} />
+                    <XAxis dataKey="day" tick={axisTick} tickLine={false} axisLine={{ stroke: theme.chart.axisLine }} ticks={[1, 30, 60, 90]} tickFormatter={(d) => `Day ${d}`} />
+                    <YAxis tick={axisTick} tickLine={false} axisLine={false} width={64} tickFormatter={(v) => fmtUsd(v as number)} />
                     <Tooltip
-                      cursor={{ stroke: 'var(--line-strong)' }}
-                      contentStyle={{ background: 'var(--surface)', border: '1px solid var(--line-strong)', borderRadius: 6, fontSize: 12, color: 'var(--ink)' }}
-                      labelStyle={{ color: 'var(--muted)' }}
+                      {...chartTooltip}
+                      cursor={{ stroke: chartTooltip.cursor.stroke }}
                       labelFormatter={(d) => `Day ${d}`}
                       formatter={(v, name) => [fmtUsd(v as number), name === 'expected' ? 'Expected (× probability)' : 'If the fix works']}
                     />
-                    <Area type="monotone" dataKey="ifSuccessful" stroke="var(--chart-5)" fill="var(--chart-5)" fillOpacity={0.12} strokeDasharray="4 3" isAnimationActive={false} />
-                    <Area type="monotone" dataKey="expected" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.18} isAnimationActive={false} />
+                    <Area type="monotone" dataKey="ifSuccessful" stroke={theme.chart.measure} fill={theme.chart.measure} fillOpacity={0.1} strokeDasharray="4 3" isAnimationActive={false} />
+                    <Area type="monotone" dataKey="expected" stroke={theme.chart.series[0]} fill={theme.chart.series[0]} fillOpacity={0.18} isAnimationActive={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>

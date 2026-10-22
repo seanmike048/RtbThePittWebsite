@@ -1,6 +1,6 @@
 import React from 'react';
 import type { CaseRecord } from '../../lib/cases/types.ts';
-import { cx } from '../ui.tsx';
+import { cx, StateNote, table } from '../ui.tsx';
 
 /**
  * Action plan & owners, exactly as the source assigns them: team from the "[Team]" tag, people only where the source
@@ -21,27 +21,27 @@ export const ActionPlan: React.FC<{ c: CaseRecord }> = ({ c }) => (
         </div>
       ))}
     </dl>
-    <div className="overflow-x-auto rounded-lg border border-line">
-      <table className="w-full min-w-[760px] text-left text-sm">
+    <div className={table.wrap}>
+      <table className={table.table + ' min-w-[760px]'}>
         <caption className="sr-only">Action plan and owners for {c.publisher}</caption>
-        <thead className="bg-surface-2 text-xs text-muted">
+        <thead className={table.head}>
           <tr>
             {['Team', 'Next step', 'Named in source', 'Status', 'Publisher contact', 'Ticket'].map((h) => (
-              <th key={h} scope="col" className="px-3 py-2 font-medium">
+              <th key={h} scope="col" className={table.th}>
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-line align-top">
+        <tbody className={table.body}>
           {c.actions.map((a) => (
-            <tr key={a.id}>
+            <tr key={a.id} className={table.row}>
               <td className="whitespace-nowrap px-3 py-2.5 font-medium text-ink">{a.team}</td>
               <td className="px-3 py-2.5">
                 <p className="text-ink">{a.nextStep ?? 'No next step stated'}</p>
                 <p className="mt-0.5 text-xs text-muted">{a.observation}</p>
               </td>
-              <td className="px-3 py-2.5 text-xs text-ink-2">{a.contacts.length ? a.contacts.join(', ') : <span className="text-faint">No one named</span>}</td>
+              <td className="px-3 py-2.5 text-xs text-ink-2">{a.contacts.length ? a.contacts.join(', ') : <span className="text-muted">No one named</span>}</td>
               <td className="px-3 py-2.5 text-xs text-ink-2">{a.status}</td>
               <td className={cx('px-3 py-2.5 text-xs', a.publisherContact === 'Held until TechOps confirms' ? 'text-warn-ink' : 'text-muted')}>{a.publisherContact}</td>
               <td className="num px-3 py-2.5 text-xs text-ink-2">{a.tickets.join(', ') || '—'}</td>
@@ -49,8 +49,8 @@ export const ActionPlan: React.FC<{ c: CaseRecord }> = ({ c }) => (
           ))}
           {!c.actions.length && (
             <tr>
-              <td colSpan={6} className="px-3 py-4 text-sm text-muted">
-                The source lists no open item for this publisher.
+              <td colSpan={6} className="p-2">
+                <StateNote kind="empty" compact title="No open item in the source for this publisher" />
               </td>
             </tr>
           )}

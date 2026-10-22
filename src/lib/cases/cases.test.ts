@@ -289,3 +289,58 @@ test('No RPMBr or Confidence wording in mounted UI copy', () => {
     assert.doesNotMatch(t, /RPMB?r\b|RPMBR|RPMA\b|[Cc]onfidence/, f);
   }
 });
+
+/* ------------------------------------------------------------------ design system contract */
+
+const css = readFileSync('src/index.css', 'utf8');
+const tokens = (start: string) => {
+  const i = css.indexOf(start);
+  return Object.fromEntries([...css.slice(i, css.indexOf('}', i)).matchAll(/--([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})/g)].map((m) => [m[1], m[2]]));
+};
+const lum = (h: string) => {
+  const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+};
+const contrast = (a: string, b: string) => {
+  const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m);
+  return (x + 0.05) / (y + 0.05);
+};
+
+test('Semantic roles exist in every theme block: focus, disabled, tooltip, raised surface, divider, on-accent', () => {
+  for (const start of [':root {', ':root:not([data-theme="light"])', ':root[data-theme="dark"]']) {
+    const t = tokens(start);
+    for (const k of ['focus', 'disabled', 'disabled-ink', 'disabled-line', 'tooltip', 'tooltip-ink', 'tooltip-line', 'surface-raised', 'divider', 'on-accent', 'chart-grid'])
+      assert.ok(t[k], `${start} misses --${k}`);
+  }
+});
+
+test('Text and UI contrast meets WCAG targets in light and dark', () => {
+  const pairs: [string, string, number][] = [
+    ['ink', 'surface', 7], ['ink-2', 'surface', 4.5], ['muted', 'surface', 4.5], ['muted', 'surface-2', 4.5], ['muted', 'canvas', 4.5],
+    ['faint', 'surface', 3], ['on-accent', 'accent', 4.5], ['accent-ink', 'accent-soft', 4.5], ['tooltip-ink', 'tooltip', 4.5],
+    ['disabled-ink', 'disabled', 4.5], ['focus', 'canvas', 3], ['danger-ink', 'danger-soft', 4.5], ['warn-ink', 'warn-soft', 4.5],
+    ['ok-ink', 'ok-soft', 4.5], ['info', 'info-soft', 4.5], ['chart-removed', 'surface', 3], ['chart-live', 'surface', 3],
+  ];
+  for (const start of [':root {', ':root:not([data-theme="light"])', ':root[data-theme="dark"]']) {
+    const t = tokens(start);
+    for (const [fg, bg, min] of pairs) assert.ok(contrast(t[fg], t[bg]) >= min, `${start} ${fg} on ${bg}: ${contrast(t[fg], t[bg]).toFixed(2)} < ${min}`);
+  }
+});
+
+test('The theme module only references CSS variables, and charts use the shared tooltip', () => {
+  const t = readFileSync('src/lib/theme.ts', 'utf8');
+  assert.doesNotMatch(t, /#[0-9a-fA-F]{3,8}\b|rgb\(|hsl\(/);
+  for (const f of MOUNTED.filter((x) => x.endsWith('.tsx'))) {
+    const s = readFileSync(f, 'utf8');
+    if (s.includes("from 'recharts'")) assert.match(s, /chartTooltip/, f + ' builds its own chart tooltip');
+    assert.doesNotMatch(s, /contentStyle=\{\{/, f);
+  }
+});
+
+test('Empty, loading and error states use the shared component; no shouting eyebrows', () => {
+  for (const f of MOUNTED.filter((x) => x.endsWith('.tsx') && !x.endsWith('ui.tsx'))) {
+    const s = readFileSync(f, 'utf8');
+    assert.doesNotMatch(s, /italic text-muted|border-dashed border-line-strong p-4/, f);
+    assert.doesNotMatch(s, /uppercase tracking/, f);
+  }
+});

@@ -8,11 +8,11 @@ export const RunStrip: React.FC<{ compact?: boolean }> = ({ compact }) => {
   const { run, go } = useCases();
   const c = run.context;
   return (
-    <section aria-label="Run context" className="rounded-xl border border-line bg-surface px-4 py-3">
+    <section aria-label="Run context" className="rounded-lg border border-line bg-surface px-4 py-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
         <p className="text-xs font-medium text-muted">
           Run context · {run.label}
-          <span className="text-faint"> · applies to the whole run, not to one publisher</span>
+          <span> · applies to the whole run, not to one publisher</span>
         </p>
         <button onClick={() => go('investigations')} className="text-xs text-accent-ink hover:underline cursor-pointer">
           {run.cases.length} publisher case{run.cases.length === 1 ? '' : 's'} →

@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowLeft, FileText, Lock, ShieldAlert } from 'lucide-re
 import { checkGrid, fmtCompact, fmtMoney, fmtPct, investigation, networkSummary, rankedHypotheses, readiness, trafficContext } from '../../lib/pitt/engine.ts';
 import type { Check, Dataset } from '../../lib/pitt/types.ts';
 import { useCases } from '../cases/CasesContext.tsx';
+import { StateNote } from '../ui.tsx';
 import { Chip, Panel, PresenceChip, ResultChip } from './bits.tsx';
 
 const JIRA = /^[A-Z][A-Z0-9]+-\d+$/;
@@ -28,7 +29,7 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
       </button>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-accent">Network #{networkId}</p>
+          <p className="text-xs text-muted">Network #{networkId}</p>
           <h2 className="text-xl font-bold text-ink">{s.publisher}</h2>
           {inv?.meta && <p className="text-xs text-ink-2">{inv.meta}</p>}
           <p className="text-xs text-muted">
@@ -36,7 +37,7 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
           </p>
         </div>
         <div className="text-right">
-          <p className="text-[11px] uppercase tracking-wider text-muted">Revenue at risk</p>
+          <p className="text-xs text-muted">Revenue at risk</p>
           <p className="num text-2xl font-bold text-ink">{fmtMoney(s.atRisk, sym)}</p>
           <Chip tone={s.disconnected ? 'danger' : 'ok'}>{s.disconnected ? 'Still disconnected' : 'Reconnected'}</Chip>
           {caseRec && (
@@ -52,10 +53,10 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
           <table className="w-full text-left text-xs">
             <caption className="sr-only">Checks before and after the cut</caption>
             <thead>
-              <tr className="text-[10px] uppercase tracking-wider text-muted">
-                <th scope="col" className="py-1.5 font-semibold">Check</th>
-                <th scope="col" className="py-1.5 font-semibold">Before</th>
-                <th scope="col" className="py-1.5 font-semibold">After</th>
+              <tr className="text-xs text-muted">
+                <th scope="col" className="py-1.5 font-medium">Check</th>
+                <th scope="col" className="py-1.5 font-medium">Before</th>
+                <th scope="col" className="py-1.5 font-medium">After</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -92,14 +93,14 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
             </p>
           )}
           {!traffic.metrics.length ? (
-            <p className="text-sm italic text-muted">No data: no traffic metric for this network.</p>
+            <StateNote kind="unavailable" compact title="No traffic metric for this network" />
           ) : (
             <table className="w-full text-left text-xs">
               <caption className="sr-only">Traffic metrics before and after</caption>
               <thead>
-                <tr className="text-[10px] uppercase tracking-wider text-muted">
+                <tr className="text-xs text-muted">
                   {['Metric', 'Before', 'After', 'Change', 'Period · source'].map((h, i) => (
-                    <th key={h} scope="col" className={'py-1.5 pr-2 font-semibold ' + (i > 0 && i < 4 ? 'text-right' : '')}>
+                    <th key={h} scope="col" className={'py-1.5 pr-2 font-medium ' + (i > 0 && i < 4 ? 'text-right' : '')}>
                       {h}
                     </th>
                   ))}
@@ -128,7 +129,7 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
 
       <Panel id="ai" eyebrow="Investigation" title="Leading hypotheses" description="Hypotheses as the source states them, in source order. Not confirmed, not scored.">
         {!inv ? (
-          <p className="text-sm italic text-muted">No data: no AI investigation for this network.</p>
+          <StateNote kind="unavailable" compact title="No investigation for this network" />
         ) : (
           <div className="space-y-3">
             {caseRec && (
@@ -192,7 +193,7 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
           ) : caseRec ? (
             <p className="text-sm text-ink-2">The draft for this case is in its case file: Draft only, no Jira ticket created.</p>
           ) : (
-            <p className="text-sm italic text-muted">No data: no draft for this network.</p>
+            <StateNote kind="empty" compact title="No draft for this network" />
           )}
           <p className="mt-2 text-[11px] text-muted">Nothing can be sent from this page.</p>
         </Panel>
@@ -216,7 +217,7 @@ export const ReadinessPanel: React.FC<{ groups: ReturnType<typeof readiness> }> 
     <div className="space-y-3">
       {groups.map((g) => (
         <div key={g.id}>
-          <p className="mb-1 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+          <p className="mb-1 flex flex-wrap items-center gap-1.5 text-xs font-medium text-ink-2">
             {g.label} {g.note && <Chip tone="info">{g.note}</Chip>}
           </p>
           <ul className="grid gap-1 sm:grid-cols-2">

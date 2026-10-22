@@ -73,11 +73,11 @@ export const RevenueVariance: React.FC<{ items: VarianceItem[]; additive: boolea
               ) : (
                 <p className="text-xs text-muted">{m.reason}</p>
               )}
-              <p className="mt-0.5 text-[11px] text-faint">{m.explain}</p>
+              <p className="mt-0.5 text-[11px] text-muted">{m.explain}</p>
             </dd>
             <dd className="text-right">
               <span className="num block text-sm font-semibold text-ink">{m.value == null ? '—' : fmt(m.value)}</span>
-              <span className={cx('text-[11px]', m.state === 'Unavailable' ? 'text-faint' : m.state === 'Illustrative' ? 'text-warn-ink' : 'text-muted')}>{m.state}</span>
+              <span className={cx('text-[11px]', m.state === 'Illustrative' ? 'text-warn-ink' : 'text-muted')}>{m.state}</span>
             </dd>
           </div>
         ))}

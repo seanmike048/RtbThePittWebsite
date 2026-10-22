@@ -1,14 +1,20 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { sankey as d3sankey, sankeyLinkHorizontal, type SankeyGraph } from 'd3-sankey';
 import { SANKEY_COLUMNS, fmtMoney, type SankeyLink, type SankeyNode } from '../../lib/pitt/engine.ts';
+import { theme } from '../../lib/theme.ts';
+import { StateNote } from '../ui.tsx';
 import { ChartTable } from './bits.tsx';
 
 type N = SankeyNode & { x0?: number; x1?: number; y0?: number; y1?: number; index?: number };
 type L = { source: N; target: N; value: number; width?: number; y0?: number; y1?: number };
 
 // Theme tokens only (index.css), so the flow follows light and dark like every other chart.
-const COLUMN_COLORS = ['var(--chart-1)', 'var(--chart-3)', 'var(--chart-5)', 'var(--chart-2)', 'var(--chart-removed)'];
-const colorOf = (n: N) => (n.column === 4 ? (n.name === 'Reconnected' ? 'var(--ok)' : 'var(--chart-removed)') : n.column === 3 && n.name === 'No failing check' ? 'var(--faint)' : COLUMN_COLORS[n.column]);
+const { chart } = theme;
+const h = (n: N) => (n.y1 ?? 0) - (n.y0 ?? 0);
+/** Labels inside the chart stay short; the full name is in the focus line and the table. */
+const shortName = (name: string) => name.replace(/^Amazon DSP /, '').replace(/\s+·\s+(\d+)$/, ' · $1');
+const COLUMN_COLORS = [chart.series[0], chart.series[2], chart.series[4], chart.series[1], chart.removed];
+const colorOf = (n: N) => (n.column === 4 ? (n.name === 'Reconnected' ? chart.positive : chart.removed) : n.column === 3 && n.name === 'No failing check' ? chart.neutral : COLUMN_COLORS[n.column]);
 
 /**
  * Revenue at risk flow. Layout geometry comes from d3-sankey; every value and share comes from engine.sankey().
@@ -84,7 +90,7 @@ export const SankeyFlow: React.FC<{ nodes: SankeyNode[]; links: SankeyLink[]; sy
     if (candidates[0]) setFocus(candidates[0].id);
   };
 
-  if (!graph) return <p className="rounded-lg border border-dashed border-line-strong p-4 text-sm italic text-muted">No data: no seat in this cohort has a recorded spend to draw.</p>;
+  if (!graph) return <StateNote kind="empty" title="Nothing to draw">No seat in this cohort has a recorded spend.</StateNote>;
 
   return (
     <div>
@@ -102,7 +108,7 @@ export const SankeyFlow: React.FC<{ nodes: SankeyNode[]; links: SankeyLink[]; sy
             {SANKEY_COLUMNS.map((c, i) => {
               const x = byColumn[i][0]?.x0;
               return x == null ? null : (
-                <text key={c} x={i === 4 ? x + 12 : x} y={11} textAnchor={i === 4 ? 'end' : 'start'} className="fill-[var(--muted)] text-[10px] font-semibold uppercase tracking-wider">
+                <text key={c} x={i === 4 ? x + 12 : x} y={11} textAnchor={i === 4 ? 'end' : 'start'} className="fill-[var(--muted)] text-[11px] font-medium">
                   {c}
                 </text>
               );
@@ -133,9 +139,22 @@ export const SankeyFlow: React.FC<{ nodes: SankeyNode[]; links: SankeyLink[]; sy
               return (
                 <g key={n.id} opacity={on ? 1 : 0.25} onClick={() => setFocus(n.id === focus ? null : n.id)} className="cursor-pointer">
                   <rect x={n.x0} y={n.y0} width={(n.x1 ?? 0) - (n.x0 ?? 0)} height={Math.max(1, (n.y1 ?? 0) - (n.y0 ?? 0))} rx={2} fill={colorOf(n)} stroke={n.id === focus ? 'var(--ink)' : 'none'} strokeWidth={2} />
-                  {((n.y1 ?? 0) - (n.y0 ?? 0) >= (n.column === 2 ? 15 : 11) || n.id === focus) && (
-                    <text x={left ? (n.x1 ?? 0) + 5 : (n.x0 ?? 0) - 5} y={((n.y0 ?? 0) + (n.y1 ?? 0)) / 2} dy="0.35em" textAnchor={left ? 'start' : 'end'} className="fill-[var(--ink-2)] text-[10.5px]">
-                      {n.name} · <tspan className="num fill-[var(--ink)] font-semibold">{fmtMoney(n.value, symbol)}</tspan> <tspan className="fill-[var(--muted)]">{n.share.toFixed(1)}%</tspan>
+                  {(h(n) >= 12 || n.id === focus) && (
+                    // Haloed with the surface colour so the label stays readable over the link bands; value on its own line.
+                    <text
+                      x={left ? (n.x1 ?? 0) + 6 : (n.x0 ?? 0) - 6}
+                      y={((n.y0 ?? 0) + (n.y1 ?? 0)) / 2}
+                      dy={h(n) >= 28 ? '-0.2em' : '0.35em'}
+                      textAnchor={left ? 'start' : 'end'}
+                      className="fill-[var(--ink-2)] text-[11px]"
+                      style={{ paintOrder: 'stroke', stroke: 'var(--surface)', strokeWidth: 4, strokeLinejoin: 'round' }}
+                    >
+                      {shortName(n.name)}
+                      {h(n) >= 28 && (
+                        <tspan x={left ? (n.x1 ?? 0) + 6 : (n.x0 ?? 0) - 6} dy="1.25em" className="num fill-[var(--ink)] font-semibold">
+                          {fmtMoney(n.value, symbol)}
+                        </tspan>
+                      )}
                     </text>
                   )}
                 </g>
@@ -153,7 +172,7 @@ export const SankeyFlow: React.FC<{ nodes: SankeyNode[]; links: SankeyLink[]; sy
           <span className="num">{current.share.toFixed(1)}%</span> of the drawn flow. Arrows to move, Escape to exit.
         </p>
       )}
-      {undrawn > 0 && <p className="mt-2 text-xs text-muted">{undrawn} seat row(s) have no recorded spend (No data) and cannot be drawn; they still count in the table.</p>}
+      {undrawn > 0 && <p className="mt-2 text-xs text-muted">{undrawn} cut seat(s) recorded $0 or no spend, so they have no width to draw; they still count in the table.</p>}
       <ChartTable
         caption="Revenue at risk flow, by node"
         head={['Column', 'Node', 'Weekly spend before the cut', 'Share of the flow']}

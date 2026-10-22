@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Copy, Info, X } from 'lucide-react';
+import { AlertTriangle, Check, CircleSlash, Copy, Inbox, Info, Loader2, X } from 'lucide-react';
 
 type Tone = 'neutral' | 'accent' | 'danger' | 'warn' | 'ok' | 'info';
 
@@ -92,24 +92,91 @@ export const SectionHeading: React.FC<{
   </div>
 );
 
+/**
+ * One button for every route. Variants: primary (one per view), secondary, ghost. Disabled uses the disabled tokens
+ * (legible, not faded); loading keeps the label and announces itself.
+ */
 export const Button: React.FC<
-  React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost'; size?: 'sm' | 'md' }
-> = ({ variant = 'secondary', size = 'md', className, children, ...rest }) => (
+  React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost'; size?: 'sm' | 'md'; loading?: boolean }
+> = ({ variant = 'secondary', size = 'md', loading, className, children, disabled, ...rest }) => (
   <button
     type="button"
     {...rest}
+    disabled={disabled || loading}
+    aria-busy={loading || undefined}
     className={cx(
-      'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer',
+      'inline-flex items-center justify-center gap-2 rounded-md border font-medium transition-colors cursor-pointer disabled:cursor-not-allowed',
+      'disabled:border-disabled-line disabled:bg-disabled disabled:text-disabled-ink disabled:shadow-none',
       size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-3.5 py-2 text-sm',
-      variant === 'primary' && 'bg-accent text-on-accent shadow-sm hover:opacity-90',
-      variant === 'secondary' && 'border border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink',
-      variant === 'ghost' && 'text-muted hover:bg-surface-2 hover:text-ink',
+      variant === 'primary' && 'border-transparent bg-accent text-on-accent shadow-sm hover:bg-accent-ink active:opacity-90',
+      variant === 'secondary' && 'border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink active:bg-surface-2',
+      variant === 'ghost' && 'border-transparent text-muted hover:bg-surface-2 hover:text-ink active:bg-surface-2 disabled:border-transparent disabled:bg-transparent',
       className,
     )}
   >
+    {loading && <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" aria-hidden />}
     {children}
   </button>
 );
+
+/** Text inputs and selects share one look and one set of states (focus, invalid, disabled). */
+export const fieldClass = (size: 'sm' | 'md' = 'md') =>
+  cx(
+    'rounded-md border border-line bg-surface text-ink placeholder:text-faint transition-colors',
+    'focus:border-focus focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus',
+    'aria-[invalid=true]:border-danger disabled:cursor-not-allowed disabled:border-disabled-line disabled:bg-disabled disabled:text-disabled-ink',
+    size === 'sm' ? 'h-8 px-2 text-xs' : 'h-9 px-2.5 text-sm',
+  );
+
+type StateKind = 'empty' | 'loading' | 'error' | 'unavailable';
+const STATE_ICON: Record<StateKind, React.ReactNode> = {
+  empty: <Inbox className="h-4 w-4" aria-hidden />,
+  loading: <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden />,
+  error: <AlertTriangle className="h-4 w-4" aria-hidden />,
+  unavailable: <CircleSlash className="h-4 w-4" aria-hidden />,
+};
+
+/**
+ * Shared empty, loading, error and unavailable states: same spacing, an icon and a title so the state never relies on
+ * colour alone, an optional action.
+ */
+export const StateNote: React.FC<{ kind: StateKind; title: string; children?: React.ReactNode; action?: React.ReactNode; className?: string; compact?: boolean }> = ({
+  kind,
+  title,
+  children,
+  action,
+  className,
+  compact,
+}) => (
+  <div
+    role={kind === 'error' ? 'alert' : kind === 'loading' ? 'status' : undefined}
+    className={cx(
+      'flex items-start gap-3 rounded-lg border text-sm',
+      compact ? 'px-3 py-2' : 'px-4 py-3',
+      kind === 'error' ? 'border-danger/30 bg-danger-soft text-danger-ink' : 'border-line bg-surface-2 text-ink-2',
+      className,
+    )}
+  >
+    <span className={cx('mt-0.5 shrink-0', kind === 'error' ? 'text-danger' : 'text-muted')}>{STATE_ICON[kind]}</span>
+    <div className="min-w-0 flex-1">
+      <p className={cx('font-medium', kind === 'error' ? 'text-danger-ink' : 'text-ink')}>{title}</p>
+      {children && <div className="mt-0.5 text-muted [overflow-wrap:anywhere]">{children}</div>}
+      {action && <div className="mt-2">{action}</div>}
+    </div>
+  </div>
+);
+
+/** One table look: quiet header, hairline rows, hover, tabular numbers. */
+export const table = {
+  wrap: 'overflow-x-auto rounded-lg border border-line bg-surface',
+  table: 'w-full text-left text-sm',
+  head: 'bg-surface-2 text-xs text-muted',
+  th: 'whitespace-nowrap px-3 py-2 font-medium',
+  body: 'divide-y divide-divider',
+  row: 'transition-colors hover:bg-surface-2/60',
+  td: 'px-3 py-2.5 align-top',
+  num: 'num text-right',
+} as const;
 
 export function useCopy(timeout = 1800) {
   const [copied, setCopied] = useState<string | null>(null);
@@ -190,14 +257,14 @@ export const Modal: React.FC<{
       <div className="absolute inset-0 bg-overlay backdrop-blur-sm" onClick={onClose} />
       <div
         className={cx(
-          'anim-fade-up relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border border-line bg-surface shadow-2xl sm:rounded-2xl',
+          'anim-fade-up relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-xl border border-line bg-surface-raised shadow-2xl sm:rounded-xl',
           size === 'lg' ? 'sm:max-w-3xl' : 'sm:max-w-2xl',
         )}
       >
         <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
           <div className="flex min-w-0 items-start gap-3">
             {icon && (
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
                 {icon}
               </div>
             )}
@@ -225,14 +292,11 @@ export const Modal: React.FC<{
   );
 };
 
+/** Kept for existing callers: an empty state without a title line. */
 export const EmptyNote: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
-  <div
-    className={cx(
-      'rounded-xl border border-dashed border-line-strong bg-surface-2 px-4 py-3 text-sm italic leading-relaxed text-muted',
-      className,
-    )}
-  >
-    {children}
+  <div className={cx('flex items-start gap-3 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm leading-relaxed text-muted', className)}>
+    <span className="mt-0.5 shrink-0">{STATE_ICON.empty}</span>
+    <div className="min-w-0">{children}</div>
   </div>
 );
 
@@ -247,7 +311,7 @@ export const SegmentedControl = <T extends string>({
   options: { value: NoInfer<T>; label: string }[];
   ariaLabel: string;
 }) => (
-  <div role="tablist" aria-label={ariaLabel} className="scrollbar-none inline-flex max-w-full overflow-x-auto rounded-xl border border-line bg-surface-2 p-1">
+  <div role="tablist" aria-label={ariaLabel} className="scrollbar-none inline-flex max-w-full overflow-x-auto rounded-lg border border-line bg-surface-2 p-1">
     {options.map(o => (
       <button
         key={o.value}
@@ -256,7 +320,7 @@ export const SegmentedControl = <T extends string>({
         aria-selected={value === o.value}
         onClick={() => onChange(o.value)}
         className={cx(
-          'whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all cursor-pointer',
+          'whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all cursor-pointer',
           value === o.value ? 'bg-surface text-ink shadow-sm' : 'text-muted hover:text-ink',
         )}
       >
@@ -278,14 +342,14 @@ export const formatTimestamp = (ts: string) => {
 };
 
 export const TableShell: React.FC<{ children: React.ReactNode; minWidth?: string }> = ({ children, minWidth = '640px' }) => (
-  <div className="overflow-x-auto rounded-xl border border-line">
-    <table className="w-full text-left text-sm" style={{ minWidth }}>
+  <div className={table.wrap}>
+    <table className={table.table} style={{ minWidth }}>
       {children}
     </table>
   </div>
 );
 
 export const Th: React.FC<{ children?: React.ReactNode; right?: boolean }> = ({ children, right }) => (
-  <th className={cx('whitespace-nowrap bg-surface-2 px-4 py-3 text-xs font-medium text-muted', right && 'text-right')}>{children}</th>
+  <th scope="col" className={cx('whitespace-nowrap bg-surface-2 px-3 py-2 text-xs font-medium text-muted', right && 'text-right')}>{children}</th>
 );
 

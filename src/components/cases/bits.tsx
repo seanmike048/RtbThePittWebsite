@@ -1,7 +1,7 @@
 import React from 'react';
 import { caseFinancials, SEAT_NAME } from '../../lib/cases/financials.ts';
 import type { CaseRecord, Provenance } from '../../lib/cases/types.ts';
-import { cx } from '../ui.tsx';
+import { cx, StateNote } from '../ui.tsx';
 import { useCases } from './CasesContext.tsx';
 import { PublisherDirectory } from './PublisherDirectory.tsx';
 
@@ -12,9 +12,7 @@ export const Prov: React.FC<{ p: Provenance | 'Draft only' | 'Unavailable' | 'Pr
       ? 'text-warn-ink'
       : p === 'Leading hypothesis — not confirmed' || p === 'Context, not proof'
         ? 'text-info'
-        : p === 'Unavailable'
-          ? 'text-faint'
-          : 'text-muted';
+        : 'text-muted';
   return <span className={cx('whitespace-nowrap text-[11px] font-medium', tone, className)}>{p}</span>;
 };
 
@@ -69,9 +67,9 @@ export const RequirePublisher: React.FC<{ title: string; children: (c: CaseRecor
     <div className="space-y-4">
       <PageHeader title={title} lead={missingId ? undefined : 'Pick a publisher. Everything on this page is scoped to one publisher; nothing falls back to another one or to a total.'} />
       {missingId && (
-        <p role="status" className="rounded-lg border border-warn/40 bg-warn-soft px-3 py-2 text-sm text-warn-ink">
-          The publisher in this link ({missingId}) is not in the current run ({run.label}). Pick one of its publishers below.
-        </p>
+        <StateNote kind="unavailable" title="This publisher is not in the current run">
+          The link asks for {missingId}; the current run is {run.label}. Pick one of its publishers below.
+        </StateNote>
       )}
       <PublisherDirectory />
     </div>

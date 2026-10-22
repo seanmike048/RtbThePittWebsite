@@ -11,8 +11,8 @@
   --line-strong: #cfd4e0;
   --ink: #0f172a;
   --ink-2: #334155;
-  --muted: #64748b;
-  --faint: #94a3b8;
+  --muted: #5b6678;
+  --faint: #7d889b;
 
   --accent: #4f46e5;
   --accent-ink: #4338ca;
@@ -28,7 +28,7 @@
   --ok: #059669;
   --ok-ink: #047857;
   --ok-soft: #ecfdf5;
-  --info: #0284c7;
+  --info: #0369a1;
   --info-soft: #f0f9ff;
   /* Chart series (validated with the dataviz palette checker against #ffffff) */
   --viz-1: #2a78d6;
@@ -44,6 +44,16 @@
   --chart-measure: #64748b;
   --chart-grid: #e4e7ef;
   --overlay: rgb(15 23 42 / 0.4);
+  /* Semantic roles (one theme contract for every route, modal, menu and chart). */
+  --surface-raised: #ffffff;
+  --divider: #eceef4;
+  --focus: #4f46e5;
+  --disabled: #f1f3f7;
+  --disabled-ink: #5f6878;
+  --disabled-line: #dfe3ea;
+  --tooltip: #ffffff;
+  --tooltip-ink: #0f172a;
+  --tooltip-line: #cfd4e0;
   --code-bg: #0f172a;
   --code-ink: #e2e8f0;
 
@@ -89,6 +99,15 @@
     --chart-measure: #94a3b8;
     --chart-grid: #232c3f;
     --overlay: rgb(0 0 0 / 0.55);
+    --surface-raised: #1a2233;
+    --divider: #1c2434;
+    --focus: #a5b4fc;
+    --disabled: #1a2131;
+    --disabled-ink: #8792a6;
+    --disabled-line: #2a3346;
+    --tooltip: #1a2233;
+    --tooltip-ink: #f1f5f9;
+    --tooltip-line: #3a465f;
     --code-bg: #0b0f19;
     --code-ink: #e2e8f0;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -8px rgb(0 0 0 / 0.4);
@@ -133,6 +152,15 @@
   --chart-measure: #94a3b8;
   --chart-grid: #232c3f;
   --overlay: rgb(0 0 0 / 0.55);
+  --surface-raised: #1a2233;
+  --divider: #1c2434;
+  --focus: #a5b4fc;
+  --disabled: #1a2131;
+  --disabled-ink: #8792a6;
+  --disabled-line: #2a3346;
+  --tooltip: #1a2233;
+  --tooltip-ink: #f1f5f9;
+  --tooltip-line: #3a465f;
   --code-bg: #0b0f19;
   --code-ink: #e2e8f0;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -8px rgb(0 0 0 / 0.4);
@@ -178,6 +206,15 @@
   --color-chart-live: var(--chart-live);
   --color-chart-measure: var(--chart-measure);
   --color-overlay: var(--overlay);
+  --color-surface-raised: var(--surface-raised);
+  --color-divider: var(--divider);
+  --color-focus: var(--focus);
+  --color-disabled: var(--disabled);
+  --color-disabled-ink: var(--disabled-ink);
+  --color-disabled-line: var(--disabled-line);
+  --color-tooltip: var(--tooltip);
+  --color-tooltip-ink: var(--tooltip-ink);
+  --color-tooltip-line: var(--tooltip-line);
   --color-code-bg: var(--code-bg);
   --color-code-ink: var(--code-ink);
   --shadow-card: var(--shadow);
@@ -201,7 +238,7 @@
     color: var(--on-accent);
   }
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--focus);
     outline-offset: 2px;
     border-radius: 6px;
   }

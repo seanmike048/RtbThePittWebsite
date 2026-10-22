@@ -5,7 +5,7 @@ import { eurPerUsd, FX_SOURCE, showUsd, usdValue } from '../../lib/cases/fx.ts';
 import { project, projectedWeekly } from '../../lib/cases/projection.ts';
 import { SPEND_SNAPSHOT } from '../../lib/cases/spend.data.ts';
 import type { CaseRecord } from '../../lib/cases/types.ts';
-import { Button } from '../ui.tsx';
+import { Button, table } from '../ui.tsx';
 import { PageHeader, RequirePublisher, Section } from './bits.tsx';
 import { useCases } from './CasesContext.tsx';
 import { RevenueVariance, type VarianceItem } from './RevenueVariance.tsx';
@@ -86,10 +86,10 @@ const Impact: React.FC<{ c: CaseRecord }> = ({ c }) => {
 
       {f.seats.length > 0 && (
         <Section title="By seat">
-          <div className="overflow-x-auto rounded-lg border border-line">
-            <table className="w-full min-w-[560px] text-left text-sm">
+          <div className={table.wrap}>
+            <table className={table.table + ' min-w-[560px]'}>
               <caption className="sr-only">Spend by Amazon seat for {c.publisher}</caption>
-              <thead className="bg-surface-2 text-xs text-muted">
+              <thead className={table.head}>
                 <tr>
                   <th scope="col" className="px-3 py-2 font-medium">Endpoint</th>
                   <th scope="col" className="px-3 py-2 font-medium">State</th>
@@ -98,9 +98,9 @@ const Impact: React.FC<{ c: CaseRecord }> = ({ c }) => {
                   <th scope="col" className="px-3 py-2 text-right font-medium">{f.latestDay ?? 'Latest day'}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-line">
+              <tbody className={table.body}>
                 {f.seats.map((s) => (
-                  <tr key={s.partnerId}>
+                  <tr key={s.partnerId} className={table.row}>
                     <td className="px-3 py-2 text-ink">{s.name}</td>
                     <td className={s.state === 'Cut' ? 'px-3 py-2 text-danger-ink' : 'px-3 py-2 text-ink-2'}>{s.state}</td>
                     <td className="num px-3 py-2 text-xs text-muted">{s.cutAt ?? '—'}</td>

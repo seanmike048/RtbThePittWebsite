@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { ClipboardPaste } from 'lucide-react';
 import { enrich } from '../../lib/cases/bundled.ts';
 import { parseRun } from '../../lib/cases/parse.ts';
-import { Button, Modal } from '../ui.tsx';
+import { Button, fieldClass, Modal, StateNote } from '../ui.tsx';
 import { useCases } from './CasesContext.tsx';
 
 const MAX_CHARS = 500_000;
@@ -67,7 +67,7 @@ export const ImportDialog: React.FC<{ open: boolean; onClose: () => void }> = ({
           maxLength={MAX_CHARS}
           aria-label="Slack or n8n output"
           placeholder="Paste here: the run summary (“3 publishers · …”) and the “[The Pitt] … disconnected from …” drafts."
-          className="num w-full rounded-md border border-line bg-surface-2 p-3 text-xs text-ink placeholder:text-faint focus:border-accent focus:outline-none"
+          className={fieldClass() + ' num h-auto w-full p-3 text-xs'}
         />
         {r && (
           <div className="rounded-md border border-line" aria-live="polite">
@@ -96,11 +96,15 @@ export const ImportDialog: React.FC<{ open: boolean; onClose: () => void }> = ({
               </ul>
             )}
             {r.warnings.length > 0 && (
-              <ul className="space-y-0.5 border-t border-line bg-warn-soft px-3 py-2 text-xs text-warn-ink">
-                {r.warnings.map((w) => (
-                  <li key={w}>{w}</li>
-                ))}
-              </ul>
+              <div className="border-t border-line p-2">
+                <StateNote kind={parsed!.cases.length ? 'unavailable' : 'error'} compact title={parsed!.cases.length ? `${r.warnings.length} warning(s)` : 'Nothing to import'}>
+                  <ul className="space-y-0.5">
+                    {r.warnings.map((w) => (
+                      <li key={w}>{w}</li>
+                    ))}
+                  </ul>
+                </StateNote>
+              </div>
             )}
             <p className="border-t border-line px-3 py-2 text-[11px] text-muted">
               Ignored lines are Slack chrome, link previews or other messages: they are never used as evidence. Source-only lines (metrics the product does not analyse) are stored with the case and not displayed.

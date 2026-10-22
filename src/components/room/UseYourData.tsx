@@ -39,7 +39,7 @@ export const UseYourData: React.FC<{ onBack: () => void }> = ({ onBack }) => (
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-xs">
           <thead>
-            <tr className="text-[10px] uppercase tracking-wider text-muted">
+            <tr className="text-xs text-muted">
               <th scope="col" className="py-1.5 pr-3 font-semibold">Array</th>
               <th scope="col" className="py-1.5 pr-3 font-semibold">Source / grain</th>
               <th scope="col" className="py-1.5 font-semibold">Fields</th>

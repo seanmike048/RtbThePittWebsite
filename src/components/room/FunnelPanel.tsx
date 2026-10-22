@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { FUNNEL_STAGES, fmtCompact, fmtNum, funnel, type Row } from '../../lib/pitt/engine.ts';
 import type { Dataset } from '../../lib/pitt/types.ts';
+import { chartTooltip, theme } from '../../lib/theme.ts';
+import { fieldClass, StateNote } from '../ui.tsx';
 import { ChartTable, Panel } from './bits.tsx';
 
 /** Demand funnel: Auctions → Bid requests → Bids → Wins → Impressions, for the cohort or one network. */
@@ -19,7 +21,7 @@ export const FunnelPanel: React.FC<{ ds: Dataset; rows: Row[] }> = ({ ds, rows }
       aside={
         <label className="flex items-center gap-1.5 text-xs text-muted">
           Network
-          <select className="h-7 rounded-md border border-line bg-surface-2 px-1.5 text-xs text-ink" value={nid ?? ''} onChange={(e) => setNid(e.target.value ? Number(e.target.value) : null)}>
+          <select className={fieldClass('sm')} value={nid ?? ''} onChange={(e) => setNid(e.target.value ? Number(e.target.value) : null)}>
             <option value="">Whole cohort</option>
             {nets.map(([id, name]) => (
               <option key={id} value={id}>
@@ -31,24 +33,24 @@ export const FunnelPanel: React.FC<{ ds: Dataset; rows: Row[] }> = ({ ds, rows }
       }
     >
       {!f.stages.length ? (
-        <p className="rounded-lg border border-dashed border-line-strong p-4 text-sm italic text-muted">No data: this data set has no demand funnel for these networks.</p>
+        <StateNote kind="unavailable" title="No funnel data">This data set has no demand funnel for these networks.</StateNote>
       ) : (
         <>
           <div className="h-52" role="img" aria-label={'Demand funnel: ' + f.stages.map((s) => s.stage + ' ' + fmtCompact(s.intake)).join(', ')}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={f.stages} layout="vertical" margin={{ top: 4, right: 64, bottom: 4, left: 8 }}>
                 <XAxis type="number" hide domain={[0, 'dataMax']} />
-                <YAxis type="category" dataKey="stage" width={88} tick={{ fill: 'var(--ink-2)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="stage" width={88} tick={{ fill: theme.color.textSecondary, fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  cursor={{ fill: 'var(--surface-2)' }}
-                  contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--line-strong)', borderRadius: 8, fontSize: 12 }}
+                  {...chartTooltip}
+                  cursor={{ fill: chartTooltip.cursor.fill }}
                   formatter={(v) => [fmtNum(v as number), 'Intake']}
                 />
                 <Bar dataKey="intake" radius={[0, 4, 4, 0]} isAnimationActive={false}>
                   {f.stages.map((s, i) => (
-                    <Cell key={s.stage} fill={['var(--chart-1)', 'var(--chart-1)', 'var(--chart-3)', 'var(--chart-3)', 'var(--chart-5)'][i]} />
+                    <Cell key={s.stage} fill={[theme.chart.series[0], theme.chart.series[0], theme.chart.series[2], theme.chart.series[2], theme.chart.series[4]][i]} />
                   ))}
-                  <LabelList dataKey="intake" position="right" formatter={(v) => fmtCompact(v as number)} style={{ fill: 'var(--ink)', fontSize: 11 }} />
+                  <LabelList dataKey="intake" position="right" formatter={(v) => fmtCompact(v as number)} style={{ fill: theme.chart.label, fontSize: 11 }} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

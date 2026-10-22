@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { caseFinancials } from '../../lib/cases/financials.ts';
 import { showUsd } from '../../lib/cases/fx.ts';
-import { cx } from '../ui.tsx';
+import { cx, fieldClass, StateNote } from '../ui.tsx';
 import { useCases } from './CasesContext.tsx';
 
 /** Every publisher of the run, searchable. One row per case; opening one selects it for every page. */
@@ -16,7 +16,7 @@ export const PublisherDirectory: React.FC<{ compact?: boolean }> = ({ compact })
   const open = (id: string) => go(tab === 'overview' ? 'investigations' : tab, id);
 
   if (!run.cases.length)
-    return <p className="rounded-lg border border-dashed border-line-strong p-4 text-sm text-muted">No publisher case in the current run. Import a full n8n / Slack output to start.</p>;
+    return <StateNote kind="empty" title="No publisher case in this run">Import a full n8n or Slack output to start (Import run, top right).</StateNote>;
 
   return (
     <div className="space-y-2">
@@ -28,7 +28,7 @@ export const PublisherDirectory: React.FC<{ compact?: boolean }> = ({ compact })
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search publisher, network or case ID"
-          className="h-9 w-full rounded-md border border-line bg-surface pl-8 pr-3 text-sm text-ink placeholder:text-faint focus:border-accent focus:outline-none"
+          className={fieldClass() + ' w-full pl-8'}
         />
       </label>
       <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
@@ -63,7 +63,11 @@ export const PublisherDirectory: React.FC<{ compact?: boolean }> = ({ compact })
             </li>
           );
         })}
-        {!rows.length && <li className="px-3 py-4 text-sm text-muted">No publisher matches “{q}”.</li>}
+        {!rows.length && (
+          <li className="p-2">
+            <StateNote kind="empty" compact title={`No publisher matches “${q}”`} action={<button onClick={() => setQ('')} className="text-xs text-accent-ink hover:underline cursor-pointer">Clear search</button>} />
+          </li>
+        )}
       </ul>
     </div>
   );

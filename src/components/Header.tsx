@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ClipboardPaste, Moon, Sun } from 'lucide-react';
 import { TABS, TAB_LABEL } from '../lib/cases/selection.ts';
 import { useCases } from './cases/CasesContext.tsx';
-import { Button, cx } from './ui.tsx';
+import { Button, cx, fieldClass } from './ui.tsx';
 
 function useTheme() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -49,7 +49,7 @@ export const Header: React.FC<{ onOpenImport: () => void; toolbar?: React.ReactN
                 value={selected?.caseId ?? ''}
                 onChange={(e) => select(e.target.value || null)}
                 aria-label="Selected publisher"
-                className="h-8 w-[8.5rem] min-w-0 truncate rounded-md border border-line bg-surface px-2 text-xs text-ink focus:border-accent focus:outline-none sm:w-auto sm:max-w-[16rem]"
+                className={fieldClass('sm') + ' w-[8.5rem] min-w-0 truncate sm:w-auto sm:max-w-[16rem]'}
               >
                 <option value="">None selected</option>
                 {run.cases.map((c) => (

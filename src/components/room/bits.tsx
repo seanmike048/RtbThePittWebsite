@@ -42,10 +42,10 @@ export const PresenceChip: React.FC<{ p: Presence }> = ({ p }) => (
 export const Panel: React.FC<{ id?: string; title: string; eyebrow?: string; aside?: React.ReactNode; children: React.ReactNode; className?: string; description?: React.ReactNode }> = ({
   id, title, eyebrow, aside, children, className, description,
 }) => (
-  <section id={id} aria-labelledby={id ? id + '-h' : undefined} className={cx('rounded-xl border border-line bg-surface p-4 sm:p-5', className)}>
+  <section id={id} aria-labelledby={id ? id + '-h' : undefined} className={cx('rounded-lg border border-line bg-surface p-4 sm:p-5', className)}>
     <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
       <div className="min-w-0">
-        {eyebrow && <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-accent">{eyebrow}</p>}
+        {eyebrow && <p className="text-xs text-muted">{eyebrow}</p>}
         <h2 id={id ? id + '-h' : undefined} className="text-base font-semibold text-ink">
           {title}
         </h2>
@@ -74,7 +74,7 @@ export const Tip: React.FC<{ label: string; children: React.ReactNode }> = ({ la
         <Info className="h-3.5 w-3.5" aria-hidden />
       </button>
       {open && (
-        <span role="tooltip" className="absolute left-1/2 top-full z-20 mt-1 w-64 -translate-x-1/2 rounded-lg border border-line-strong bg-surface-2 p-2.5 text-xs font-normal normal-case leading-relaxed tracking-normal text-ink-2 shadow-xl">
+        <span role="tooltip" className="absolute left-1/2 top-full z-20 mt-1 w-64 -translate-x-1/2 rounded-md border border-tooltip-line bg-tooltip p-2.5 text-xs font-normal normal-case leading-relaxed tracking-normal text-tooltip-ink shadow-card">
           {children}
         </span>
       )}

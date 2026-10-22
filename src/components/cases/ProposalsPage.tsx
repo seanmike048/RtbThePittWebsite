@@ -3,7 +3,7 @@ import { Lock } from 'lucide-react';
 import { showUsd } from '../../lib/cases/fx.ts';
 import { DRY_RUN, NEXT_STATES, noProposalReason, proposalsFor, type AuditEntry, type Proposal, type ProposalState } from '../../lib/cases/proposals.ts';
 import type { CaseRecord } from '../../lib/cases/types.ts';
-import { Button, cx } from '../ui.tsx';
+import { Button, cx, fieldClass, StateNote } from '../ui.tsx';
 import { PageHeader, RequirePublisher, Section } from './bits.tsx';
 
 export const ProposalsPage: React.FC<{ serverQueue?: React.ReactNode }> = ({ serverQueue }) => (
@@ -57,7 +57,7 @@ const Proposals: React.FC<{ c: CaseRecord }> = ({ c }) => {
           <strong className="font-medium text-ink">{DRY_RUN.label}.</strong> {DRY_RUN.reason}
         </span>
       </p>
-      {!base.length && <p className="rounded-lg border border-dashed border-line-strong p-4 text-sm text-ink-2">{none}</p>}
+      {!base.length && <StateNote kind="empty" title="No change proposed for this publisher">{none}</StateNote>}
       {base.map((p) => (
         <ProposalCard
           key={p.id}
@@ -154,7 +154,7 @@ const ProposalCard: React.FC<{ p: Proposal; audit: AuditEntry[]; onState: (s: Pr
             Execute
           </Button>
         </div>
-        {refusal && <p className="text-xs text-danger-ink" role="alert">{refusal}</p>}
+        {refusal && <StateNote kind="error" compact title="Execution refused">{refusal.replace(/^Execution refused:\s*/, '')}</StateNote>}
 
         {can('Approved') && (
           <form
@@ -168,7 +168,7 @@ const ProposalCard: React.FC<{ p: Proposal; audit: AuditEntry[]; onState: (s: Pr
           >
             <label className="text-xs text-muted">
               Approver
-              <input value={approver} onChange={(e) => setApprover(e.target.value)} placeholder="Name" className="mt-1 block h-8 rounded-md border border-line bg-surface px-2 text-sm text-ink focus:border-accent focus:outline-none" />
+              <input value={approver} onChange={(e) => setApprover(e.target.value)} placeholder="Name" className={fieldClass('sm') + ' mt-1 block'} />
             </label>
             <label className="flex items-center gap-1.5 text-xs text-ink-2">
               <input type="checkbox" checked={scopeOk} onChange={(e) => setScopeOk(e.target.checked)} className="accent-[var(--accent)]" /> I approve exactly this scope: {p.scope}
