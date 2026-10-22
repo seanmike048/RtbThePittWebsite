@@ -335,7 +335,8 @@ const ScenarioModel: React.FC = () => {
 
 export const Analytics: React.FC = () => {
   const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  const liveTotal = LIVE_CASES.filter(c => c.kind === 'live').reduce((s, c) => s + c.amount, 0);
+  const live = LIVE_CASES.filter(c => c.kind === 'live');
+  const liveTotal = live.reduce((s, c) => s + c.amount, 0);
   const maxShare = TOP_PUBLISHERS[0].sharePct;
 
   return (
@@ -416,10 +417,10 @@ export const Analytics: React.FC = () => {
             </Callout>
             <Callout tone="accent" title="Where attention should go">
               The top 16 publishers hold 31.27% of current gross revenue. Seedtag and THUNDER MONETIZATION are the two largest;
-              the latest live issue run flags Tubi TV STR and Raptive STR as the largest displayed at-risk cases.
+              the latest live issue run flags Raptive STR as the largest displayed at-risk case.
             </Callout>
             <Callout tone="warn" title="What is not confirmed">
-              The three live issue amounts total {int(liveTotal)} displayed units, but their currency is undocumented. The
+              The {live.length} live issue amounts total {int(liveTotal)} displayed units, but their currency is undocumented. The
               €18,000 Synthetic Network A amount is a demo proxy and is never combined with live cases.
             </Callout>
             <Callout tone="danger" title="Management implication">
@@ -704,8 +705,8 @@ export const Analytics: React.FC = () => {
 
         <p className="mt-5 flex gap-2 rounded-xl bg-surface-2 px-4 py-3 text-sm leading-relaxed text-ink-2">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted" />
-          “Not crawled” means the crawler did not retrieve the file. It does not prove a seller line is missing. Tubi TV STR had
-          only two days of coverage in the window; Sharethrough SSP – Global Supply had no row.
+          “Not crawled” means the crawler did not retrieve the file. It does not prove a seller line is missing. Sharethrough SSP – Global Supply had no row
+          in the window.
         </p>
 
         <h3 className="mt-8 font-semibold text-ink">Largest STR issue-revenue rows in the cohort</h3>

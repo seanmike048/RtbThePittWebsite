@@ -75,20 +75,6 @@ export const LIVE_CASES: {
   interpretation: string;
 }[] = [
   {
-    name: 'Tubi TV STR',
-    id: '5100',
-    kind: 'live',
-    amountLabel: '16,037 units',
-    amount: 16_037,
-    checks: [
-      { label: 'ads.txt', result: 'PASS' },
-      { label: 'SCO', result: 'PASS' },
-      { label: 'Blocked inv.', result: 'PASS' },
-      { label: 'IVT', result: 'PASS' },
-    ],
-    interpretation: 'Cause unconfirmed. Amazon bid requests fell 99.5% while network auctions changed −1.3%.',
-  },
-  {
     name: 'Raptive STR',
     id: '5339',
     kind: 'live',

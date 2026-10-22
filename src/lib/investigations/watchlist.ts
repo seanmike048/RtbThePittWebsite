@@ -45,8 +45,8 @@ const c = (
 /** Networks with "STR" as a separate word are being sunset and are left out (same rule as the n8n main workflow's M2/M4). */
 export const isSunset = (name: string) => /(^|\s)STR(\s|$)/.test(name);
 
-/** Networks left out of the watchlist on request (21 Oct 2026): Tubi #5524, the network related to the retired #5100 case. */
-export const EXCLUDED_NETWORKS = new Set(['5524']);
+/** Tubi networks left out of the site on request (21 Oct 2026): #5524 and the retired #5100 case. */
+export const EXCLUDED_NETWORKS = new Set(['5100', '5524']);
 
 export const WATCHLIST_SNAPSHOT: Watchlist = {
   asOf: '2026-10-21',

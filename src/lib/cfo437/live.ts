@@ -3,6 +3,7 @@
  * Snowflake for Amazon DSP connection history on partner 437, Google Drive for the workbook.
  * Everything here is read-only.
  */
+import { EXCLUDED_NETWORKS } from '../investigations/watchlist.ts';
 
 export const SNOWFLAKE_SERVER = 'Snowflake role data analyst';
 export const SNOWFLAKE_TOOL = 'sql_exec_tool';
@@ -55,7 +56,7 @@ export function toConnectionState(summary: Record<string, string | null>[], list
     connected: Number(by('connected')?.NETWORKS ?? 0),
     disconnected: Number(by('disconnected')?.NETWORKS ?? 0),
     latestCut: by('disconnected')?.LATEST_CUT?.slice(0, 16) ?? null,
-    networks: list.map(r => ({
+    networks: list.filter(r => !EXCLUDED_NETWORKS.has((r.NETWORK_ID ?? '').trim())).map(r => ({
       networkId: (r.NETWORK_ID ?? '').trim(),
       networkName: (r.NETWORK_NAME ?? '').trim(),
       cutAt: r.DATE_DISCONNECTION ? r.DATE_DISCONNECTION.slice(0, 16) : null,
@@ -122,7 +123,6 @@ export const CONNECTION_SNAPSHOT: ConnectionState = {
   source: 'snapshot',
   networks: [
     ['5339', 'Raptive STR', '2026-10-01 08:28', 'US'],
-    ['5100', 'Tubi TV STR', '2026-09-25 08:11', 'US'],
     ['4443', 'Column6RTB', '2026-09-14 11:53', 'US'],
     ['5550', 'diDNA', '2026-09-03 08:35', 'US'],
     ['4438', 'Coingecko', '2026-08-31 21:25', 'APAC'],
@@ -257,7 +257,7 @@ export const toTrend = (rows: Record<string, string | null>[]): TrendPoint[] =>
   }));
 
 export const toAlerts = (rows: Record<string, string | null>[], asOf: string): AlertState => {
-  const alerts = rows.map(r => ({
+  const alerts = rows.filter(r => !EXCLUDED_NETWORKS.has((r.NETWORK_ID ?? '').trim())).map(r => ({
     networkId: r.NETWORK_ID ?? '',
     networkName: (r.NETWORK_NAME ?? '').trim(),
     cutAt: r.CUT_AT ?? '',
@@ -306,7 +306,6 @@ export const ALERT_SNAPSHOT: AlertState = {
       ['4721', 'Smoot', '2026-04-16 21:33', 0.326779, 'LATAM'],
       ['4872', 'cpmstar', '2026-04-15 15:46', 0.157023, 'US'],
       ['1331', 'Azerion Technology B.V. (PubGalaxy)', '2026-08-31 21:08', 0.008964, 'CEE'],
-      ['5100', 'Tubi TV STR', '2026-09-25 08:11', 0, 'US'],
       ['4443', 'Column6RTB', '2026-09-14 11:53', 0, 'US'],
       ['5550', 'diDNA', '2026-09-03 08:35', 0, 'US'],
     ] as const
