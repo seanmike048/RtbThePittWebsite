@@ -1,6 +1,6 @@
 /** Read-only Snowflake queries for investigation context and the watchlist. Network IDs are validated as integers. */
 import type { DailyPoint, NetworkContext, SeatEvent } from './context.ts';
-import { isSunset, type AtRiskSeat, type RecentCut, type Watchlist } from './watchlist.ts';
+import { EXCLUDED_NETWORKS, isSunset, type AtRiskSeat, type RecentCut, type Watchlist } from './watchlist.ts';
 
 const AMZ = '437, 489, 490, 491, 492';
 const id = (v: string) => {
@@ -112,12 +112,13 @@ export function toContext(base: NetworkContext, conn: Row[], events: Row[], dail
   };
 }
 
-export function toWatchlist(cuts: Row[], atRisk: Row[], asOf: string): Watchlist {
+export function toWatchlist(cuts: Row[], allAtRisk: Row[], asOf: string): Watchlist {
+  const atRisk = allAtRisk.filter((r) => !EXCLUDED_NETWORKS.has(r.NETWORK_ID ?? ''));
   return {
     asOf,
     source: 'live',
     lastActivityDay: atRisk[0]?.LAST_DAY ?? '',
-    cuts: cuts.filter((r) => !isSunset(r.NETWORK_NAME ?? '')).map(
+    cuts: cuts.filter((r) => !isSunset(r.NETWORK_NAME ?? '') && !EXCLUDED_NETWORKS.has(r.NETWORK_ID ?? '')).map(
       (r): RecentCut => ({
         networkId: r.NETWORK_ID ?? '',
         networkName: r.NETWORK_NAME ?? '',

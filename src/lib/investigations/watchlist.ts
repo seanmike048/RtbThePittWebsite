@@ -45,6 +45,9 @@ const c = (
 /** Networks with "STR" as a separate word are being sunset and are left out (same rule as the n8n main workflow's M2/M4). */
 export const isSunset = (name: string) => /(^|\s)STR(\s|$)/.test(name);
 
+/** Networks left out of the watchlist on request (21 Oct 2026): Tubi #5524, the network related to the retired #5100 case. */
+export const EXCLUDED_NETWORKS = new Set(['5524']);
+
 export const WATCHLIST_SNAPSHOT: Watchlist = {
   asOf: '2026-10-21',
   lastActivityDay: '2026-10-19',
@@ -72,7 +75,6 @@ export const WATCHLIST_SNAPSHOT: Watchlist = {
   atRisk: [
     { networkId: '6049', networkName: 'Outdoor America', partnerId: 492, partnerName: 'Amazon DSP CTV B', bidRequests7d: 339520720, spend7d: 21.726653, rpmbr7d: 0.063992 },
     { networkId: '4568', networkName: 'Bigo Indirect', partnerId: 491, partnerName: 'Amazon DSP Video B', bidRequests7d: 259376000, spend7d: 0, rpmbr7d: 0 },
-    { networkId: '5524', networkName: 'Tubi', partnerId: 492, partnerName: 'Amazon DSP CTV B', bidRequests7d: 170812889, spend7d: 10.99614, rpmbr7d: 0.064375 },
     { networkId: '4575', networkName: 'Mediafuse', partnerId: 492, partnerName: 'Amazon DSP CTV B', bidRequests7d: 155970745, spend7d: 12.321356, rpmbr7d: 0.078998 },
   ],
 };

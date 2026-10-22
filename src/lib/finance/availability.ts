@@ -28,7 +28,7 @@ export const AVAILABILITY: DatasetRow[] = [
     unit: 'n/a',
     currency: 'n/a',
     permissions: 'Snowflake role data analyst (read)',
-    missing: 'Effective-dated DSP / endpoint / internal and external seat IDs; publisher group linking 5100 and 5524; historical seller types',
+    missing: 'Effective-dated DSP / endpoint / internal and external seat IDs; historical seller types',
     enables: 'Scopes 437 vs 489–492; visible view',
   },
   {
@@ -70,7 +70,7 @@ export const AVAILABILITY: DatasetRow[] = [
     unit: 'Auctions, impressions, spend',
     currency: 'Column comment: Euro',
     permissions: 'Readable; too slow through the connector',
-    missing: 'All rows for 5100 / 5524. Supply comparison uses DAY_DEMAND spend instead.',
+    missing: 'Native-grain auctions (the query times out through the connector).',
     enables: 'Supply decline and substitution controls',
   },
   {
