@@ -415,6 +415,27 @@ export function cohortVariance(rows: Row[]): CohortVarianceRow[] {
   ];
 }
 
+// ------------------------------------------------------------------ at risk by Amazon seat
+
+export interface SeatShare { id: string; label: string; value: number; share: number }
+
+/** Revenue at risk (still disconnected, recorded spend) by Amazon seat: the four largest, then "Other seats". */
+export function atRiskBySeat(rows: Row[], top = 4): SeatShare[] {
+  const by = new Map<number, { name: string; v: number }>();
+  for (const r of rows.filter(isDisconnected)) {
+    if (r.SPEND_7D_BEFORE == null || r.SPEND_7D_BEFORE <= 0) continue;
+    const e = by.get(r.PARTNER_ID) ?? { name: r.PARTNER_NAME.replace('Amazon DSP ', ''), v: 0 };
+    e.v += r.SPEND_7D_BEFORE;
+    by.set(r.PARTNER_ID, e);
+  }
+  const all = [...by.entries()].map(([id, e]) => ({ id: String(id), label: `${e.name} · ${id}`, value: e.v })).sort((a, b) => b.value - a.value);
+  const total = all.reduce((a, x) => a + x.value, 0);
+  const head = all.slice(0, top);
+  const rest = all.slice(top).reduce((a, x) => a + x.value, 0);
+  const out = rest > 0 ? [...head, { id: 'other', label: 'Other seats', value: rest }] : head;
+  return out.map((x) => ({ ...x, share: total ? (x.value / total) * 100 : 0 }));
+}
+
 // ------------------------------------------------------------------ what-if (projection, not a forecast)
 
 /**

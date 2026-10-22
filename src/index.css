@@ -2,188 +2,246 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* Design tokens — light by default, dark via OS preference or explicit toggle */
+/*
+ * The Pitt · Maestro design tokens (design-system/tokens.json from the Maestro-inspired spec).
+ * Neutral greys carry the UI; orange is the one loud colour. Light by default; dark via the OS or the toggle.
+ * The primary fill (--accent) is a slightly deeper Maestro orange so its label passes WCAG 4.5:1; --brand keeps the
+ * exact Maestro orange for graphics (active nav icon, accents).
+ */
 :root {
-  --canvas: #f5f6fa;
-  --surface: #ffffff;
-  --surface-2: #f8f9fc;
-  --line: #e4e7ef;
-  --line-strong: #cfd4e0;
-  --ink: #0f172a;
-  --ink-2: #334155;
-  --muted: #5b6678;
-  --faint: #7d889b;
-
-  --accent: #4f46e5;
-  --accent-ink: #4338ca;
-  --accent-soft: #eef0ff;
-  --on-accent: #ffffff;
-
-  --danger: #e11d48;
-  --danger-ink: #be123c;
-  --danger-soft: #fff1f3;
-  --warn: #d97706;
-  --warn-ink: #b45309;
-  --warn-soft: #fff8eb;
-  --ok: #059669;
-  --ok-ink: #047857;
-  --ok-soft: #ecfdf5;
-  --info: #0369a1;
-  --info-soft: #f0f9ff;
-  /* Chart series (validated with the dataviz palette checker against #ffffff) */
-  --viz-1: #2a78d6;
-  --viz-2: #eb6834;
-  /* Shared chart palette: categorical series, then roles. Every chart reads these; none carries its own colours. */
-  --chart-1: #2a78d6;
-  --chart-2: #eb6834;
-  --chart-3: #1b8a78;
-  --chart-4: #7c5cc4;
-  --chart-5: #94a3b8;
-  --chart-removed: #d1495b;
-  --chart-live: #2a78d6;
-  --chart-measure: #64748b;
-  --chart-grid: #e4e7ef;
-  --overlay: rgb(15 23 42 / 0.4);
-  /* Semantic roles (one theme contract for every route, modal, menu and chart). */
-  --surface-raised: #ffffff;
-  --divider: #eceef4;
-  --focus: #4f46e5;
-  --disabled: #f1f3f7;
-  --disabled-ink: #5f6878;
-  --disabled-line: #dfe3ea;
-  --tooltip: #ffffff;
-  --tooltip-ink: #0f172a;
-  --tooltip-line: #cfd4e0;
-  --code-bg: #0f172a;
-  --code-ink: #e2e8f0;
-
-  --shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px -4px rgb(15 23 42 / 0.06);
+  --brand: #F15A22;
+  --brand-hover: #D9480F;
+  --sidebar: #2B2B2B;
+  --sidebar-ink: #E6E6E6;
+  --sidebar-muted: #9A9A9A;
+  --sidebar-line: #444444;
+  --sidebar-active: #3A3A3A;
+  --sidebar-strong: #FFFFFF;
+  --mark-chip: #FFFFFF;
+  --link: #1F6FD1;
+  --canvas: #F4F4F5;
+  --surface: #FFFFFF;
+  --surface-2: #F8F8F8;
+  --surface-raised: #FFFFFF;
+  --line: #E2E2E4;
+  --line-strong: #C9C9CD;
+  --divider: #ECECEE;
+  --ink: #222222;
+  --ink-2: #3C4043;
+  --muted: #5F6368;
+  --faint: #8A8D93;
+  --navy: #0B1628;
+  --accent: #CC4A12;
+  --accent-ink: #B5400F;
+  --accent-soft: #FDEBE3;
+  --on-accent: #FFFFFF;
+  --focus: #1F6FD1;
+  --danger: #C5221F;
+  --danger-ink: #A51D1A;
+  --danger-soft: #FCE8E6;
+  --warn: #B26A00;
+  --warn-ink: #8F5500;
+  --warn-soft: #FFF4DC;
+  --ok: #1E8E3E;
+  --ok-ink: #17713A;
+  --ok-soft: #E6F4EA;
+  --info: #1A5FB4;
+  --info-soft: #EAF1FB;
+  --disabled: #F1F1F3;
+  --disabled-ink: #5F6368;
+  --disabled-line: #DADCE0;
+  --tooltip: #FFFFFF;
+  --tooltip-ink: #222222;
+  --tooltip-line: #C9C9CD;
+  --code-bg: #1B1C1F;
+  --code-ink: #EDEDEF;
+  --chart-1: #E8692F;
+  --chart-2: #4A4A4A;
+  --chart-3: #D9A400;
+  --chart-4: #34466B;
+  --chart-5: #4F86D6;
+  --chart-other: #E0E0E0;
+  --chart-removed: #E8692F;
+  --chart-live: #34466B;
+  --chart-measure: #5F6368;
+  --chart-grid: #E2E2E4;
+  --viz-1: #E8692F;
+  --viz-2: #34466B;
+  --overlay: rgb(17 18 20 / 0.45);
+  --shadow: none;
+  --shadow-menu: 0 2px 8px rgb(0 0 0 / 0.12);
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --canvas: #0b0f19;
-    --surface: #121826;
-    --surface-2: #171e2e;
-    --line: #232c3f;
-    --line-strong: #2f3a52;
-    --ink: #f1f5f9;
-    --ink-2: #cbd5e1;
-    --muted: #94a3b8;
-    --faint: #64748b;
-    --accent: #818cf8;
-    --accent-ink: #a5b4fc;
-    --accent-soft: #1e1f3d;
-    --on-accent: #0b0f19;
-    --danger: #fb7185;
-    --danger-ink: #fda4af;
-    --danger-soft: #2a1520;
-    --warn: #fbbf24;
-    --warn-ink: #fcd34d;
-    --warn-soft: #291f0f;
-    --ok: #34d399;
-    --ok-ink: #6ee7b7;
-    --ok-soft: #0f2620;
-    --info: #38bdf8;
-    --info-soft: #0f2130;
-    --viz-1: #3987e5;
-    --viz-2: #d95926;
-    --chart-1: #4f95ea;
-    --chart-2: #e0733f;
-    --chart-3: #2fb39c;
-    --chart-4: #a48ae6;
-    --chart-5: #64748b;
-    --chart-removed: #f06b7d;
-    --chart-live: #4f95ea;
-    --chart-measure: #94a3b8;
-    --chart-grid: #232c3f;
-    --overlay: rgb(0 0 0 / 0.55);
-    --surface-raised: #1a2233;
-    --divider: #1c2434;
-    --focus: #a5b4fc;
-    --disabled: #1a2131;
-    --disabled-ink: #8792a6;
-    --disabled-line: #2a3346;
-    --tooltip: #1a2233;
-    --tooltip-ink: #f1f5f9;
-    --tooltip-line: #3a465f;
-    --code-bg: #0b0f19;
-    --code-ink: #e2e8f0;
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -8px rgb(0 0 0 / 0.4);
+    --brand: #FF6B33;
+    --brand-hover: #FF8352;
+    --sidebar: #161616;
+    --sidebar-ink: #E6E6E6;
+    --sidebar-muted: #8A8A8A;
+    --sidebar-line: #333333;
+    --sidebar-active: #252525;
+    --sidebar-strong: #FFFFFF;
+    --mark-chip: #F4F4F5;
+    --link: #6FA8F5;
+    --canvas: #111214;
+    --surface: #1B1C1F;
+    --surface-2: #232428;
+    --surface-raised: #26272B;
+    --line: #2E3035;
+    --line-strong: #43464D;
+    --divider: #26282C;
+    --ink: #EDEDEF;
+    --ink-2: #D0D2D6;
+    --muted: #A1A4AB;
+    --faint: #7C8088;
+    --navy: #E8ECF4;
+    --accent: #FF6B33;
+    --accent-ink: #FF8352;
+    --accent-soft: #3A2219;
+    --on-accent: #111214;
+    --focus: #6FA8F5;
+    --danger: #F28B82;
+    --danger-ink: #F6A39C;
+    --danger-soft: #3B1A19;
+    --warn: #F5B544;
+    --warn-ink: #F5B544;
+    --warn-soft: #3A2E12;
+    --ok: #4CC66F;
+    --ok-ink: #4CC66F;
+    --ok-soft: #17301F;
+    --info: #6FA8F5;
+    --info-soft: #172536;
+    --disabled: #232428;
+    --disabled-ink: #8F939A;
+    --disabled-line: #34363B;
+    --tooltip: #26272B;
+    --tooltip-ink: #EDEDEF;
+    --tooltip-line: #43464D;
+    --code-bg: #0B0C0E;
+    --code-ink: #EDEDEF;
+    --chart-1: #F08A5D;
+    --chart-2: #B8B8B8;
+    --chart-3: #F2C744;
+    --chart-4: #8DA2CC;
+    --chart-5: #6E9BE0;
+    --chart-other: #3A3C42;
+    --chart-removed: #F08A5D;
+    --chart-live: #8DA2CC;
+    --chart-measure: #A1A4AB;
+    --chart-grid: #2E3035;
+    --viz-1: #F08A5D;
+    --viz-2: #8DA2CC;
+    --overlay: rgb(0 0 0 / 0.6);
+    --shadow: none;
+    --shadow-menu: 0 4px 16px rgb(0 0 0 / 0.5);
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --canvas: #0b0f19;
-  --surface: #121826;
-  --surface-2: #171e2e;
-  --line: #232c3f;
-  --line-strong: #2f3a52;
-  --ink: #f1f5f9;
-  --ink-2: #cbd5e1;
-  --muted: #94a3b8;
-  --faint: #64748b;
-  --accent: #818cf8;
-  --accent-ink: #a5b4fc;
-  --accent-soft: #1e1f3d;
-  --on-accent: #0b0f19;
-  --danger: #fb7185;
-  --danger-ink: #fda4af;
-  --danger-soft: #2a1520;
-  --warn: #fbbf24;
-  --warn-ink: #fcd34d;
-  --warn-soft: #291f0f;
-  --ok: #34d399;
-  --ok-ink: #6ee7b7;
-  --ok-soft: #0f2620;
-  --info: #38bdf8;
-  --info-soft: #0f2130;
-  --viz-1: #3987e5;
-  --viz-2: #d95926;
-  --chart-1: #4f95ea;
-  --chart-2: #e0733f;
-  --chart-3: #2fb39c;
-  --chart-4: #a48ae6;
-  --chart-5: #64748b;
-  --chart-removed: #f06b7d;
-  --chart-live: #4f95ea;
-  --chart-measure: #94a3b8;
-  --chart-grid: #232c3f;
-  --overlay: rgb(0 0 0 / 0.55);
-  --surface-raised: #1a2233;
-  --divider: #1c2434;
-  --focus: #a5b4fc;
-  --disabled: #1a2131;
-  --disabled-ink: #8792a6;
-  --disabled-line: #2a3346;
-  --tooltip: #1a2233;
-  --tooltip-ink: #f1f5f9;
-  --tooltip-line: #3a465f;
-  --code-bg: #0b0f19;
-  --code-ink: #e2e8f0;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -8px rgb(0 0 0 / 0.4);
+  --brand: #FF6B33;
+  --brand-hover: #FF8352;
+  --sidebar: #161616;
+  --sidebar-ink: #E6E6E6;
+  --sidebar-muted: #8A8A8A;
+  --sidebar-line: #333333;
+  --sidebar-active: #252525;
+  --sidebar-strong: #FFFFFF;
+  --mark-chip: #F4F4F5;
+  --link: #6FA8F5;
+  --canvas: #111214;
+  --surface: #1B1C1F;
+  --surface-2: #232428;
+  --surface-raised: #26272B;
+  --line: #2E3035;
+  --line-strong: #43464D;
+  --divider: #26282C;
+  --ink: #EDEDEF;
+  --ink-2: #D0D2D6;
+  --muted: #A1A4AB;
+  --faint: #7C8088;
+  --navy: #E8ECF4;
+  --accent: #FF6B33;
+  --accent-ink: #FF8352;
+  --accent-soft: #3A2219;
+  --on-accent: #111214;
+  --focus: #6FA8F5;
+  --danger: #F28B82;
+  --danger-ink: #F6A39C;
+  --danger-soft: #3B1A19;
+  --warn: #F5B544;
+  --warn-ink: #F5B544;
+  --warn-soft: #3A2E12;
+  --ok: #4CC66F;
+  --ok-ink: #4CC66F;
+  --ok-soft: #17301F;
+  --info: #6FA8F5;
+  --info-soft: #172536;
+  --disabled: #232428;
+  --disabled-ink: #8F939A;
+  --disabled-line: #34363B;
+  --tooltip: #26272B;
+  --tooltip-ink: #EDEDEF;
+  --tooltip-line: #43464D;
+  --code-bg: #0B0C0E;
+  --code-ink: #EDEDEF;
+  --chart-1: #F08A5D;
+  --chart-2: #B8B8B8;
+  --chart-3: #F2C744;
+  --chart-4: #8DA2CC;
+  --chart-5: #6E9BE0;
+  --chart-other: #3A3C42;
+  --chart-removed: #F08A5D;
+  --chart-live: #8DA2CC;
+  --chart-measure: #A1A4AB;
+  --chart-grid: #2E3035;
+  --viz-1: #F08A5D;
+  --viz-2: #8DA2CC;
+  --overlay: rgb(0 0 0 / 0.6);
+  --shadow: none;
+  --shadow-menu: 0 4px 16px rgb(0 0 0 / 0.5);
   color-scheme: dark;
 }
 
 @theme inline {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  --font-sans: 'Roboto', 'Helvetica Neue', Arial, system-ui, sans-serif;
+  --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, monospace;
+  /* Maestro is nearly square: 2px controls, 4px cards. */
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-2xl: 6px;
 
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-ink: var(--sidebar-ink);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-line: var(--sidebar-line);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-strong: var(--sidebar-strong);
+  --color-mark-chip: var(--mark-chip);
+  --color-link: var(--link);
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-raised: var(--surface-raised);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
+  --color-divider: var(--divider);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-muted: var(--muted);
   --color-faint: var(--faint);
+  --color-navy: var(--navy);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
   --color-on-accent: var(--on-accent);
+  --color-focus: var(--focus);
   --color-danger: var(--danger);
   --color-danger-ink: var(--danger-ink);
   --color-danger-soft: var(--danger-soft);
@@ -195,20 +253,6 @@
   --color-ok-soft: var(--ok-soft);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
-  --color-viz-1: var(--viz-1);
-  --color-viz-2: var(--viz-2);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-chart-removed: var(--chart-removed);
-  --color-chart-live: var(--chart-live);
-  --color-chart-measure: var(--chart-measure);
-  --color-overlay: var(--overlay);
-  --color-surface-raised: var(--surface-raised);
-  --color-divider: var(--divider);
-  --color-focus: var(--focus);
   --color-disabled: var(--disabled);
   --color-disabled-ink: var(--disabled-ink);
   --color-disabled-line: var(--disabled-line);
@@ -217,7 +261,21 @@
   --color-tooltip-line: var(--tooltip-line);
   --color-code-bg: var(--code-bg);
   --color-code-ink: var(--code-ink);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-other: var(--chart-other);
+  --color-chart-removed: var(--chart-removed);
+  --color-chart-live: var(--chart-live);
+  --color-chart-measure: var(--chart-measure);
+  --color-chart-grid: var(--chart-grid);
+  --color-viz-1: var(--viz-1);
+  --color-viz-2: var(--viz-2);
+  --color-overlay: var(--overlay);
   --shadow-card: var(--shadow);
+  --shadow-menu: var(--shadow-menu);
 }
 
 @layer base {
@@ -230,7 +288,8 @@
     background: var(--canvas);
     color: var(--ink);
     font-family: var(--font-sans);
-    font-feature-settings: 'cv11', 'ss01';
+    font-size: 14px;
+    line-height: 20px;
     overflow-x: hidden;
   }
   ::selection {
@@ -240,14 +299,18 @@
   :focus-visible {
     outline: 2px solid var(--focus);
     outline-offset: 2px;
-    border-radius: 6px;
+    border-radius: 2px;
   }
 }
 
+/* Figures: tabular sans (Maestro). IDs (#5412, TOPS-11471, case IDs) use the mono "id" style. */
 @utility num {
-  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+}
+@utility id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
 }
 
 @utility scrollbar-none {
@@ -265,16 +328,21 @@
   from { transform: translateX(100%); }
   to { transform: none; }
 }
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: none; }
+}
 @keyframes grow-x {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
 .anim-fade-up { animation: fade-up 0.35s ease-out both; }
 .anim-slide-in { animation: slide-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.anim-slide-in-left { animation: slide-in-left 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .anim-grow-x { transform-origin: left; animation: grow-x 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
 @media (prefers-reduced-motion: reduce) {
-  .anim-fade-up, .anim-slide-in, .anim-grow-x { animation: none; }
+  .anim-fade-up, .anim-slide-in, .anim-slide-in-left, .anim-grow-x { animation: none; }
 }
 
 /* Disconnection Room: links draw in once; no motion when the viewer asks for less. */

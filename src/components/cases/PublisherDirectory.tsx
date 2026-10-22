@@ -65,7 +65,7 @@ export const PublisherDirectory: React.FC<{ compact?: boolean }> = ({ compact })
         })}
         {!rows.length && (
           <li className="p-2">
-            <StateNote kind="empty" compact title={`No publisher matches “${q}”`} action={<button onClick={() => setQ('')} className="text-xs text-accent-ink hover:underline cursor-pointer">Clear search</button>} />
+            <StateNote kind="empty" compact title={`No publisher matches “${q}”`} action={<button onClick={() => setQ('')} className="text-xs text-link hover:underline cursor-pointer">Clear search</button>} />
           </li>
         )}
       </ul>

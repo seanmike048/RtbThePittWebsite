@@ -251,7 +251,7 @@ test('Optimization: proposals come from the action plan, preview only, execution
 
 const walk = (dir: string): string[] => readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? walk(join(dir, f)) : [join(dir, f)]));
 // Pages mounted by App.tsx (the 437 portfolio, CFO and watchlist pages are no longer mounted).
-const MOUNTED = [...walk('src/components/cases'), ...walk('src/components/room'), 'src/components/Header.tsx', 'src/components/ui.tsx', 'src/components/ops/RunsPanel.tsx', 'src/App.tsx'];
+const MOUNTED = [...walk('src/components/cases'), ...walk('src/components/room'), ...walk('src/components/shell'), 'src/components/ui.tsx', 'src/components/ops/RunsPanel.tsx', 'src/App.tsx'];
 
 test('Imported text is rendered as text: no raw HTML, eval or innerHTML in mounted components', () => {
   const r = parseRun(RUN_FIXTURE_TEXT.replace('26.24% of auctions', '<img src=x onerror=alert(1)> 26.24% of auctions'));

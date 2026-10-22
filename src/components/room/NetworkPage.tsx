@@ -41,7 +41,7 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
           <p className="num text-2xl font-bold text-ink">{fmtMoney(s.atRisk, sym)}</p>
           <Chip tone={s.disconnected ? 'danger' : 'ok'}>{s.disconnected ? 'Still disconnected' : 'Reconnected'}</Chip>
           {caseRec && (
-            <button onClick={() => go('investigations', caseRec.caseId)} className="mt-2 flex items-center gap-1 text-xs text-accent-ink hover:underline cursor-pointer">
+            <button onClick={() => go('investigations', caseRec.caseId)} className="mt-2 flex items-center gap-1 text-xs text-link hover:underline cursor-pointer">
               <FileText className="h-3.5 w-3.5" aria-hidden /> Open the case file
             </button>
           )}

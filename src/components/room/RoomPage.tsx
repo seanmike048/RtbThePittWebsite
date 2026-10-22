@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, BookOpen, FileText, FlaskConical, LayoutGrid } from 'lucide-react';
-import { cx, fieldClass, StateNote, table as tbl } from '../ui.tsx';
+import { PageHeader } from '../cases/bits.tsx';
+import { Badge, Button, cx, fieldClass, SegmentedControl, StateNote, table as tbl } from '../ui.tsx';
 import { DATASETS } from '../../lib/pitt/data.ts';
 import {
-  AGE_BUCKETS, NO_FILTERS, PRIORITY_RULES, defaultFilters, applyFilters, bucketTotals, cohortSummary, cohortVariance, deriveRows, filterOptions, fmtCompact, fmtMoney, fmtNum, kpis, priorFilters,
+  AGE_BUCKETS, NO_FILTERS, PRIORITY_RULES, atRiskBySeat, defaultFilters, applyFilters, bucketTotals, cohortSummary, cohortVariance, deriveRows, filterOptions, fmtCompact, fmtMoney, fmtNum, kpis, priorFilters,
   reconcile, riskTable, sankey, type Filters, type Kpi, type SortKey,
 } from '../../lib/pitt/engine.ts';
 import { useCases } from '../cases/CasesContext.tsx';
 import { RunStrip } from '../cases/RunStrip.tsx';
+import { SeatDonut } from './SeatDonut.tsx';
 import { RevenueVariance } from '../cases/RevenueVariance.tsx';
 import { Chip, Panel, PriorityChip, Tip, useCountUp } from './bits.tsx';
 import { SankeyFlow } from './SankeyFlow.tsx';
@@ -61,6 +63,7 @@ export const RoomPage: React.FC = () => {
   const set = (p: Partial<Filters>) => setFilters((f) => ({ ...f, ...p }));
   const sym = ds.currency.symbol;
   const variance = useMemo(() => cohortVariance(rows), [rows]);
+  const bySeat = useMemo(() => atRiskBySeat(rows), [rows]);
   const { run, go } = useCases();
   // A network of the real data set that is also a case of the current run opens its case file.
   const caseOf = (nid: number) => (ds.synthetic ? null : run.cases.find((c) => c.networkId === nid) ?? null);
@@ -73,73 +76,58 @@ export const RoomPage: React.FC = () => {
         </div>
       )}
 
-      {/* Header */}
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-xs text-muted">Amazon DSP · all endpoints</p>
-            <h1 className="text-xl font-semibold tracking-tight text-ink">Disconnection Room</h1>
-            {mode === 'internal' && (
-              <p className="num mt-0.5 text-xs text-muted">
-                {summary.networks} networks · {summary.seats} Amazon seats · {summary.window} · data as of {ds.asOf}
-              </p>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="flex items-center gap-1.5 text-xs text-muted">
-              Data
-              <select className={field} value={dsId} onChange={(e) => setDsId(e.target.value)}>
-                {DATASETS.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div role="radiogroup" aria-label="View" className="flex rounded-md border border-line p-0.5">
-              {(['internal', 'publisher'] as const).map((m) => (
-                <button
-                  key={m}
-                  role="radio"
-                  aria-checked={mode === m}
-                  onClick={() => setMode(m)}
-                  className={cx('rounded px-2.5 py-1 text-xs font-medium cursor-pointer', mode === m ? 'bg-surface-2 text-ink shadow-sm' : 'text-muted hover:text-ink')}
-                >
-                  {m === 'internal' ? 'Internal view' : 'Publisher view'}
-                </button>
-              ))}
-            </div>
-            <button onClick={() => setView({ page: 'data' })} className="inline-flex items-center gap-1.5 rounded-md border border-line px-2.5 py-1.5 text-xs text-ink-2 hover:text-ink cursor-pointer">
-              <BookOpen className="h-3.5 w-3.5" aria-hidden /> Use your data
-            </button>
-          </div>
-        </div>
+      <PageHeader
+        title="Disconnection Room"
+        aside={
+          <>
+            <SegmentedControl<'internal' | 'publisher'>
+              value={mode}
+              onChange={setMode}
+              ariaLabel="View"
+              options={[
+                { value: 'internal', label: 'Internal view' },
+                { value: 'publisher', label: 'Publisher view' },
+              ]}
+            />
+            <Button onClick={() => setView({ page: 'data' })}>
+              <BookOpen className="h-4 w-4" aria-hidden /> Use your data
+            </Button>
+          </>
+        }
+      />
 
-        {/* Filters: applied before every derivation. Hidden in the publisher view, which shows one network only. */}
-        <div role="group" aria-label="Filters" hidden={mode === 'publisher'} className="flex flex-wrap items-end gap-2 border-y border-line py-3">
+      {/* Filters: applied before every derivation. Hidden in the publisher view, which shows one network only. */}
+      <div role="group" aria-label="Filters" hidden={mode === 'publisher'} className="rounded-lg border border-line bg-surface p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <Sel label="Data" value={dsId} onChange={setDsId} options={DATASETS.map((d) => [d.id, d.label])} all={false} />
           <Sel label="Business unit" value={filters.businessUnit ?? ''} onChange={(v) => set({ businessUnit: v || null })} options={opts.businessUnits.map((b) => [b, b])} />
           <Sel label="Amazon partner" value={filters.partnerId?.toString() ?? ''} onChange={(v) => set({ partnerId: v ? Number(v) : null })} options={opts.partners.map((p) => [String(p.id), p.id + ' · ' + p.name.replace('Amazon DSP ', '')])} />
           <Sel label="Region" value={filters.region ?? ''} onChange={(v) => set({ region: v || null })} options={opts.regions.map((r) => [r, r])} />
           <Sel label="Priority" value={filters.priority ?? ''} onChange={(v) => set({ priority: (v || null) as Filters['priority'] })} options={[['P0', 'P0'], ['P1', 'P1'], ['P2', 'P2']]} />
           <Sel label="Status" value={filters.status ?? ''} onChange={(v) => set({ status: (v || null) as Filters['status'] })} options={[['disconnected', 'Still disconnected'], ['reconnected', 'Reconnected']]} />
-          <label className="flex flex-col gap-1 text-[11px] font-medium text-muted">
-            Cut from
-            <input type="date" className={cx(field, 'num')} value={filters.from ?? ''} min={opts.minDate} max={opts.maxDate} onChange={(e) => set({ from: e.target.value || null })} />
+          <label className="flex flex-col gap-1.5 text-[13px] text-muted">
+            Cut from → to
+            <span className="flex items-center gap-1">
+              <input type="date" aria-label="Cut from" className={cx(field, 'num')} value={filters.from ?? ''} min={opts.minDate} max={opts.maxDate} onChange={(e) => set({ from: e.target.value || null })} />
+              <span aria-hidden>→</span>
+              <input type="date" aria-label="Cut to" className={cx(field, 'num')} value={filters.to ?? ''} min={opts.minDate} max={opts.maxDate} onChange={(e) => set({ to: e.target.value || null })} />
+            </span>
           </label>
-          <label className="flex flex-col gap-1 text-[11px] font-medium text-muted">
-            to
-            <input type="date" className={cx(field, 'num')} value={filters.to ?? ''} min={opts.minDate} max={opts.maxDate} onChange={(e) => set({ to: e.target.value || null })} />
-          </label>
-          <button onClick={() => setFilters(NO_FILTERS)} className="h-8 rounded-md px-2 text-xs text-muted hover:text-ink cursor-pointer">
+          <button onClick={() => setFilters(NO_FILTERS)} className="h-8 px-1 text-sm text-link hover:underline cursor-pointer">
             Clear filters
           </button>
           <span className="ml-auto self-center">
-            <Chip tone="warn" title={'P0: still disconnected and ≥ ' + PRIORITY_RULES.p0SpendMin + ' / week · P1: ≥ ' + PRIORITY_RULES.p1SpendMin + ' or revenue drop ≥ ' + PRIORITY_RULES.p1DropPct + '% · P2: still disconnected, revenue missing'}>
-              Placeholder thresholds
-            </Chip>
+            <Badge tone="warn">
+              <span title={'P0: still disconnected and ≥ ' + PRIORITY_RULES.p0SpendMin + ' / week · P1: ≥ ' + PRIORITY_RULES.p1SpendMin + ' or revenue drop ≥ ' + PRIORITY_RULES.p1DropPct + '% · P2: still disconnected, revenue missing'}>Placeholder thresholds</span>
+            </Badge>
           </span>
         </div>
-      </header>
+        {mode === 'internal' && (
+          <p className="num mt-3 text-xs text-muted">
+            {summary.networks} networks · {summary.seats} Amazon seats · cuts {summary.window} · data as of {ds.asOf}
+          </p>
+        )}
+      </div>
 
       {view.page === 'data' ? (
         <UseYourData onBack={() => setView({ page: 'room' })} />
@@ -150,21 +138,28 @@ export const RoomPage: React.FC = () => {
       ) : (
         <>
           {!ds.synthetic && <RunStrip />}
-          <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line md:grid-cols-5" aria-label="Key figures">
-            {k.map((x) => (
-              <KpiCard key={x.id} k={x} symbol={sym} hasPrior={!!prior} />
-            ))}
-          </dl>
-          <p className="text-[11px] text-muted">{ds.currency.note}</p>
+          <section aria-label="Key figures" className="overflow-hidden rounded-lg border border-line bg-surface">
+            <dl className="grid grid-cols-2 gap-px bg-line md:grid-cols-5">
+              {k.map((x, i) => (
+                <KpiCard key={x.id} k={x} symbol={sym} hasPrior={!!prior} last={i === k.length - 1} />
+              ))}
+            </dl>
+            <p className="border-t border-line px-4 py-2 text-[11px] text-muted">{ds.currency.note}</p>
+          </section>
 
-          <Panel
-            id="flow"
-            eyebrow="Revenue at risk flow"
-            title="Where the weekly spend sat before the cut"
-            description={'Business unit → Amazon seat → network → primary failing check → status. "Still disconnected" equals the Revenue at risk KPI (' + fmtMoney(flow.stillDisconnected, sym) + ').'}
-          >
-            <SankeyFlow nodes={flow.nodes} links={flow.links} symbol={sym} undrawn={flow.undrawn} />
-          </Panel>
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,62fr)_minmax(0,38fr)]">
+            <Panel
+              id="flow"
+              eyebrow="Revenue at risk flow"
+              title="Where the weekly spend sat before the cut"
+              description={'Business unit → Amazon seat → network → failing check → status. "Still disconnected" equals Revenue at risk (' + fmtMoney(flow.stillDisconnected, sym) + ').'}
+            >
+              <SankeyFlow nodes={flow.nodes} links={flow.links} symbol={sym} undrawn={flow.undrawn} />
+            </Panel>
+            <Panel id="by-seat" eyebrow="At risk by Amazon seat" title="Still disconnected, weekly spend before the cut">
+              <SeatDonut data={bySeat} symbol={sym} />
+            </Panel>
+          </div>
 
           <Panel
             id="risk"
@@ -172,19 +167,16 @@ export const RoomPage: React.FC = () => {
             title="Every cut seat, by days since the cut"
             aside={
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                <div role="radiogroup" aria-label="Sort" className="flex rounded-md border border-line p-0.5">
-                  {(
-                    [
-                      ['age', 'Age'],
-                      ['value', 'Value'],
-                      ['az', 'A–Z'],
-                    ] as const
-                  ).map(([id, l]) => (
-                    <button key={id} role="radio" aria-checked={sort === id} onClick={() => setSort(id)} className={cx('rounded px-2 py-0.5 cursor-pointer', sort === id ? 'bg-surface-2 text-ink' : 'text-muted')}>
-                      {l}
-                    </button>
-                  ))}
-                </div>
+                <SegmentedControl<SortKey>
+                  value={sort}
+                  onChange={setSort}
+                  ariaLabel="Sort"
+                  options={[
+                    { value: 'age', label: 'Age' },
+                    { value: 'value', label: 'Value' },
+                    { value: 'az', label: 'A–Z' },
+                  ]}
+                />
                 <label className="flex items-center gap-1.5 text-muted">
                   <input type="checkbox" checked={atRiskOnly} onChange={(e) => setAtRiskOnly(e.target.checked)} className="accent-[var(--accent)]" /> At-risk only
                 </label>
@@ -225,7 +217,7 @@ export const RoomPage: React.FC = () => {
                           {r.reason}
                         </span>
                         {caseOf(r.NETWORK_ID) && (
-                          <button className="mt-0.5 inline-flex items-center gap-1 text-accent-ink hover:underline cursor-pointer" onClick={(e) => (e.stopPropagation(), go('investigations', caseOf(r.NETWORK_ID)!.caseId))}>
+                          <button className="mt-0.5 inline-flex items-center gap-1 text-link hover:underline cursor-pointer" onClick={(e) => (e.stopPropagation(), go('investigations', caseOf(r.NETWORK_ID)!.caseId))}>
                             <FileText className="h-3 w-3" aria-hidden /> Case file
                           </button>
                         )}
@@ -248,7 +240,7 @@ export const RoomPage: React.FC = () => {
                   {!table.length && (
                     <tr>
                       <td colSpan={8} className="px-2 py-3">
-                        <StateNote kind="empty" compact title="No seat matches the filters" action={<button onClick={() => setFilters(NO_FILTERS)} className="text-xs text-accent-ink hover:underline cursor-pointer">Clear filters</button>} />
+                        <StateNote kind="empty" compact title="No seat matches the filters" action={<button onClick={() => setFilters(NO_FILTERS)} className="text-xs text-link hover:underline cursor-pointer">Clear filters</button>} />
                       </td>
                     </tr>
                   )}
@@ -277,11 +269,11 @@ export const RoomPage: React.FC = () => {
   );
 };
 
-const Sel: React.FC<{ label: string; value: string; onChange: (v: string) => void; options: (readonly [string, string])[] }> = ({ label, value, onChange, options }) => (
-  <label className="flex flex-col gap-1 text-[11px] font-medium text-muted">
+const Sel: React.FC<{ label: string; value: string; onChange: (v: string) => void; options: (readonly [string, string])[]; all?: boolean }> = ({ label, value, onChange, options, all = true }) => (
+  <label className="flex flex-col gap-1.5 text-[13px] text-muted">
     {label}
-    <select className={field} value={value} onChange={(e) => onChange(e.target.value)}>
-      <option value="">All</option>
+    <select className={cx(field, 'min-w-[8.5rem]')} value={value} onChange={(e) => onChange(e.target.value)}>
+      {all && <option value="">All</option>}
       {options.map(([v, l]) => (
         <option key={v} value={v}>
           {l}
@@ -291,19 +283,19 @@ const Sel: React.FC<{ label: string; value: string; onChange: (v: string) => voi
   </label>
 );
 
-const KpiCard: React.FC<{ k: Kpi; symbol: string; hasPrior: boolean }> = ({ k, symbol, hasPrior }) => {
+const KpiCard: React.FC<{ k: Kpi; symbol: string; hasPrior: boolean; last?: boolean }> = ({ k, symbol, hasPrior, last }) => {
   const v = useCountUp(k.value);
   const shown = k.value == null ? 'No data' : k.kind === 'money' ? fmtMoney(v, symbol) : fmtNum(v);
   const up = (k.delta ?? 0) > 0;
   // More disconnections, revenue at risk or failing checks is bad; more reconnected or saved is good.
   const good = k.id === 'reconnected' || k.id === 'saved' ? up : !up;
   return (
-    <div className="bg-surface px-4 py-3">
-      <dt className="flex items-center gap-1 text-xs text-muted">
+    <div className={cx('bg-surface px-4 py-3.5', last && 'col-span-2 md:col-span-1')}>
+      <dt className="flex items-center gap-1 text-sm text-ink">
         {k.label}
         <Tip label={'Definition of ' + k.label}>{k.definition}</Tip>
       </dt>
-      <dd className="num mt-1 text-xl font-semibold text-ink" aria-label={k.label + ': ' + (k.value == null ? 'No data' : k.kind === 'money' ? fmtMoney(k.value, symbol) : fmtNum(k.value))}>
+      <dd className={cx('num mt-1 text-xl', k.value == null ? 'text-muted' : 'text-accent-ink')} aria-label={k.label + ': ' + (k.value == null ? 'No data' : k.kind === 'money' ? fmtMoney(k.value, symbol) : fmtNum(k.value))}>
         {shown}
       </dd>
       {k.sub && <dd className="text-[11px] text-muted">{k.sub}</dd>}

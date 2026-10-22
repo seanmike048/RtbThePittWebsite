@@ -23,7 +23,7 @@ export const CaseFile: React.FC<{ c: CaseRecord }> = ({ c }) => {
         title={c.publisher}
         c={c}
         aside={
-          <button onClick={() => go('impact', c.caseId)} className="inline-flex items-center gap-1 text-sm text-accent-ink hover:underline cursor-pointer">
+          <button onClick={() => go('impact', c.caseId)} className="inline-flex items-center gap-1 text-sm text-link hover:underline cursor-pointer">
             Financial impact <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </button>
         }
@@ -54,7 +54,7 @@ export const CaseFile: React.FC<{ c: CaseRecord }> = ({ c }) => {
       )}
 
       <dl className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-lg border border-line bg-surface p-4 sm:grid-cols-3 lg:grid-cols-6">
-        <Fact k="Case" v={<span className="num text-xs">{c.caseId}</span>} />
+        <Fact k="Case" v={<span className="id break-all">{c.caseId}</span>} />
         <Fact k="Disconnected" v={c.disconnectedAt ?? 'Not stated'} p="Source" />
         <Fact k="Publisher" v={c.meta ?? 'Not stated'} p="Source" />
         <Fact k="Removed per week" v={<span className="num font-semibold">{showUsd(f.removedAfterCut)}</span>} p={f.removedAfterCut.kind === 'usd' ? 'Calculated' : 'Unavailable'} />

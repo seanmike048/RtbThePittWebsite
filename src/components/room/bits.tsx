@@ -39,21 +39,27 @@ export const PresenceChip: React.FC<{ p: Presence }> = ({ p }) => (
   <Chip tone={p === 'PRESENT' ? 'ok' : p === 'ABSENT' ? 'danger' : p === 'PARTIAL' ? 'warn' : 'neutral'}>{p === 'NO_DATA' ? 'No data' : p.toLowerCase()}</Chip>
 );
 
+/** A Maestro card: short 17px title (the eyebrow when given), the longer sentence as a muted subtitle, actions right. */
 export const Panel: React.FC<{ id?: string; title: string; eyebrow?: string; aside?: React.ReactNode; children: React.ReactNode; className?: string; description?: React.ReactNode }> = ({
   id, title, eyebrow, aside, children, className, description,
 }) => (
-  <section id={id} aria-labelledby={id ? id + '-h' : undefined} className={cx('rounded-lg border border-line bg-surface p-4 sm:p-5', className)}>
-    <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+  <section id={id} aria-labelledby={id ? id + '-h' : undefined} className={cx('rounded-lg border border-line bg-surface', className)}>
+    <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-4 pb-3 pt-3.5">
       <div className="min-w-0">
-        {eyebrow && <p className="text-xs text-muted">{eyebrow}</p>}
-        <h2 id={id ? id + '-h' : undefined} className="text-base font-semibold text-ink">
-          {title}
+        <h2 id={id ? id + '-h' : undefined} className="text-[17px] font-normal leading-6 text-ink">
+          {eyebrow ?? title}
         </h2>
-        {description && <p className="mt-0.5 max-w-3xl text-xs text-muted">{description}</p>}
+        {(eyebrow || description) && (
+          <p className="mt-0.5 max-w-3xl text-xs text-muted">
+            {eyebrow ? title : null}
+            {eyebrow && description ? '. ' : null}
+            {description}
+          </p>
+        )}
       </div>
       {aside}
     </div>
-    {children}
+    <div className="px-4 pb-4">{children}</div>
   </section>
 );
 

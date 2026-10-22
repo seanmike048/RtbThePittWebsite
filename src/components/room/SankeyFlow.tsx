@@ -13,8 +13,8 @@ const { chart } = theme;
 const h = (n: N) => (n.y1 ?? 0) - (n.y0 ?? 0);
 /** Labels inside the chart stay short; the full name is in the focus line and the table. */
 const shortName = (name: string) => name.replace(/^Amazon DSP /, '').replace(/\s+·\s+(\d+)$/, ' · $1');
-const COLUMN_COLORS = [chart.series[0], chart.series[2], chart.series[4], chart.series[1], chart.removed];
-const colorOf = (n: N) => (n.column === 4 ? (n.name === 'Reconnected' ? chart.positive : chart.removed) : n.column === 3 && n.name === 'No failing check' ? chart.neutral : COLUMN_COLORS[n.column]);
+const COLUMN_COLORS = [chart.series[3], chart.series[0], chart.series[4], chart.series[2], chart.stillDisconnected];
+const colorOf = (n: N) => (n.column === 4 ? (n.name === 'Reconnected' ? chart.positive : chart.stillDisconnected) : n.column === 3 && n.name === 'No failing check' ? chart.neutral : COLUMN_COLORS[n.column]);
 
 /**
  * Revenue at risk flow. Layout geometry comes from d3-sankey; every value and share comes from engine.sankey().
@@ -121,7 +121,7 @@ export const SankeyFlow: React.FC<{ nodes: SankeyNode[]; links: SankeyLink[]; sy
                     key={i}
                     d={sankeyLinkHorizontal()(l as never) ?? undefined}
                     stroke={colorOf(l.target)}
-                    strokeOpacity={on ? 0.42 : 0.06}
+                    strokeOpacity={on ? 0.35 : 0.06}
                     strokeWidth={Math.max(1, l.width ?? 1)}
                     className="room-flow"
                     style={{ animationDelay: l.source.column * 120 + 'ms' }}

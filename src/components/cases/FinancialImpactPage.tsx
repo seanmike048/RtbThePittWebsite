@@ -70,7 +70,7 @@ const Impact: React.FC<{ c: CaseRecord }> = ({ c }) => {
           footnote={
             <>
               Projected recovery comes from{' '}
-              <button onClick={() => go('projection', c.caseId)} className="text-accent-ink hover:underline cursor-pointer">
+              <button onClick={() => go('projection', c.caseId)} className="text-link hover:underline cursor-pointer">
                 Spend Projection
               </button>
               ; it is not added to observed spend.

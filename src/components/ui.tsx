@@ -4,12 +4,12 @@ import { AlertTriangle, Check, CircleSlash, Copy, Inbox, Info, Loader2, X } from
 type Tone = 'neutral' | 'accent' | 'danger' | 'warn' | 'ok' | 'info';
 
 const TONES: Record<Tone, string> = {
-  neutral: 'bg-surface-2 text-ink-2 border-line',
-  accent: 'bg-accent-soft text-accent-ink border-accent/25',
-  danger: 'bg-danger-soft text-danger-ink border-danger/25',
-  warn: 'bg-warn-soft text-warn-ink border-warn/30',
-  ok: 'bg-ok-soft text-ok-ink border-ok/25',
-  info: 'bg-info-soft text-info border-info/25',
+  neutral: 'bg-surface-2 text-ink-2',
+  accent: 'bg-accent-soft text-accent-ink',
+  danger: 'bg-danger-soft text-danger-ink',
+  warn: 'bg-warn-soft text-warn-ink',
+  ok: 'bg-ok-soft text-ok-ink',
+  info: 'bg-info-soft text-info',
 };
 
 const DOTS: Record<Tone, string> = {
@@ -33,7 +33,7 @@ export const Badge: React.FC<{ tone?: Tone; dot?: boolean; className?: string; c
 }) => (
   <span
     className={cx(
-      'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap',
+      'inline-flex items-center gap-1.5 rounded-sm px-2 py-1 text-xs whitespace-nowrap',
       TONES[tone],
       className,
     )}
@@ -47,7 +47,23 @@ export const Card: React.FC<{ className?: string; children: React.ReactNode; as?
   className,
   children,
   as: Tag = 'section',
-}) => <Tag className={cx('rounded-xl border border-line bg-surface shadow-card', className)}>{children}</Tag>;
+}) => <Tag className={cx('rounded-lg border border-line bg-surface', className)}>{children}</Tag>;
+
+/** Maestro overline: 11px/500 uppercase with tracking. The only uppercase text in the product (rail sections, summary bands). */
+export const Overline: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
+  <p className={cx('text-[11px] font-medium uppercase leading-[14px] tracking-[0.06em]', className)}>{children}</p>
+);
+
+/** Maestro card header: 17px/400 title, actions right-aligned. */
+export const CardHeader: React.FC<{ title: React.ReactNode; aside?: React.ReactNode; sub?: React.ReactNode; className?: string }> = ({ title, aside, sub, className }) => (
+  <div className={cx('flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-4 pt-3.5 pb-3', className)}>
+    <div className="min-w-0">
+      <h2 className="text-[17px] font-normal leading-6 text-ink">{title}</h2>
+      {sub && <p className="mt-0.5 max-w-3xl text-xs text-muted">{sub}</p>}
+    </div>
+    {aside && <div className="flex shrink-0 flex-wrap items-center gap-2">{aside}</div>}
+  </div>
+);
 
 export const Eyebrow: React.FC<{ tone?: Tone; children: React.ReactNode; className?: string }> = ({
   tone = 'neutral',
@@ -63,7 +79,7 @@ export const Eyebrow: React.FC<{ tone?: Tone; children: React.ReactNode; classNa
     info: 'text-info',
   }[tone];
   return (
-    <p className={cx('text-[11px] font-semibold uppercase tracking-[0.08em]', color, className)}>{children}</p>
+    <Overline className={cx(color, className)}>{children}</Overline>
   );
 };
 
@@ -78,13 +94,13 @@ export const SectionHeading: React.FC<{
   <div className="flex flex-wrap items-start justify-between gap-3">
     <div className="flex min-w-0 items-start gap-3">
       {icon && (
-        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-ink">
           {icon}
         </div>
       )}
       <div className="min-w-0">
         {eyebrow && <Eyebrow tone={eyebrowTone}>{eyebrow}</Eyebrow>}
-        <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">{title}</h2>
+        <h2 className="mt-1 text-[17px] font-normal leading-6 text-ink">{title}</h2>
         {description && <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted [overflow-wrap:anywhere]">{description}</p>}
       </div>
     </div>
@@ -105,12 +121,12 @@ export const Button: React.FC<
     disabled={disabled || loading}
     aria-busy={loading || undefined}
     className={cx(
-      'inline-flex items-center justify-center gap-2 rounded-md border font-medium transition-colors cursor-pointer disabled:cursor-not-allowed',
+      'inline-flex items-center justify-center gap-2 rounded-sm border font-medium transition-colors cursor-pointer disabled:cursor-not-allowed',
       'disabled:border-disabled-line disabled:bg-disabled disabled:text-disabled-ink disabled:shadow-none',
-      size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-3.5 py-2 text-sm',
+      size === 'sm' ? 'h-8 px-3 text-[13px]' : 'h-9 px-3.5 text-sm',
       variant === 'primary' && 'border-transparent bg-accent text-on-accent shadow-sm hover:bg-accent-ink active:opacity-90',
-      variant === 'secondary' && 'border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink active:bg-surface-2',
-      variant === 'ghost' && 'border-transparent text-muted hover:bg-surface-2 hover:text-ink active:bg-surface-2 disabled:border-transparent disabled:bg-transparent',
+      variant === 'secondary' && 'border-line-strong bg-surface text-ink hover:bg-surface-2 active:bg-surface-2',
+      variant === 'ghost' && 'border-transparent text-link hover:bg-surface-2 active:bg-surface-2 disabled:border-transparent disabled:bg-transparent',
       className,
     )}
   >
@@ -122,10 +138,10 @@ export const Button: React.FC<
 /** Text inputs and selects share one look and one set of states (focus, invalid, disabled). */
 export const fieldClass = (size: 'sm' | 'md' = 'md') =>
   cx(
-    'rounded-md border border-line bg-surface text-ink placeholder:text-faint transition-colors',
+    'rounded-sm border border-line bg-surface text-ink placeholder:text-faint transition-colors hover:border-line-strong',
     'focus:border-focus focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus',
     'aria-[invalid=true]:border-danger disabled:cursor-not-allowed disabled:border-disabled-line disabled:bg-disabled disabled:text-disabled-ink',
-    size === 'sm' ? 'h-8 px-2 text-xs' : 'h-9 px-2.5 text-sm',
+    size === 'sm' ? 'h-8 px-2 text-[13px]' : 'h-9 px-3 text-sm',
   );
 
 type StateKind = 'empty' | 'loading' | 'error' | 'unavailable';
@@ -170,11 +186,11 @@ export const StateNote: React.FC<{ kind: StateKind; title: string; children?: Re
 export const table = {
   wrap: 'overflow-x-auto rounded-lg border border-line bg-surface',
   table: 'w-full text-left text-sm',
-  head: 'bg-surface-2 text-xs text-muted',
-  th: 'whitespace-nowrap px-3 py-2 font-medium',
-  body: 'divide-y divide-divider',
-  row: 'transition-colors hover:bg-surface-2/60',
-  td: 'px-3 py-2.5 align-top',
+  head: 'bg-surface-2 text-[13px] text-muted',
+  th: 'whitespace-nowrap border-b border-line px-3 py-2.5 font-normal',
+  body: 'divide-y divide-line',
+  row: 'transition-colors hover:bg-surface-2/70',
+  td: 'px-3 py-3 align-top',
   num: 'num text-right',
 } as const;
 
@@ -311,7 +327,7 @@ export const SegmentedControl = <T extends string>({
   options: { value: NoInfer<T>; label: string }[];
   ariaLabel: string;
 }) => (
-  <div role="tablist" aria-label={ariaLabel} className="scrollbar-none inline-flex max-w-full overflow-x-auto rounded-lg border border-line bg-surface-2 p-1">
+  <div role="tablist" aria-label={ariaLabel} className="scrollbar-none inline-flex max-w-full overflow-x-auto rounded-sm border border-line-strong">
     {options.map(o => (
       <button
         key={o.value}
@@ -320,8 +336,8 @@ export const SegmentedControl = <T extends string>({
         aria-selected={value === o.value}
         onClick={() => onChange(o.value)}
         className={cx(
-          'whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all cursor-pointer',
-          value === o.value ? 'bg-surface text-ink shadow-sm' : 'text-muted hover:text-ink',
+          'h-8 whitespace-nowrap border-l border-line-strong px-3 text-[13px] transition-colors first:border-l-0 cursor-pointer',
+          value === o.value ? 'bg-accent-soft font-medium text-accent-ink' : 'bg-surface text-ink hover:bg-surface-2',
         )}
       >
         {o.label}
@@ -350,6 +366,6 @@ export const TableShell: React.FC<{ children: React.ReactNode; minWidth?: string
 );
 
 export const Th: React.FC<{ children?: React.ReactNode; right?: boolean }> = ({ children, right }) => (
-  <th scope="col" className={cx('whitespace-nowrap bg-surface-2 px-3 py-2 text-xs font-medium text-muted', right && 'text-right')}>{children}</th>
+  <th scope="col" className={cx('whitespace-nowrap border-b border-line bg-surface-2 px-3 py-2.5 text-[13px] font-normal text-muted', right && 'text-right')}>{children}</th>
 );
 

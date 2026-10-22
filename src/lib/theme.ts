@@ -27,6 +27,9 @@ export const theme = {
     series: ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)'],
     /** Roles with a fixed meaning: do not reuse them for unrelated series. */
     removed: 'var(--chart-removed)',
+    /** The Sankey status node "Still disconnected" only. */
+    stillDisconnected: 'var(--danger)',
+    other: 'var(--chart-other)',
     live: 'var(--chart-live)',
     measure: 'var(--chart-measure)',
     positive: 'var(--ok)',
