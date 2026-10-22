@@ -6,8 +6,9 @@ import { ChartTable } from './bits.tsx';
 type N = SankeyNode & { x0?: number; x1?: number; y0?: number; y1?: number; index?: number };
 type L = { source: N; target: N; value: number; width?: number; y0?: number; y1?: number };
 
-const COLUMN_COLORS = ['#7c83ff', '#5aa9ff', '#9aa3ba', '#f5b83d', '#ff6b81'];
-const colorOf = (n: N) => (n.column === 4 ? (n.name === 'Reconnected' ? '#3fd69b' : '#ff6b81') : n.column === 3 && n.name === 'No failing check' ? '#7d879f' : COLUMN_COLORS[n.column]);
+// Theme tokens only (index.css), so the flow follows light and dark like every other chart.
+const COLUMN_COLORS = ['var(--chart-1)', 'var(--chart-3)', 'var(--chart-5)', 'var(--chart-2)', 'var(--chart-removed)'];
+const colorOf = (n: N) => (n.column === 4 ? (n.name === 'Reconnected' ? 'var(--ok)' : 'var(--chart-removed)') : n.column === 3 && n.name === 'No failing check' ? 'var(--faint)' : COLUMN_COLORS[n.column]);
 
 /**
  * Revenue at risk flow. Layout geometry comes from d3-sankey; every value and share comes from engine.sankey().
@@ -131,7 +132,7 @@ export const SankeyFlow: React.FC<{ nodes: SankeyNode[]; links: SankeyLink[]; sy
               const left = n.column < 4;
               return (
                 <g key={n.id} opacity={on ? 1 : 0.25} onClick={() => setFocus(n.id === focus ? null : n.id)} className="cursor-pointer">
-                  <rect x={n.x0} y={n.y0} width={(n.x1 ?? 0) - (n.x0 ?? 0)} height={Math.max(1, (n.y1 ?? 0) - (n.y0 ?? 0))} rx={2} fill={colorOf(n)} stroke={n.id === focus ? '#fff' : 'none'} strokeWidth={2} />
+                  <rect x={n.x0} y={n.y0} width={(n.x1 ?? 0) - (n.x0 ?? 0)} height={Math.max(1, (n.y1 ?? 0) - (n.y0 ?? 0))} rx={2} fill={colorOf(n)} stroke={n.id === focus ? 'var(--ink)' : 'none'} strokeWidth={2} />
                   {((n.y1 ?? 0) - (n.y0 ?? 0) >= (n.column === 2 ? 15 : 11) || n.id === focus) && (
                     <text x={left ? (n.x1 ?? 0) + 5 : (n.x0 ?? 0) - 5} y={((n.y0 ?? 0) + (n.y1 ?? 0)) / 2} dy="0.35em" textAnchor={left ? 'start' : 'end'} className="fill-[var(--ink-2)] text-[10.5px]">
                       {n.name} · <tspan className="num fill-[var(--ink)] font-semibold">{fmtMoney(n.value, symbol)}</tspan> <tspan className="fill-[var(--muted)]">{n.share.toFixed(1)}%</tspan>

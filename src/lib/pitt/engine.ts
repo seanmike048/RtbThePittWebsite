@@ -3,7 +3,7 @@
  * selectors return. Filters are applied first (applyFilters), and every selector takes the filtered cohort, so all KPIs,
  * charts and tables on screen describe the same rows.
  */
-import type { AiInvestigation, Check, CheckName, CheckResult, Confidence, Dataset, DemandFunnel, Disconnection, Hypothesis, Presence, TrafficMetric } from './types.ts';
+import type { AiInvestigation, Check, CheckName, CheckResult, Dataset, DemandFunnel, Disconnection, Hypothesis, Presence, TrafficMetric } from './types.ts';
 
 // ------------------------------------------------------------------ configuration (editable placeholders)
 
@@ -14,11 +14,6 @@ export const PRIORITY_RULES = {
   p1DropPct: 50,
   // P2: still disconnected with SPEND_7D_BEFORE missing
 } as const;
-
-/** Amazon RPMBr reference by region, USD per million bid requests (configurable). Not converted to EUR. */
-export const RPMBR_REFERENCE_USD: Record<string, number> = { Americas: 50, EMEA: 25, APAC: 10 };
-/** Region each Amazon seat is valued against (from the seat names). */
-export const SEAT_REGION: Record<number, string> = { 437: 'Americas', 489: 'EMEA', 490: 'Americas', 491: 'Americas', 492: 'Americas' };
 
 export const AGE_BUCKETS = [
   { id: 'current', label: 'Current', min: 0, max: 0 },
@@ -53,28 +48,16 @@ export const READINESS_GROUPS = [
   { id: 'device', label: 'Device', note: null, signals: ['device.lmt', 'device.dnt'] },
 ] as const;
 
-/** Ops-room theme (dark, one accent). Applied as CSS variables on the Room only. */
-export const ROOM_THEME = {
-  accent: '#7c83ff',
-  vars: {
-    '--canvas': '#0a0d16', '--surface': '#111624', '--surface-2': '#161c2d', '--line': '#232b40', '--line-strong': '#313b56',
-    '--ink': '#f1f4fb', '--ink-2': '#c8cfdf', '--muted': '#9aa3ba', '--faint': '#6b7591',
-    '--accent': '#7c83ff', '--accent-ink': '#b4b8ff', '--accent-soft': '#1d1f45',
-    '--danger': '#ff6b81', '--danger-ink': '#ff9aa9', '--danger-soft': '#3a1520',
-    '--warn': '#f5b83d', '--warn-ink': '#ffd27a', '--warn-soft': '#33260c',
-    '--ok': '#3fd69b', '--ok-ink': '#7ce8be', '--ok-soft': '#0f2c22',
-    '--info': '#5aa9ff', '--info-soft': '#0f2238',
-  } as Record<string, string>,
-  priority: { P0: '#ff6b81', P1: '#f5b83d', P2: '#5aa9ff', none: '#6b7591' },
-  result: { PASS: '#3fd69b', FAIL: '#ff6b81', NO_DATA: '#7d879f' },
-} as const;
+/** Tone of each priority and check result; colours come from the shared theme tokens (index.css). */
+export const PRIORITY_TONE = { P0: 'danger', P1: 'warn', P2: 'info', none: 'neutral' } as const;
+export const RESULT_TONE = { PASS: 'ok', FAIL: 'danger', NO_DATA: 'neutral' } as const;
 
 // ------------------------------------------------------------------ formatting (null is "No data", never 0)
 
 export const NO_DATA = 'No data';
 export const fmtNum = (n: number | null | undefined, digits = 0) =>
   n == null || !Number.isFinite(n) ? NO_DATA : n.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
-export const fmtMoney = (n: number | null | undefined, symbol = '€') => (n == null || !Number.isFinite(n) ? NO_DATA : symbol + Math.round(n).toLocaleString('en-US'));
+export const fmtMoney = (n: number | null | undefined, symbol = '$') => (n == null || !Number.isFinite(n) ? NO_DATA : symbol + Math.round(n).toLocaleString('en-US'));
 export const fmtCompact = (n: number | null | undefined) => {
   if (n == null || !Number.isFinite(n)) return NO_DATA;
   const a = Math.abs(n);
@@ -275,8 +258,8 @@ export function kpis(ds: Dataset, rows: Row[], prior: Row[] | null, f: Filters =
       definition: 'Distinct networks with at least one Amazon seat whose RECONNECTED_AT is null, in the filtered cohort.' },
     { id: 'atRisk', label: 'Revenue at risk', value: now.atRisk, kind: 'money', sub: 'per week, before the cut', delta: d(now.atRisk, before?.atRisk),
       definition: 'Sum of SPEND_7D_BEFORE over still-disconnected seats. Spend in the 7 days before the cut: a run rate, not a confirmed loss. Seats with no spend recorded are left out.' },
-    { id: 'reconnected', label: 'Reconnected', value: now.reconnected, kind: 'count', sub: now.recovered == null ? 'recovered: No data' : 'recovered ' + fmtMoney(now.recovered, ds.currency.symbol) + ' / week', delta: d(now.reconnected, before?.reconnected),
-      definition: 'Distinct networks whose cut seats all have a RECONNECTED_AT in the cohort; recovered = their SPEND_7D_BEFORE.' },
+    { id: 'reconnected', label: 'Reconnected', value: now.reconnected, kind: 'count', sub: now.recovered == null ? 'pre-cut value: No data' : fmtMoney(now.recovered, ds.currency.symbol) + ' / week pre-cut value', delta: d(now.reconnected, before?.reconnected),
+      definition: 'Distinct networks whose cut seats all have a RECONNECTED_AT in the cohort. The figure below is their SPEND_7D_BEFORE: what they spent before the cut, not verified restored spend.' },
     { id: 'saved', label: 'Revenue saved', value: now.saved, kind: 'money', sub: 'per week', delta: d(now.saved, before?.saved),
       definition: 'Weekly spend of networks that reconnected after a fix (in the cohort) plus networks that stayed connected after a fix (seat and date filters only). From the saves list in data.ts.' },
     { id: 'failing', label: 'Checks failing', value: now.failing, kind: 'count', sub: 'after the cut', delta: d(now.failing, before?.failing),
@@ -399,25 +382,37 @@ export function funnel(ds: Dataset, rows: Row[], networkId: number | null): { st
   return { stages, networks: fs.length };
 }
 
-// ------------------------------------------------------------------ waterfall
+// ------------------------------------------------------------------ revenue variance (cohort)
 
-export interface WaterStep { name: string; value: number; start: number; end: number; kind: 'total' | 'loss' | 'gain'; base: number; size: number }
-export function waterfall(rows: Row[]): WaterStep[] {
+export interface CohortVarianceRow {
+  id: string;
+  label: string;
+  value: number | null;
+  /** Why the value is missing, when it is. */
+  reason: string | null;
+  role: 'total' | 'part' | 'measure';
+  explain: string;
+}
+
+/**
+ * Additive split of the cohort's pre-cut weekly spend: still removed + seats reconnected since. Reconnected seats are
+ * not "recovered": spend after a reconnection is not in the alert view. Run rate, projection and confirmed restored
+ * spend need daily data per publisher (Financial Impact), so they are unavailable here, never zero.
+ */
+export function cohortVariance(rows: Row[]): CohortVarianceRow[] {
   const withSpend = rows.filter((r) => r.SPEND_7D_BEFORE != null);
-  const before = withSpend.reduce((a, r) => a + r.SPEND_7D_BEFORE!, 0);
-  const steps: Omit<WaterStep, 'base' | 'size'>[] = [{ name: 'Before the cut', value: before, start: 0, end: before, kind: 'total' }];
-  let level = before;
-  const byPartner = new Map<string, number>();
-  for (const r of withSpend) byPartner.set(r.PARTNER_NAME + ' · ' + r.PARTNER_ID, (byPartner.get(r.PARTNER_NAME + ' · ' + r.PARTNER_ID) ?? 0) + r.SPEND_7D_BEFORE!);
-  for (const [name, v] of [...byPartner.entries()].sort((a, b) => b[1] - a[1])) {
-    steps.push({ name: 'Cut · ' + name, value: -v, start: level, end: level - v, kind: 'loss' });
-    level -= v;
-  }
-  const recovered = withSpend.filter((r) => !isDisconnected(r)).reduce((a, r) => a + r.SPEND_7D_BEFORE!, 0);
-  steps.push({ name: 'Recovered (reconnected)', value: recovered, start: level, end: level + recovered, kind: 'gain' });
-  level += recovered;
-  steps.push({ name: 'Current run rate', value: level, start: 0, end: level, kind: 'total' });
-  return steps.map((x) => ({ ...x, base: Math.min(x.start, x.end), size: Math.abs(x.end - x.start) }));
+  const total = sum(withSpend.map((r) => r.SPEND_7D_BEFORE));
+  const removed = sum(withSpend.filter(isDisconnected).map((r) => r.SPEND_7D_BEFORE)) ?? (total == null ? null : 0);
+  const reconnected = sum(withSpend.filter((r) => !isDisconnected(r)).map((r) => r.SPEND_7D_BEFORE)) ?? (total == null ? null : 0);
+  const perPublisher = 'Needs daily spend per publisher: open the publisher in Financial Impact.';
+  return [
+    { id: 'precut', label: 'Pre-cut weekly spend', value: total, reason: total == null ? 'No seat in the cohort has a recorded spend.' : null, role: 'total', explain: 'Amazon DSP spend in the 7 days before the cut, on the cut seats of this cohort.' },
+    { id: 'removed', label: 'Removed after cut', value: removed, reason: null, role: 'part', explain: 'Seats still disconnected.' },
+    { id: 'reconnected', label: 'Reconnected seats', value: reconnected, reason: null, role: 'part', explain: 'Seats connected again. Their pre-cut value is shown; spend after reconnection is not verified.' },
+    { id: 'runrate', label: 'Current run rate', value: null, reason: perPublisher, role: 'measure', explain: 'Latest loaded day × 7.' },
+    { id: 'projected', label: 'Projected recovery', value: null, reason: 'Projections are per publisher (Spend Projection).', role: 'measure', explain: 'Only from a complete scenario.' },
+    { id: 'restored', label: 'Confirmed restored', value: null, reason: 'No verified restored spend in the alert view.', role: 'measure', explain: 'Spend observed again after a verified reconnection.' },
+  ];
 }
 
 // ------------------------------------------------------------------ what-if (projection, not a forecast)
@@ -477,32 +472,23 @@ export function changePct(t: TrafficMetric): number | null {
 }
 
 export function trafficContext(ds: Dataset, networkId: number) {
-  const metrics = ds.traffic.filter((t) => t.network_id === networkId).map((t) => ({ ...t, change: changePct(t) }));
+  const metrics = ds.traffic.filter((t) => t.network_id === networkId && !/rpmbr|rpma/i.test(t.metric)).map((t) => ({ ...t, change: changePct(t) }));
   const auctions = metrics.find((m) => m.metric === AMAZON_SPECIFIC.auctionsMetric);
   const amazon = metrics.find((m) => m.metric === AMAZON_SPECIFIC.amazonMetric);
   const amazonSpecific = !!auctions && !!amazon && auctions.change != null && amazon.change != null && Math.abs(auctions.change) <= AMAZON_SPECIFIC.stablePct && amazon.change <= AMAZON_SPECIFIC.dropPct;
   return { metrics, amazonSpecific };
 }
 
-const CONF_RANK: Record<Confidence, number> = { HIGH: 3, MEDIUM: 2, LOW: 1 };
 export interface ShownHypothesis extends Hypothesis {
-  shownConfidence: Confidence | null;
-  capped: boolean;
   unverified: string[];
 }
 
-/** Ranked by confidence. No FAIL check -> HIGH is shown as MEDIUM. A ref missing from Checks is "Unverified evidence". */
+/** Hypotheses in source order, never ranked or scored. A ref missing from Checks is "Unverified evidence". */
 export function rankedHypotheses(ds: Dataset, networkId: number): ShownHypothesis[] {
   const inv = ds.investigations.find((i) => i.network_id === networkId);
   if (!inv) return [];
-  const anyFail = ds.checks.some((c) => c.network_id === networkId && c.result === 'FAIL');
   const refs = new Set(ds.checks.map((c) => c.evidence_ref));
-  return inv.hypotheses
-    .map((h) => {
-      const capped = !anyFail && h.confidence === 'HIGH';
-      return { ...h, shownConfidence: capped ? ('MEDIUM' as Confidence) : h.confidence, capped, unverified: h.evidence_refs.filter((r) => !refs.has(r)) };
-    })
-    .sort((a, b) => (b.shownConfidence ? CONF_RANK[b.shownConfidence] : 0) - (a.shownConfidence ? CONF_RANK[a.shownConfidence] : 0));
+  return inv.hypotheses.map((h) => ({ ...h, unverified: h.evidence_refs.filter((r) => !refs.has(r)) }));
 }
 
 export function investigation(ds: Dataset, networkId: number): AiInvestigation | null {
@@ -531,9 +517,6 @@ export function networkSummary(ds: Dataset, networkId: number) {
     atRisk: sum(rows.filter(isDisconnected).map((r) => r.SPEND_7D_BEFORE)),
     failing,
     fixes: [...new Set(failing.map((c) => c.check))].map((c) => ({ check: c, label: CHECK_LABEL[c], fix: CHECK_FIX[c] })),
-    rpmbr: ds.traffic
-      .filter((t) => t.network_id === networkId && t.metric === 'amazon_rpmbr')
-      .map((t) => ({ seat: t.partner_name, ids: t.partner_ids, value: t.before, referenceUsd: t.partner_ids.length ? RPMBR_REFERENCE_USD[SEAT_REGION[t.partner_ids[0]]] ?? null : null, region: t.partner_ids.length ? SEAT_REGION[t.partner_ids[0]] ?? null : null })),
     timeline: [
       ...rows.map((r) => ({ at: r.CUT_AT, what: 'Cut from ' + r.PARTNER_NAME + ' (' + r.PARTNER_ID + ')' })),
       ...failing.map((c) => ({ at: null as string | null, what: CHECK_LABEL[c.check] + ' FAIL after the cut: ' + c.detail })),

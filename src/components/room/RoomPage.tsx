@@ -1,15 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, BookOpen, FlaskConical, LayoutGrid } from 'lucide-react';
+import { ArrowDown, ArrowUp, BookOpen, FileText, FlaskConical, LayoutGrid } from 'lucide-react';
 import { cx } from '../ui.tsx';
 import { DATASETS } from '../../lib/pitt/data.ts';
 import {
-  AGE_BUCKETS, NO_FILTERS, PRIORITY_RULES, defaultFilters, applyFilters, bucketTotals, cohortSummary, deriveRows, filterOptions, fmtCompact, fmtMoney, fmtNum, kpis, priorFilters,
+  AGE_BUCKETS, NO_FILTERS, PRIORITY_RULES, defaultFilters, applyFilters, bucketTotals, cohortSummary, cohortVariance, deriveRows, filterOptions, fmtCompact, fmtMoney, fmtNum, kpis, priorFilters,
   reconcile, riskTable, sankey, type Filters, type Kpi, type SortKey,
 } from '../../lib/pitt/engine.ts';
-import { Chip, Panel, PriorityChip, Tip, roomStyle, useCountUp } from './bits.tsx';
+import { useCases } from '../cases/CasesContext.tsx';
+import { RunStrip } from '../cases/RunStrip.tsx';
+import { RevenueVariance } from '../cases/RevenueVariance.tsx';
+import { Chip, Panel, PriorityChip, Tip, useCountUp } from './bits.tsx';
 import { SankeyFlow } from './SankeyFlow.tsx';
 import { FunnelPanel } from './FunnelPanel.tsx';
-import { WaterfallPanel } from './WaterfallPanel.tsx';
 import { WhatIfPanel } from './WhatIfPanel.tsx';
 import { NetworkPage } from './NetworkPage.tsx';
 import { PublisherView } from './PublisherView.tsx';
@@ -58,9 +60,13 @@ export const RoomPage: React.FC = () => {
 
   const set = (p: Partial<Filters>) => setFilters((f) => ({ ...f, ...p }));
   const sym = ds.currency.symbol;
+  const variance = useMemo(() => cohortVariance(rows), [rows]);
+  const { run, go } = useCases();
+  // A network of the real data set that is also a case of the current run opens its case file.
+  const caseOf = (nid: number) => (ds.synthetic ? null : run.cases.find((c) => c.networkId === nid) ?? null);
 
   return (
-    <div ref={top} style={roomStyle()} className="room scroll-mt-28 -mx-4 space-y-4 rounded-none p-4 sm:-mx-6 sm:rounded-2xl sm:p-6 lg:-mx-8">
+    <div ref={top} className="scroll-mt-28 space-y-4">
       {ds.synthetic && (
         <div role="status" className="sticky top-[calc(env(safe-area-inset-top,0px)+7rem)] z-30 flex items-center gap-2 rounded-lg border border-warn/40 bg-warn-soft px-3 py-2 text-xs font-medium text-warn-ink">
           <FlaskConical className="h-4 w-4 shrink-0" aria-hidden /> Synthetic demo data. Every network, owner and figure in this view is generated (scenarios A, B, C); none is a real Equativ case.
@@ -71,8 +77,8 @@ export const RoomPage: React.FC = () => {
       <header className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-accent">Equativ · AI Days 2026 · Competitive track</p>
-            <h1 className="text-2xl font-bold tracking-tight text-ink">The Pitt · Amazon DSP Disconnection Room</h1>
+            <p className="text-xs text-muted">Amazon DSP · all endpoints</p>
+            <h1 className="text-xl font-semibold tracking-tight text-ink">Disconnection Room</h1>
             {mode === 'internal' && (
               <p className="num mt-0.5 text-xs text-muted">
                 {summary.networks} networks · {summary.seats} Amazon seats · {summary.window} · data as of {ds.asOf}
@@ -97,7 +103,7 @@ export const RoomPage: React.FC = () => {
                   role="radio"
                   aria-checked={mode === m}
                   onClick={() => setMode(m)}
-                  className={cx('rounded px-2.5 py-1 text-xs font-medium cursor-pointer', mode === m ? 'bg-accent text-[#0a0d16]' : 'text-muted hover:text-ink')}
+                  className={cx('rounded px-2.5 py-1 text-xs font-medium cursor-pointer', mode === m ? 'bg-surface-2 text-ink shadow-sm' : 'text-muted hover:text-ink')}
                 >
                   {m === 'internal' ? 'Internal view' : 'Publisher view'}
                 </button>
@@ -143,12 +149,7 @@ export const RoomPage: React.FC = () => {
         <NetworkPage ds={ds} networkId={view.networkId} onBack={() => setView({ page: 'room' })} />
       ) : (
         <>
-          {ds.headline && (
-            <p className="rounded-xl border border-accent/40 bg-accent-soft px-4 py-3 text-sm text-ink">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-accent-ink">The Pitt · </span>
-              {ds.headline}
-            </p>
-          )}
+          {!ds.synthetic && <RunStrip />}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
             {k.map((x) => (
               <KpiCard key={x.id} k={x} symbol={sym} hasPrior={!!prior} />
@@ -222,6 +223,11 @@ export const RoomPage: React.FC = () => {
                         <span className="block max-w-md truncate text-muted" title={r.reason}>
                           {r.reason}
                         </span>
+                        {caseOf(r.NETWORK_ID) && (
+                          <button className="mt-0.5 inline-flex items-center gap-1 text-accent-ink hover:underline cursor-pointer" onClick={(e) => (e.stopPropagation(), go('investigations', caseOf(r.NETWORK_ID)!.caseId))}>
+                            <FileText className="h-3 w-3" aria-hidden /> Case file
+                          </button>
+                        )}
                       </td>
                       <td className="px-2 py-2 align-top text-ink-2">
                         <span className="num">{r.PARTNER_ID}</span> {r.PARTNER_NAME.replace('Amazon DSP ', '')}
@@ -235,7 +241,7 @@ export const RoomPage: React.FC = () => {
                       <td className="px-2 py-2 align-top">
                         <Chip tone={r.risk === 'Critical' ? 'danger' : r.risk === 'High' ? 'warn' : r.risk === 'Watch' ? 'info' : 'neutral'}>{r.risk}</Chip>
                       </td>
-                      <td className="px-2 py-2 align-top text-ink-2">{r.USERNAME ?? <span className="text-muted">No data</span>}</td>
+                      <td className="px-2 py-2 align-top text-ink-2">{r.USERNAME ?? <span className="text-muted">{caseOf(r.NETWORK_ID) ? 'See action plan' : 'Not recorded'}</span>}</td>
                     </tr>
                   ))}
                   {!table.length && (
@@ -252,7 +258,13 @@ export const RoomPage: React.FC = () => {
 
           <div className="grid gap-4 xl:grid-cols-2">
             <FunnelPanel ds={ds} rows={rows} />
-            <WaterfallPanel rows={rows} symbol={sym} />
+            <Panel id="variance" eyebrow="Revenue variance" title="What the cut removed from the weekly spend" description="Cohort of this view, in USD. Run rate and projections are per publisher.">
+              <RevenueVariance
+                additive
+                caption={'Seats in the filtered cohort. ' + ds.currency.note}
+                items={variance.map((v) => ({ ...v, state: v.value == null ? 'Unavailable' : 'Calculated' }))}
+              />
+            </Panel>
           </div>
           <WhatIfPanel ds={ds} rows={rows} symbol={sym} />
           <p className="flex items-center gap-1.5 text-[11px] text-muted">

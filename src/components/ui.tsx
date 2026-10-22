@@ -33,7 +33,7 @@ export const Badge: React.FC<{ tone?: Tone; dot?: boolean; className?: string; c
 }) => (
   <span
     className={cx(
-      'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
+      'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap',
       TONES[tone],
       className,
     )}
@@ -47,7 +47,7 @@ export const Card: React.FC<{ className?: string; children: React.ReactNode; as?
   className,
   children,
   as: Tag = 'section',
-}) => <Tag className={cx('rounded-2xl border border-line bg-surface shadow-card', className)}>{children}</Tag>;
+}) => <Tag className={cx('rounded-xl border border-line bg-surface shadow-card', className)}>{children}</Tag>;
 
 export const Eyebrow: React.FC<{ tone?: Tone; children: React.ReactNode; className?: string }> = ({
   tone = 'neutral',
@@ -99,9 +99,9 @@ export const Button: React.FC<
     type="button"
     {...rest}
     className={cx(
-      'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer',
+      'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer',
       size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-3.5 py-2 text-sm',
-      variant === 'primary' && 'bg-accent text-white shadow-sm hover:opacity-90',
+      variant === 'primary' && 'bg-accent text-on-accent shadow-sm hover:opacity-90',
       variant === 'secondary' && 'border border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink',
       variant === 'ghost' && 'text-muted hover:bg-surface-2 hover:text-ink',
       className,
@@ -187,7 +187,7 @@ export const Modal: React.FC<{
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-6" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-overlay backdrop-blur-sm" onClick={onClose} />
       <div
         className={cx(
           'anim-fade-up relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border border-line bg-surface shadow-2xl sm:rounded-2xl',

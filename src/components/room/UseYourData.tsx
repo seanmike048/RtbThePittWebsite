@@ -8,7 +8,7 @@ const CONTRACT: [string, string, string][] = [
   ['B. Checks', 'one row per network per check per window', 'network_id, check ∈ {ADS_TXT, SCO, BLOCKED_INVENTORY, IVT}, window ∈ {BEFORE, AFTER}, result ∈ {PASS, FAIL, NO_DATA}, evidence_ref, detail'],
   ['C. Traffic metrics', 'traffic context signal', 'network_id, metric, partner_name, partner_ids, change_pct (null = derived from before/after), before, after, period, source'],
   ['D. Demand funnel', 'per network', 'network_id, auctions, bid_requests, bids, wins, impressions, drop_reasons[] {stage, reason, count}'],
-  ['E. AI investigation', 'per network', 'network_id, hypotheses[] {label, confidence ∈ {LOW, MEDIUM, HIGH} or null, evidence_refs[], missing_info[]}, draft_message, validation {passed, ai_output_accepted, fallback_fields[]}'],
+  ['E. AI investigation', 'per network', 'network_id, hypotheses[] {label, evidence_refs[], missing_info[]}, draft_message, validation {passed, ai_output_accepted, fallback_fields[]}'],
   ['Readiness', 'OpenRTB signals per network', 'network_id, signal, presence ∈ {PRESENT, ABSENT, PARTIAL, NO_DATA}, detail'],
   ['Saves', 'revenue kept after a fix', 'network_id, PUBLISHER, PARTNER_ID, kind ∈ {stayed_connected, reconnected_after_fix}, fixed_check, fixed_at, SPEND_7D'],
 ];
@@ -26,8 +26,7 @@ export const UseYourData: React.FC<{ onBack: () => void }> = ({ onBack }) => (
           <code className="num text-accent-ink">scripts/gen_room_data.py</code> (synthetic set + the real 21 Oct run).
         </p>
         <p>
-          <code className="num text-accent-ink">src/lib/pitt/engine.ts</code> holds every threshold (priority rules, age buckets, the Amazon-specific banner rule, RPMBr references), label, stage name and the
-          accent colour, plus every derivation. Components only render what it returns, and filters are applied before any derivation.
+          <code className="num text-accent-ink">src/lib/pitt/engine.ts</code> holds every threshold (priority rules, age buckets, the Amazon-specific banner rule), label, stage name and every derivation. Components only render what it returns, and filters are applied before any derivation.
         </p>
         <p>Missing values stay null and show as “No data”, never 0. NO_DATA checks are grey and never count as a pass.</p>
         <p>

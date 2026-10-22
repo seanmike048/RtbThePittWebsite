@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { AlertTriangle, ArrowLeft, Lock, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, FileText, Lock, ShieldAlert } from 'lucide-react';
 import { checkGrid, fmtCompact, fmtMoney, fmtPct, investigation, networkSummary, rankedHypotheses, readiness, trafficContext } from '../../lib/pitt/engine.ts';
 import type { Check, Dataset } from '../../lib/pitt/types.ts';
+import { useCases } from '../cases/CasesContext.tsx';
 import { Chip, Panel, PresenceChip, ResultChip } from './bits.tsx';
 
 const JIRA = /^[A-Z][A-Z0-9]+-\d+$/;
@@ -17,6 +18,8 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
   const ready = useMemo(() => readiness(ds, networkId), [ds, networkId]);
   const sym = ds.currency.symbol;
   const evidence = ds.checks.filter((c) => c.network_id === networkId);
+  const { run, go } = useCases();
+  const caseRec = ds.synthetic ? null : run.cases.find((c) => c.networkId === networkId) ?? null;
 
   return (
     <div className="space-y-4">
@@ -36,6 +39,11 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
           <p className="text-[11px] uppercase tracking-wider text-muted">Revenue at risk</p>
           <p className="num text-2xl font-bold text-ink">{fmtMoney(s.atRisk, sym)}</p>
           <Chip tone={s.disconnected ? 'danger' : 'ok'}>{s.disconnected ? 'Still disconnected' : 'Reconnected'}</Chip>
+          {caseRec && (
+            <button onClick={() => go('investigations', caseRec.caseId)} className="mt-2 flex items-center gap-1 text-xs text-accent-ink hover:underline cursor-pointer">
+              <FileText className="h-3.5 w-3.5" aria-hidden /> Open the case file
+            </button>
+          )}
         </div>
       </header>
 
@@ -115,40 +123,18 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
               </tbody>
             </table>
           )}
-          {s.rpmbr.length > 0 && (
-            <ul className="mt-3 space-y-1 text-xs text-ink-2">
-              {s.rpmbr.map((x, i) => (
-                <li key={i}>
-                  RPMBr {x.seat}: <span className="num font-semibold text-ink">{x.value == null ? 'No data' : sym + x.value.toFixed(2)}</span> · Amazon reference{' '}
-                  <span className="num">{x.referenceUsd == null ? 'No data' : '$' + x.referenceUsd + ' (' + x.region + ')'}</span>
-                  <span className="text-muted"> · currencies differ (EUR vs USD reference), not converted</span>
-                </li>
-              ))}
-            </ul>
-          )}
         </Panel>
       </div>
 
-      <Panel id="ai" eyebrow="AI Investigator" title="Competing hypotheses, ranked by confidence" description="Hypotheses, not verdicts. Without a failing check, HIGH confidence is shown as MEDIUM.">
+      <Panel id="ai" eyebrow="Investigation" title="Leading hypotheses" description="Hypotheses as the source states them, in source order. Not confirmed, not scored.">
         {!inv ? (
           <p className="text-sm italic text-muted">No data: no AI investigation for this network.</p>
         ) : (
           <div className="space-y-3">
-            {inv.read && (
-              <p className="rounded-lg border border-accent/40 bg-accent-soft px-3 py-2 text-sm text-ink">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-accent-ink">Read · </span>
-                {inv.read}
+            {caseRec && (
+              <p className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-xs text-ink-2">
+                The case summary, findings and action plan for this network are in its case file (Investigations), rebuilt from the run.
               </p>
-            )}
-            {inv.findings && inv.findings.length > 0 && (
-              <div className="text-xs">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">What the data shows</p>
-                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-ink-2">
-                  {inv.findings.map((f) => (
-                    <li key={f}>{f}</li>
-                  ))}
-                </ul>
-              </div>
             )}
             <div className="flex flex-wrap gap-1.5 text-xs">
               <Chip tone={inv.validation.passed == null ? 'neutral' : inv.validation.passed ? 'ok' : 'danger'}>validation passed: {inv.validation.passed == null ? 'No data' : String(inv.validation.passed)}</Chip>
@@ -165,8 +151,7 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="num text-muted">#{i + 1}</span>
                     <strong className="text-sm text-ink">{h.label}</strong>
-                    <Chip tone={h.shownConfidence === 'HIGH' ? 'danger' : h.shownConfidence === 'MEDIUM' ? 'warn' : 'neutral'}>{h.shownConfidence ?? 'Confidence: No data'}</Chip>
-                    {h.capped && <Chip tone="info">capped from HIGH: no failing check</Chip>}
+                    <Chip tone="warn">Leading hypothesis — not confirmed</Chip>
                   </div>
                   {h.evidence_refs.length > 0 && (
                     <p className="mt-1.5 flex flex-wrap gap-1">
@@ -204,6 +189,8 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
         <Panel id="draft" eyebrow="Draft message" title="Read-only draft" aside={<Chip tone="warn"><Lock className="h-3 w-3" aria-hidden /> Requires human approval in Slack</Chip>}>
           {inv?.draft_message ? (
             <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-line bg-surface-2 p-3 text-[11.5px] leading-relaxed text-ink-2">{inv.draft_message}</pre>
+          ) : caseRec ? (
+            <p className="text-sm text-ink-2">The draft for this case is in its case file: Draft only, no Jira ticket created.</p>
           ) : (
             <p className="text-sm italic text-muted">No data: no draft for this network.</p>
           )}

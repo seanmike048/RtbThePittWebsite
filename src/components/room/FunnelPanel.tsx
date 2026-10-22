@@ -46,7 +46,7 @@ export const FunnelPanel: React.FC<{ ds: Dataset; rows: Row[] }> = ({ ds, rows }
                 />
                 <Bar dataKey="intake" radius={[0, 4, 4, 0]} isAnimationActive={false}>
                   {f.stages.map((s, i) => (
-                    <Cell key={s.stage} fill={['#7c83ff', '#6f8bff', '#5aa9ff', '#3fd69b', '#7ce8be'][i]} />
+                    <Cell key={s.stage} fill={['var(--chart-1)', 'var(--chart-1)', 'var(--chart-3)', 'var(--chart-3)', 'var(--chart-5)'][i]} />
                   ))}
                   <LabelList dataKey="intake" position="right" formatter={(v) => fmtCompact(v as number)} style={{ fill: 'var(--ink)', fontSize: 11 }} />
                 </Bar>

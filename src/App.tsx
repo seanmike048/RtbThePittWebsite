@@ -1,18 +1,16 @@
 /**
  * The Pitt — Equativ TechOps
- * Approved investigations of DSP disconnections, with Snowflake context, the Amazon watchlist, the CFO impact model,
- * investigation results pushed by n8n and the Optimization review.
+ * Amazon DSP disconnections, publisher first: an imported n8n / Slack run becomes one normalized data layer
+ * (src/lib/cases), and every page reads the same run and the same selected publisher from CasesProvider.
  */
 import { useState } from 'react';
-import type { NetworkContext } from './lib/investigations/context.ts';
-import type { InvestigationReport } from './lib/investigations/report.ts';
-import { type Watchlist, WATCHLIST_SNAPSHOT } from './lib/investigations/watchlist.ts';
-import { Header, type TabId } from './components/Header.tsx';
-import { InvestigationPage } from './components/investigations/InvestigationPage.tsx';
-import { WatchlistPage } from './components/investigations/WatchlistPage.tsx';
-import { PasteInvestigation } from './components/investigations/PasteInvestigation.tsx';
-import { Cfo437Page } from './components/cfo437/Cfo437Page.tsx';
-import { FinancePage } from './components/finance/FinancePage.tsx';
+import { CasesProvider, useCases } from './components/cases/CasesContext.tsx';
+import { FinancialImpactPage } from './components/cases/FinancialImpactPage.tsx';
+import { ImportDialog } from './components/cases/ImportDialog.tsx';
+import { InvestigationsPage } from './components/cases/InvestigationsPage.tsx';
+import { ProposalsPage } from './components/cases/ProposalsPage.tsx';
+import { SpendProjectionPage } from './components/cases/SpendProjectionPage.tsx';
+import { Header } from './components/Header.tsx';
 import { OptimizationPage } from './components/optimization/OptimizationPage.tsx';
 import { RunsPanel } from './components/ops/RunsPanel.tsx';
 import { ScopeBar } from './components/ops/ScopeBar.tsx';
@@ -20,82 +18,43 @@ import { useOps } from './components/ops/useOps.ts';
 import { RoomPage } from './components/room/RoomPage.tsx';
 
 export default function App() {
-  // Opens on the Disconnection Room; Investigations starts empty (no seeded case) and fills with pasted outputs.
-  const [tab, setTab] = useState<TabId>('room');
-  const [reports, setReports] = useState<InvestigationReport[]>([]);
-  const [selected, setSelected] = useState(0);
-  const [contexts, setContexts] = useState<Record<string, NetworkContext>>({});
-  const [watchlist, setWatchlist] = useState<Watchlist>(WATCHLIST_SNAPSHOT);
-  const [pasteOpen, setPasteOpen] = useState(false);
-  const ops = useOps();
+  return (
+    <CasesProvider>
+      <Shell />
+    </CasesProvider>
+  );
+}
 
-  const changeTab = (t: TabId) => {
-    setTab(t);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+function Shell() {
+  const { tab } = useCases();
+  const [importOpen, setImportOpen] = useState(false);
+  const ops = useOps();
+  // The n8n launch / refresh bar belongs to the pages that use it.
+  const opsTab = tab === 'investigations' || tab === 'optimization';
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header
-        activeTab={tab}
-        onTabChange={changeTab}
-        onOpenImport={() => setPasteOpen(true)}
-        counts={{ investigations: reports.length, atRisk: watchlist.atRisk.length }}
-        /* Sticky only when a backend answers; on static hosting the one-line notice sits in the page instead. */
-        toolbar={ops.backend === 'ok' && tab !== 'room' ? <ScopeBar ops={ops} /> : undefined}
-      />
+      <Header onOpenImport={() => setImportOpen(true)} toolbar={ops.backend === 'ok' && opsTab ? <ScopeBar ops={ops} /> : undefined} />
 
       <main key={tab} className="anim-fade-up mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        {ops.backend === 'none' && tab !== 'room' && <ScopeBar ops={ops} />}
-        {tab === 'room' && <RoomPage />}
-        {tab === 'investigations' && <RunsPanel ops={ops} />}
-        {tab === 'investigations' && (
-          <InvestigationPage
-            reports={reports}
-            selected={selected}
-            onSelect={setSelected}
-            contexts={contexts}
-            onContext={c => setContexts(prev => ({ ...prev, [c.networkId]: c }))}
-            onOpenImport={() => setPasteOpen(true)}
-            onOpenRoom={() => changeTab('room')}
-          />
-        )}
-        {tab === 'watchlist' && (
-          <WatchlistPage
-            watchlist={watchlist}
-            onWatchlist={setWatchlist}
-            investigated={reports.map(r => r.networkId)}
-            onOpenInvestigation={id => {
-              const i = reports.findIndex(r => r.networkId === id);
-              if (i >= 0) setSelected(i);
-              changeTab('investigations');
-            }}
-          />
-        )}
-        {tab === 'impact' && <FinancePage />}
-        {tab === 'analytics' && <Cfo437Page />}
-        {tab === 'optimization' && <OptimizationPage ops={ops} />}
+        {ops.backend === 'none' && opsTab && <ScopeBar ops={ops} />}
+        {tab === 'overview' && <RoomPage />}
+        {tab === 'investigations' && <InvestigationsPage runs={ops.backend === 'ok' ? <RunsPanel ops={ops} /> : undefined} />}
+        {tab === 'impact' && <FinancialImpactPage />}
+        {tab === 'projection' && <SpendProjectionPage />}
+        {tab === 'optimization' && <ProposalsPage serverQueue={ops.backend === 'ok' ? <OptimizationPage ops={ops} /> : undefined} />}
       </main>
 
       <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p>
-            <strong className="font-semibold text-ink-2">The Pitt</strong> · Equativ TechOps · AI Days 2026
+            <strong className="font-semibold text-ink-2">The Pitt</strong> · Equativ TechOps
           </p>
-          <p>Snowflake context is read-only. Workflow outputs are shown verbatim; nothing is sent externally from this page.</p>
+          <p>Snowflake reads are read-only. Nothing is sent, created or changed from this site.</p>
         </div>
       </footer>
 
-      <PasteInvestigation
-        open={pasteOpen}
-        onClose={() => setPasteOpen(false)}
-        onAdd={r => {
-          setReports(prev => [...prev, r]);
-          setSelected(reports.length);
-          setPasteOpen(false);
-          setTab('investigations');
-        }}
-      />
+      <ImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
     </div>
   );
 }

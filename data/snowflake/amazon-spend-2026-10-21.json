@@ -1,0 +1,746 @@
+{
+ "read_at": "2026-10-22",
+ "role": "Snowflake role data analyst (read-only)",
+ "queries": [
+  {
+   "id": "01c7e5ab-020d-0791-0000-08896b5929c2",
+   "what": "ANALYTICS.PUBLIC.VIEW_DISCONNECTION_ALERT_365DAYS for networks 5412, 5449, 4883 x Amazon seats 437/489/490/491/492"
+  },
+  {
+   "id": "01c7e5ab-020d-04af-0000-08896b594472",
+   "what": "DAY_DEMAND spend by day x seat, 2026-10-12 to 2026-10-21, joined to MAPPING_CURRENCY_RATE_HIST (USD)"
+  },
+  {
+   "id": "01c7e5af-020d-04af-0000-08896b59486a",
+   "what": "Same, 2026-09-29 to 2026-10-11"
+  },
+  {
+   "id": "01c7e5ad-020d-0791-0000-08896b592b32",
+   "what": "DAY_DEMAND all-DSP coverage per network, 2026-10-19 to 2026-10-22"
+  },
+  {
+   "id": "01c7e5ab-020d-03c3-0000-08896b58fc0a",
+   "what": "ANALYTICS.PUBLIC.MAPPING_CURRENCY_RATE_HIST, EUR and USD, 2026-10-10 to 2026-10-22"
+  }
+ ],
+ "spend_measure": "ANALYTICS_DATA_HUB.EQT_SSP_ACTIVITY.DAY_DEMAND.TOTAL_PAID_PRICE_TRUE_COUNT (column comment: price paid by winning DSPs in Euro)",
+ "fx": {
+  "table": "ANALYTICS.PUBLIC.MAPPING_CURRENCY_RATE_HIST",
+  "base": "EUR (rate 1)",
+  "column": "CURRENCY_RATE for CURRENCY_SYMBOL = USD",
+  "reading": "EUR value of 1 USD. Inferred, not documented: EUR = 1, GBP = 1.19 and CHF = 1.08 on the same day only fit that reading. Confirm with Finance.",
+  "eur_per_usd": {
+   "2026-09-29": 0.8812043095014771,
+   "2026-09-30": 0.8816968368482339,
+   "2026-10-01": 0.8874434052935751,
+   "2026-10-02": 0.8886710420444667,
+   "2026-10-03": 0.8886910228200924,
+   "2026-10-04": 0.8887071581495712,
+   "2026-10-05": 0.8916673719755579,
+   "2026-10-06": 0.8887581900844733,
+   "2026-10-07": 0.8927461394398407,
+   "2026-10-08": 0.8925880833367721,
+   "2026-10-09": 0.8924807311402064,
+   "2026-10-10": 0.8924072182286453,
+   "2026-10-11": 0.8930403835808488,
+   "2026-10-12": 0.8952523425396608,
+   "2026-10-13": 0.8935444939810621,
+   "2026-10-14": 0.8953293310023136,
+   "2026-10-15": 0.8920831014660673,
+   "2026-10-16": 0.8898220314115541,
+   "2026-10-17": 0.8895587859586348,
+   "2026-10-18": 0.8909864372797137,
+   "2026-10-19": 0.8915077503582881,
+   "2026-10-20": 0.890489688561294,
+   "2026-10-21": 0.8903752139983439,
+   "2026-10-22": 0.8899025234592098
+  }
+ },
+ "alert_cuts": [
+  {
+   "network_id": 5412,
+   "partner_id": 437,
+   "cut_at": "2026-10-20 11:38",
+   "revenue_7d_before_eur": 0.001927
+  },
+  {
+   "network_id": 5412,
+   "partner_id": 489,
+   "cut_at": "2026-10-20 11:40",
+   "revenue_7d_before_eur": 2752.856262
+  },
+  {
+   "network_id": 5412,
+   "partner_id": 490,
+   "cut_at": "2026-10-20 11:42",
+   "revenue_7d_before_eur": 0
+  },
+  {
+   "network_id": 5412,
+   "partner_id": 491,
+   "cut_at": "2026-10-20 11:44",
+   "revenue_7d_before_eur": 360.699793
+  },
+  {
+   "network_id": 5449,
+   "partner_id": 437,
+   "cut_at": "2026-10-20 11:38",
+   "revenue_7d_before_eur": 2308.872205
+  },
+  {
+   "network_id": 4883,
+   "partner_id": 490,
+   "cut_at": "2026-10-20 11:42",
+   "revenue_7d_before_eur": 0
+  },
+  {
+   "network_id": 4883,
+   "partner_id": 491,
+   "cut_at": "2026-10-20 11:44",
+   "revenue_7d_before_eur": 1579.336574
+  }
+ ],
+ "daily": [
+  {
+   "day": "2026-09-29",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 452.600139
+  },
+  {
+   "day": "2026-09-30",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 221.01040899999998
+  },
+  {
+   "day": "2026-10-01",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 283.9581730000001
+  },
+  {
+   "day": "2026-10-02",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 242.383698
+  },
+  {
+   "day": "2026-10-03",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 663.1829799999999
+  },
+  {
+   "day": "2026-10-04",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 648.962894
+  },
+  {
+   "day": "2026-10-05",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 704.6720280000001
+  },
+  {
+   "day": "2026-10-06",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 778.631062
+  },
+  {
+   "day": "2026-10-07",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 2291.34526
+  },
+  {
+   "day": "2026-10-08",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 1067.2248690000001
+  },
+  {
+   "day": "2026-10-09",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 1148.063421
+  },
+  {
+   "day": "2026-10-10",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 2036.744295
+  },
+  {
+   "day": "2026-10-11",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 2825.675993
+  },
+  {
+   "day": "2026-10-12",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 26034.999699000004
+  },
+  {
+   "day": "2026-10-13",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 6142.189552000001
+  },
+  {
+   "day": "2026-10-14",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 3562.907893
+  },
+  {
+   "day": "2026-10-15",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 4199.371923000001
+  },
+  {
+   "day": "2026-10-16",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 3235.5822859999994
+  },
+  {
+   "day": "2026-10-17",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 4589.341162
+  },
+  {
+   "day": "2026-10-18",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 3078.790384
+  },
+  {
+   "day": "2026-10-19",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 9210.392775
+  },
+  {
+   "day": "2026-10-20",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 4700.182197
+  },
+  {
+   "day": "2026-10-21",
+   "network_id": 4883,
+   "partner_id": 437,
+   "spend_eur": 3533.748984
+  },
+  {
+   "day": "2026-09-29",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 0.131262
+  },
+  {
+   "day": "2026-09-30",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 0.03954900000000001
+  },
+  {
+   "day": "2026-10-01",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 0.001132
+  },
+  {
+   "day": "2026-10-02",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 0.042716000000000004
+  },
+  {
+   "day": "2026-10-03",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 0.028058
+  },
+  {
+   "day": "2026-10-04",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 0.070084
+  },
+  {
+   "day": "2026-10-05",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 0.002515
+  },
+  {
+   "day": "2026-10-06",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 0.006829
+  },
+  {
+   "day": "2026-10-07",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 0.013472999999999999
+  },
+  {
+   "day": "2026-10-08",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 0.07488500000000001
+  },
+  {
+   "day": "2026-10-09",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 0.119952
+  },
+  {
+   "day": "2026-10-10",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 0.042707999999999996
+  },
+  {
+   "day": "2026-10-11",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 0.13064800000000001
+  },
+  {
+   "day": "2026-10-12",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 35.652193
+  },
+  {
+   "day": "2026-10-13",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 174.736576
+  },
+  {
+   "day": "2026-10-14",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 118.79520099999999
+  },
+  {
+   "day": "2026-10-15",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 179.51580300000003
+  },
+  {
+   "day": "2026-10-16",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 261.925031
+  },
+  {
+   "day": "2026-10-17",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 422.419381
+  },
+  {
+   "day": "2026-10-18",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 481.3171669999999
+  },
+  {
+   "day": "2026-10-19",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 77.87857600000001
+  },
+  {
+   "day": "2026-10-20",
+   "network_id": 4883,
+   "partner_id": 491,
+   "spend_eur": 37.485369
+  },
+  {
+   "day": "2026-10-01",
+   "network_id": 5412,
+   "partner_id": 437,
+   "spend_eur": 0.000121
+  },
+  {
+   "day": "2026-10-11",
+   "network_id": 5412,
+   "partner_id": 437,
+   "spend_eur": 0.000723
+  },
+  {
+   "day": "2026-10-13",
+   "network_id": 5412,
+   "partner_id": 437,
+   "spend_eur": 0.000585
+  },
+  {
+   "day": "2026-10-14",
+   "network_id": 5412,
+   "partner_id": 437,
+   "spend_eur": 0.000964
+  },
+  {
+   "day": "2026-10-15",
+   "network_id": 5412,
+   "partner_id": 437,
+   "spend_eur": 0.000963
+  },
+  {
+   "day": "2026-09-30",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 0.000356
+  },
+  {
+   "day": "2026-10-02",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 43.468410999999996
+  },
+  {
+   "day": "2026-10-03",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 313.146998
+  },
+  {
+   "day": "2026-10-04",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 556.542685
+  },
+  {
+   "day": "2026-10-05",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 184.73658199999997
+  },
+  {
+   "day": "2026-10-06",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 652.3397809999999
+  },
+  {
+   "day": "2026-10-07",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 789.745341
+  },
+  {
+   "day": "2026-10-08",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 625.694203
+  },
+  {
+   "day": "2026-10-09",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 1003.409254
+  },
+  {
+   "day": "2026-10-10",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 709.2373809999999
+  },
+  {
+   "day": "2026-10-11",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 615.6130530000001
+  },
+  {
+   "day": "2026-10-12",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 1562.527028
+  },
+  {
+   "day": "2026-10-13",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 1213.796502
+  },
+  {
+   "day": "2026-10-14",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 934.737157
+  },
+  {
+   "day": "2026-10-15",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 823.7952649999999
+  },
+  {
+   "day": "2026-10-16",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 317.646379
+  },
+  {
+   "day": "2026-10-17",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 171.02178700000002
+  },
+  {
+   "day": "2026-10-18",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 187.607972
+  },
+  {
+   "day": "2026-10-19",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 257.56750999999997
+  },
+  {
+   "day": "2026-10-20",
+   "network_id": 5412,
+   "partner_id": 489,
+   "spend_eur": 60.480304000000004
+  },
+  {
+   "day": "2026-10-02",
+   "network_id": 5412,
+   "partner_id": 491,
+   "spend_eur": 0.001946
+  },
+  {
+   "day": "2026-10-03",
+   "network_id": 5412,
+   "partner_id": 491,
+   "spend_eur": 9e-05
+  },
+  {
+   "day": "2026-10-08",
+   "network_id": 5412,
+   "partner_id": 491,
+   "spend_eur": 0.0
+  },
+  {
+   "day": "2026-10-12",
+   "network_id": 5412,
+   "partner_id": 491,
+   "spend_eur": 0.0
+  },
+  {
+   "day": "2026-10-13",
+   "network_id": 5412,
+   "partner_id": 491,
+   "spend_eur": 0.975129
+  },
+  {
+   "day": "2026-10-15",
+   "network_id": 5412,
+   "partner_id": 491,
+   "spend_eur": 0.20414799999999997
+  },
+  {
+   "day": "2026-10-17",
+   "network_id": 5412,
+   "partner_id": 491,
+   "spend_eur": 336.16813099999996
+  },
+  {
+   "day": "2026-10-18",
+   "network_id": 5412,
+   "partner_id": 491,
+   "spend_eur": 24.268510000000003
+  },
+  {
+   "day": "2026-10-19",
+   "network_id": 5412,
+   "partner_id": 491,
+   "spend_eur": 0.054068
+  },
+  {
+   "day": "2026-10-20",
+   "network_id": 5412,
+   "partner_id": 491,
+   "spend_eur": 0.004922
+  },
+  {
+   "day": "2026-09-30",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 53.029045999999994
+  },
+  {
+   "day": "2026-10-01",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 73.728453
+  },
+  {
+   "day": "2026-10-02",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 805.524843
+  },
+  {
+   "day": "2026-10-03",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 767.291816
+  },
+  {
+   "day": "2026-10-04",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 1236.244329
+  },
+  {
+   "day": "2026-10-05",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 870.207349
+  },
+  {
+   "day": "2026-10-06",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 567.970323
+  },
+  {
+   "day": "2026-10-07",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 1950.770606
+  },
+  {
+   "day": "2026-10-08",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 493.147513
+  },
+  {
+   "day": "2026-10-09",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 54.903414999999995
+  },
+  {
+   "day": "2026-10-10",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 22.295485
+  },
+  {
+   "day": "2026-10-11",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 21.372273999999997
+  },
+  {
+   "day": "2026-10-12",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 25.088867
+  },
+  {
+   "day": "2026-10-13",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 110.11390999999999
+  },
+  {
+   "day": "2026-10-14",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 121.942935
+  },
+  {
+   "day": "2026-10-15",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 116.85773699999999
+  },
+  {
+   "day": "2026-10-16",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 94.351708
+  },
+  {
+   "day": "2026-10-17",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 204.79243499999995
+  },
+  {
+   "day": "2026-10-18",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 471.95772
+  },
+  {
+   "day": "2026-10-19",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 912.0035250000001
+  },
+  {
+   "day": "2026-10-20",
+   "network_id": 5449,
+   "partner_id": 437,
+   "spend_eur": 386.966141
+  },
+  {
+   "day": "2026-10-14",
+   "network_id": 5449,
+   "partner_id": 489,
+   "spend_eur": 0.000548
+  },
+  {
+   "day": "2026-10-18",
+   "network_id": 5449,
+   "partner_id": 489,
+   "spend_eur": 0.000543
+  }
+ ],
+ "coverage": [
+  {
+   "day": "2026-10-21",
+   "network_id": 4883,
+   "partners": 54,
+   "all_dsp_eur": 10040.953532,
+   "amazon_eur": 3533.748984
+  },
+  {
+   "day": "2026-10-21",
+   "network_id": 5412,
+   "partners": 40,
+   "all_dsp_eur": 37.623585,
+   "amazon_eur": 0
+  },
+  {
+   "day": "2026-10-21",
+   "network_id": 5449,
+   "partners": 34,
+   "all_dsp_eur": 455.300887,
+   "amazon_eur": 0
+  }
+ ]
+}

@@ -17,6 +17,7 @@
   --accent: #4f46e5;
   --accent-ink: #4338ca;
   --accent-soft: #eef0ff;
+  --on-accent: #ffffff;
 
   --danger: #e11d48;
   --danger-ink: #be123c;
@@ -32,6 +33,19 @@
   /* Chart series (validated with the dataviz palette checker against #ffffff) */
   --viz-1: #2a78d6;
   --viz-2: #eb6834;
+  /* Shared chart palette: categorical series, then roles. Every chart reads these; none carries its own colours. */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1b8a78;
+  --chart-4: #7c5cc4;
+  --chart-5: #94a3b8;
+  --chart-removed: #d1495b;
+  --chart-live: #2a78d6;
+  --chart-measure: #64748b;
+  --chart-grid: #e4e7ef;
+  --overlay: rgb(15 23 42 / 0.4);
+  --code-bg: #0f172a;
+  --code-ink: #e2e8f0;
 
   --shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px -4px rgb(15 23 42 / 0.06);
   color-scheme: light;
@@ -51,6 +65,7 @@
     --accent: #818cf8;
     --accent-ink: #a5b4fc;
     --accent-soft: #1e1f3d;
+    --on-accent: #0b0f19;
     --danger: #fb7185;
     --danger-ink: #fda4af;
     --danger-soft: #2a1520;
@@ -64,6 +79,18 @@
     --info-soft: #0f2130;
     --viz-1: #3987e5;
     --viz-2: #d95926;
+    --chart-1: #4f95ea;
+    --chart-2: #e0733f;
+    --chart-3: #2fb39c;
+    --chart-4: #a48ae6;
+    --chart-5: #64748b;
+    --chart-removed: #f06b7d;
+    --chart-live: #4f95ea;
+    --chart-measure: #94a3b8;
+    --chart-grid: #232c3f;
+    --overlay: rgb(0 0 0 / 0.55);
+    --code-bg: #0b0f19;
+    --code-ink: #e2e8f0;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -8px rgb(0 0 0 / 0.4);
     color-scheme: dark;
   }
@@ -82,6 +109,7 @@
   --accent: #818cf8;
   --accent-ink: #a5b4fc;
   --accent-soft: #1e1f3d;
+  --on-accent: #0b0f19;
   --danger: #fb7185;
   --danger-ink: #fda4af;
   --danger-soft: #2a1520;
@@ -95,6 +123,18 @@
   --info-soft: #0f2130;
   --viz-1: #3987e5;
   --viz-2: #d95926;
+  --chart-1: #4f95ea;
+  --chart-2: #e0733f;
+  --chart-3: #2fb39c;
+  --chart-4: #a48ae6;
+  --chart-5: #64748b;
+  --chart-removed: #f06b7d;
+  --chart-live: #4f95ea;
+  --chart-measure: #94a3b8;
+  --chart-grid: #232c3f;
+  --overlay: rgb(0 0 0 / 0.55);
+  --code-bg: #0b0f19;
+  --code-ink: #e2e8f0;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -8px rgb(0 0 0 / 0.4);
   color-scheme: dark;
 }
@@ -115,6 +155,7 @@
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
   --color-danger: var(--danger);
   --color-danger-ink: var(--danger-ink);
   --color-danger-soft: var(--danger-soft);
@@ -128,6 +169,17 @@
   --color-info-soft: var(--info-soft);
   --color-viz-1: var(--viz-1);
   --color-viz-2: var(--viz-2);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-removed: var(--chart-removed);
+  --color-chart-live: var(--chart-live);
+  --color-chart-measure: var(--chart-measure);
+  --color-overlay: var(--overlay);
+  --color-code-bg: var(--code-bg);
+  --color-code-ink: var(--code-ink);
   --shadow-card: var(--shadow);
 }
 
@@ -146,7 +198,7 @@
   }
   ::selection {
     background: var(--accent);
-    color: white;
+    color: var(--on-accent);
   }
   :focus-visible {
     outline: 2px solid var(--accent);

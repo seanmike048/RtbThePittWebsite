@@ -4,9 +4,10 @@
    scenarios A (ads.txt FAIL after the cut), B (IVT spike) and C (all PASS or NO_DATA, Amazon-specific drop).
    Every name says "(synthetic)"; owners are synthetic placeholders, not people.
 2. REAL: the 21 Oct 2026 run (n8n Main MVP + Investigator v4.6) as posted in #thepittoutput at 4:55 PM, kept in
-   scripts/run-2026-10-21-1655.json (digest lines, leading hypotheses, Verify steps and Jira drafts, verbatim):
-   Display.io, E-Planning LATAM, Vidazoo Intermediary. Only figures written in that output are used; anything it does
-   not state is null / NO_DATA.
+   scripts/run-2026-10-21-1655.json: Display.io, E-Planning LATAM, Vidazoo Intermediary. Cut seats, cut times and
+   spend come from the Snowflake snapshot data/snowflake/amazon-spend-2026-10-21.json (alert view + daily DAY_DEMAND),
+   converted to USD day by day with the snapshot's FX table, then summed. Drafts, reads and findings are not copied
+   here: the case layer (src/lib/cases) owns them and rebuilds the drafts without RPMBr or source-currency amounts.
 
 3. Optional SNOWFLAKE EXPORT: --csv DIR reads one CSV per array (column names = the data contract, see
    docs/disconnection-room.md) and adds it as a third data set. Empty cells become null, never 0.
@@ -100,16 +101,14 @@ def synthetic():
         funnels.append({'network_id': nid, 'auctions': au, 'bid_requests': br, 'bids': bi, 'wins': wi, 'impressions': im, 'drop_reasons': drops})
         # investigation
         if s == 'A':
-            hyps = [{'label': 'ads.txt no longer authorises Equativ after the cut', 'confidence': 'HIGH', 'evidence_refs': ['syn-%d.ads_txt.after' % nid], 'missing_info': []},
-                    {'label': 'Amazon commercial decision on the seat', 'confidence': 'LOW', 'evidence_refs': [], 'missing_info': ['Amazon account team confirmation']}]
+            hyps = [{'label': 'ads.txt no longer authorises Equativ after the cut', 'evidence_refs': ['syn-%d.ads_txt.after' % nid], 'missing_info': []},
+                    {'label': 'Amazon commercial decision on the seat', 'evidence_refs': [], 'missing_info': ['Amazon account team confirmation']}]
         elif s == 'B':
-            hyps = [{'label': 'IVT spike made the traffic unbuyable', 'confidence': 'HIGH', 'evidence_refs': ['syn-%d.ivt.after' % nid], 'missing_info': ['IVT source (placements, bundles, IP ranges)']},
-                    {'label': 'Supply mix change on the publisher side', 'confidence': 'MEDIUM', 'evidence_refs': ['syn-%d.sco.after' % nid], 'missing_info': []}]
+            hyps = [{'label': 'IVT spike made the traffic unbuyable', 'evidence_refs': ['syn-%d.ivt.after' % nid], 'missing_info': ['IVT source (placements, bundles, IP ranges)']},
+                    {'label': 'Supply mix change on the publisher side', 'evidence_refs': ['syn-%d.sco.after' % nid], 'missing_info': []}]
         else:
-            hyps = [{'label': 'Amazon-side seat decision, not visible in Equativ data', 'confidence': 'LOW', 'evidence_refs': [], 'missing_info': ['Disconnection reason from Amazon', 'Seat-level Amazon targeting changes']},
-                    {'label': 'Pricing or floor change on the publisher side', 'confidence': 'LOW', 'evidence_refs': ['syn-%d.sco.before' % nid], 'missing_info': ['Floor history for the 14 days before the cut']}]
-            if i % 3 == 0:  # demo: the AI claimed HIGH with no failing check -> capped in the UI
-                hyps[0]['confidence'] = 'HIGH'
+            hyps = [{'label': 'Amazon-side seat decision, not visible in Equativ data', 'evidence_refs': [], 'missing_info': ['Disconnection reason from Amazon', 'Seat-level Amazon targeting changes']},
+                    {'label': 'Pricing or floor change on the publisher side', 'evidence_refs': ['syn-%d.sco.before' % nid], 'missing_info': ['Floor history for the 14 days before the cut']}]
             if i % 4 == 1:  # demo: a reference that does not exist in Checks -> "Unverified evidence"
                 hyps[1]['evidence_refs'].append('syn-%d.floor_history' % nid)
         invs.append({'network_id': nid, 'hypotheses': hyps,
@@ -126,23 +125,33 @@ def synthetic():
         saves.append({'network_id': 9200 + j, 'PUBLISHER': nm + ' (synthetic)', 'PARTNER_ID': [437, 491, 492][j], 'kind': 'stayed_connected',
                       'fixed_check': ['ADS_TXT', 'IVT', 'SCO'][j], 'fixed_at': (d0 - timedelta(days=10 + 9 * j)).isoformat(), 'SPEND_7D': [4200, 1850, 760][j]})
     return {'id': 'synthetic', 'label': 'Synthetic demo data', 'synthetic': True, 'asOf': as_of,
-            'currency': {'symbol': '€', 'note': 'Synthetic figures in EUR-like units; not real revenue.'},
+            'currency': {'code': 'USD', 'symbol': '$', 'note': 'Synthetic figures generated directly in USD-like units; not real revenue and not converted.'},
             'source': 'Seeded generator scripts/gen_room_data.py (seed 20261021). Scenarios A = ads.txt FAIL after cut, B = IVT spike, C = all PASS or NO_DATA with an Amazon-specific drop.',
             'disconnections': disc, 'networks': nets, 'checks': checks, 'traffic': traffic, 'funnels': funnels, 'investigations': invs, 'readiness': ready, 'saves': saves}
 
 # ---------------------------------------------------------------- real run (21 Oct 2026)
+SNAP = json.loads((ROOT / 'data/snowflake/amazon-spend-2026-10-21.json').read_text())
+EUR_PER_USD = SNAP['fx']['eur_per_usd']
+
+def usd_week(nid, pid, cut_day):
+    """Pre-cut week (7 days ending on the cut day): each day converted at its own rate, then summed."""
+    from datetime import date, timedelta
+    d1 = date.fromisoformat(cut_day)
+    days = [(d1 - timedelta(days=k)).isoformat() for k in range(6, -1, -1)]
+    total = 0.0
+    for day in days:
+        eur = sum(r['spend_eur'] for r in SNAP['daily'] if r['network_id'] == nid and r['partner_id'] == pid and r['day'] == day)
+        if day not in EUR_PER_USD:
+            return None
+        total += eur / EUR_PER_USD[day]
+    return round(total, 2)
+
 def real(run):
     seat = lambda pid: SEATS[pid]
-    disc = [
-        # Display.io #5412, cut 2026-10-20 11:44: seats 489 EUR 2,753 / 491 EUR 361 / 437 "none listed"
-        {'PARTNER_ID': 489, 'PARTNER_NAME': seat(489), 'PUBLISHER': 'Display.io', 'NETWORK_ID': 5412, 'BUSINESS_UNIT': None, 'USERNAME': None, 'CUT_AT': '2026-10-20 11:44', 'RECONNECTED_AT': None, 'SPEND_7D_BEFORE': 2753},
-        {'PARTNER_ID': 491, 'PARTNER_NAME': seat(491), 'PUBLISHER': 'Display.io', 'NETWORK_ID': 5412, 'BUSINESS_UNIT': None, 'USERNAME': None, 'CUT_AT': '2026-10-20 11:44', 'RECONNECTED_AT': None, 'SPEND_7D_BEFORE': 361},
-        {'PARTNER_ID': 437, 'PARTNER_NAME': seat(437), 'PUBLISHER': 'Display.io', 'NETWORK_ID': 5412, 'BUSINESS_UNIT': None, 'USERNAME': None, 'CUT_AT': '2026-10-20 11:44', 'RECONNECTED_AT': None, 'SPEND_7D_BEFORE': None},
-        # E-Planning LATAM #5449, cut 11:38: seat 437 EUR 2,309
-        {'PARTNER_ID': 437, 'PARTNER_NAME': seat(437), 'PUBLISHER': 'E-Planning LATAM', 'NETWORK_ID': 5449, 'BUSINESS_UNIT': None, 'USERNAME': None, 'CUT_AT': '2026-10-20 11:38', 'RECONNECTED_AT': None, 'SPEND_7D_BEFORE': 2309},
-        # Vidazoo Intermediary #4883, cut 11:44: seat 491 EUR 1,579 (437 still live, so not a disconnection)
-        {'PARTNER_ID': 491, 'PARTNER_NAME': seat(491), 'PUBLISHER': 'Vidazoo Intermediary', 'NETWORK_ID': 4883, 'BUSINESS_UNIT': None, 'USERNAME': None, 'CUT_AT': '2026-10-20 11:44', 'RECONNECTED_AT': None, 'SPEND_7D_BEFORE': 1579},
-    ]
+    pub = {5412: 'Display.io', 5449: 'E-Planning LATAM', 4883: 'Vidazoo Intermediary'}
+    disc = [{'PARTNER_ID': c['partner_id'], 'PARTNER_NAME': seat(c['partner_id']), 'PUBLISHER': pub[c['network_id']], 'NETWORK_ID': c['network_id'],
+             'BUSINESS_UNIT': None, 'USERNAME': None, 'CUT_AT': c['cut_at'], 'RECONNECTED_AT': None,
+             'SPEND_7D_BEFORE': usd_week(c['network_id'], c['partner_id'], c['cut_at'][:10])} for c in SNAP['alert_cuts']]
     nets = [{'NETWORK_ID': 5412, 'REGION': 'US'}, {'NETWORK_ID': 5449, 'REGION': 'LATAM'}, {'NETWORK_ID': 4883, 'REGION': 'US'}]
     stated = {
         (5412, 'ADS_TXT', 'AFTER'): ('FAIL', '26.24% of auctions on ads.txt files without the Equativ line (TechOps rule: FAIL above 5%)'),
@@ -153,19 +162,17 @@ def real(run):
     for nid in (5412, 5449, 4883):
         for c in CHECKS:
             for w in ['BEFORE', 'AFTER']:
-                r, det = stated.get((nid, c, w), ('NO_DATA', 'Not stated in the 21 Oct run page'))
+                r, det = stated.get((nid, c, w), ('NO_DATA', 'Not stated in the 21 Oct run'))
                 checks.append({'network_id': nid, 'check': c, 'window': w, 'result': r, 'evidence_ref': EVIDENCE[c] if (nid, c, w) in stated else 'run-2026-10-21.%d.%s.%s' % (nid, c.lower(), w.lower()), 'detail': det})
+    wk = lambda nid, pid, a, b: round(sum(r['spend_eur'] / EUR_PER_USD[r['day']] for r in SNAP['daily'] if r['network_id'] == nid and r['partner_id'] == pid and a <= r['day'] <= b), 2)
     traffic = [
-        {'network_id': 4883, 'metric': 'amazon_spend_per_week', 'partner_name': seat(491), 'partner_ids': [491], 'change_pct': None, 'before': 36, 'after': 1709,
-         'period': 'Week before the last week before the cut vs the last week before the cut', 'source': 'The Pitt run, 21 Oct 2026'},
-        {'network_id': 5412, 'metric': 'amazon_rpmbr', 'partner_name': seat(489), 'partner_ids': [489], 'change_pct': None, 'before': 15.84, 'after': None, 'period': '7 days before the cut', 'source': 'The Pitt run, 21 Oct 2026'},
-        {'network_id': 5412, 'metric': 'amazon_rpmbr', 'partner_name': seat(491), 'partner_ids': [491], 'change_pct': None, 'before': 33.48, 'after': None, 'period': '7 days before the cut', 'source': 'The Pitt run, 21 Oct 2026'},
-        {'network_id': 5449, 'metric': 'amazon_rpmbr', 'partner_name': seat(437), 'partner_ids': [437], 'change_pct': None, 'before': 28.78, 'after': None, 'period': '7 days before the cut', 'source': 'The Pitt run, 21 Oct 2026'},
-        {'network_id': 4883, 'metric': 'amazon_rpmbr', 'partner_name': seat(491), 'partner_ids': [491], 'change_pct': None, 'before': 12.07, 'after': None, 'period': '7 days before the cut', 'source': 'The Pitt run, 21 Oct 2026'},
+        {'network_id': 4883, 'metric': 'amazon_spend_per_week_usd', 'partner_name': seat(491), 'partner_ids': [491], 'change_pct': None,
+         'before': wk(4883, 491, '2026-10-06', '2026-10-12'), 'after': wk(4883, 491, '2026-10-13', '2026-10-19'),
+         'period': '6–12 Oct vs 13–19 Oct (USD, converted per day)', 'source': 'Snowflake DAY_DEMAND, read 22 Oct 2026'},
     ]
     cases = run['cases']
-    invs = [{'network_id': nid, 'hypotheses': [{'label': cases[str(nid)]['hypothesis'], 'confidence': None, 'evidence_refs': ['TOPS-11471'], 'missing_info': ['Verify: ' + cases[str(nid)]['verify']]}],
-             'draft_message': cases[str(nid)]['draft'], 'read': cases[str(nid)]['read'], 'findings': cases[str(nid)]['findings'], 'meta': cases[str(nid)]['meta'],
+    invs = [{'network_id': nid, 'hypotheses': [{'label': cases[str(nid)]['hypothesis'], 'evidence_refs': ['TOPS-11471'], 'missing_info': ['Verify: ' + cases[str(nid)]['verify']]}],
+             'draft_message': None, 'meta': cases[str(nid)]['meta'],
              'validation': {'passed': None, 'ai_output_accepted': None, 'fallback_fields': None}} for nid in (5412, 5449, 4883)]
     ready = []
     for nid in (5412, 5449, 4883):
@@ -175,8 +182,8 @@ def real(run):
             else:
                 ready.append({'network_id': nid, 'signal': sig, 'presence': 'NO_DATA', 'detail': None})
     return {'id': 'run-2026-10-21', 'label': 'Real run · 21 Oct 2026, 4:55 PM', 'synthetic': False, 'asOf': '2026-10-21',
-            'currency': {'symbol': '€', 'note': 'EUR as documented by the source (TOTAL_PAID_PRICE_TRUE_COUNT); not Finance-validated. A run rate, not a confirmed loss.'},
-            'source': run['source'], 'headline': run['headline'],
+            'currency': {'code': 'USD', 'symbol': '$', 'note': 'USD: source EUR (DAY_DEMAND, documented in Euro) converted day by day with ANALYTICS.PUBLIC.MAPPING_CURRENCY_RATE_HIST, then summed. A run rate, not a confirmed loss.'},
+            'source': run['source'] + ' Seats and spend: Snowflake snapshot read 22 Oct 2026.', 'headline': None,
             'disconnections': disc, 'networks': nets, 'checks': checks, 'traffic': traffic, 'funnels': [], 'investigations': invs, 'readiness': ready, 'saves': []}
 
 # ---------------------------------------------------------------- Snowflake CSV export
@@ -217,10 +224,15 @@ def from_csv(d, label, as_of):
     d = pathlib.Path(d)
     disc = read_csv(d, 'disconnections.csv', ['PARTNER_ID', 'PARTNER_NAME', 'PUBLISHER', 'NETWORK_ID', 'CUT_AT'],
                     {'PARTNER_ID': 'int', 'PARTNER_NAME': 'str', 'PUBLISHER': 'str', 'NETWORK_ID': 'int', 'BUSINESS_UNIT': 'str', 'USERNAME': 'str', 'CUT_AT': 'str', 'RECONNECTED_AT': 'str', 'SPEND_7D_BEFORE': 'num'})
+    # STR publishers are being sunset and are not analysed.
+    disc = [r for r in disc if not re.search(r'(^|\s)STR(\s|$)', r['PUBLISHER'] or '')]
     for r in disc:
         r['CUT_AT'] = r['CUT_AT'][:16].replace('T', ' ')
         if r['RECONNECTED_AT'] and r['RECONNECTED_AT'].startswith('2099'):
             r['RECONNECTED_AT'] = None  # the alert view stores open cuts as 2099-...: still disconnected
+        # EUR -> USD at the cut-day rate; no rate for that day = No data (never a guessed rate).
+        rate = EUR_PER_USD.get(r['CUT_AT'][:10])
+        r['SPEND_7D_BEFORE'] = None if r['SPEND_7D_BEFORE'] is None or rate is None else round(r['SPEND_7D_BEFORE'] / rate, 2)
     nets = read_csv(d, 'networks.csv', ['NETWORK_ID'], {'NETWORK_ID': 'int', 'REGION': 'str'}, optional=True)
     checks = read_csv(d, 'checks.csv', ['network_id', 'check', 'window', 'result'], {'network_id': 'int', 'check': 'str', 'window': 'str', 'result': 'str', 'evidence_ref': 'str', 'detail': 'str'}, optional=True)
     for c in checks:
@@ -240,7 +252,7 @@ def from_csv(d, label, as_of):
     saves = read_csv(d, 'saves.csv', ['network_id', 'PUBLISHER', 'PARTNER_ID', 'kind', 'fixed_check', 'fixed_at'],
                      {'network_id': 'int', 'PUBLISHER': 'str', 'PARTNER_ID': 'int', 'kind': 'str', 'fixed_check': 'str', 'fixed_at': 'str', 'SPEND_7D': 'num'}, optional=True)
     return {'id': 'export', 'label': label, 'synthetic': False, 'asOf': as_of,
-            'currency': {'symbol': '€', 'note': 'As exported from Snowflake; SPEND_7D_BEFORE is documented in EUR by the source, not Finance-validated.'},
+            'currency': {'code': 'USD', 'symbol': '$', 'note': 'SPEND_7D_BEFORE exported in EUR, converted at the cut-day rate of the snapshot FX table (no daily detail); rows without a rate show No data.'},
             'source': 'Snowflake CSV export in ' + d.name, 'disconnections': disc, 'networks': nets, 'checks': checks, 'traffic': traffic,
             'funnels': funnels, 'investigations': invs, 'readiness': ready, 'saves': saves}
 

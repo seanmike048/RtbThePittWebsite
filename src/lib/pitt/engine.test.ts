@@ -4,9 +4,11 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { RUN_2026_10_21, SYNTHETIC } from './data.ts';
 import {
-  NO_FILTERS, applyFilters, bucketOf, deriveRows, fmtMoney, fmtNum, funnel, kpis, priorFilters, priorityOf, rankedHypotheses, reconcile, riskTable,
-  sankey, trafficContext, waterfall, whatIf,
+  NO_FILTERS, applyFilters, bucketOf, cohortVariance, deriveRows, fmtMoney, fmtNum, funnel, kpis, priorFilters, priorityOf, rankedHypotheses, reconcile, riskTable,
+  sankey, trafficContext, whatIf,
 } from './engine.ts';
+import { bundledRun } from '../cases/bundled.ts';
+import { runRemovedTotal } from '../cases/financials.ts';
 import type { Dataset, Disconnection } from './types.ts';
 
 const row = (o: Partial<Disconnection>): Disconnection => ({
@@ -37,17 +39,17 @@ for (const ds of [SYNTHETIC, RUN_2026_10_21]) {
   });
 }
 
-test('The real 21 Oct run totals EUR 7,002 at risk, as published', () => {
+test('The real 21 Oct run: USD at risk equals the case layer total (same snapshot, converted day by day)', () => {
   const rows = deriveRows(RUN_2026_10_21);
   const k = kpis(RUN_2026_10_21, rows, null);
-  assert.equal(k.find((x) => x.id === 'atRisk')!.value, 7002);
+  const usd = runRemovedTotal(bundledRun().cases);
+  assert.equal(usd.kind, 'usd');
+  assert.ok(Math.abs(k.find((x) => x.id === 'atRisk')!.value! - (usd as { usd: number }).usd) < 0.05);
   assert.equal(k.find((x) => x.id === 'networks')!.value, 3);
   assert.equal(k.find((x) => x.id === 'saved')!.value, null); // no saves in the run: "No data", not 0
   assert.equal(fmtMoney(k.find((x) => x.id === 'saved')!.value), 'No data');
-  const di437 = rows.find((r) => r.NETWORK_ID === 5412 && r.PARTNER_ID === 437)!;
-  assert.equal(di437.SPEND_7D_BEFORE, null); // "none listed" stays null
-  assert.equal(di437.priority, 'P2');
-  assert.equal(sankey(rows).undrawn, 1);
+  assert.equal(RUN_2026_10_21.currency.code, 'USD');
+  assert.equal(SYNTHETIC.currency.code, 'USD');
 });
 
 test('Filters apply before every derivation: KPI, Sankey and table follow the same cohort', () => {
@@ -65,16 +67,16 @@ test('Prior period is the equal-length window just before', () => {
   assert.equal(priorFilters(NO_FILTERS), null);
 });
 
-test('NO_DATA is never a pass; no FAIL caps HIGH confidence; missing refs are unverified', () => {
+test('NO_DATA is never a pass; hypotheses keep source order with no confidence; missing refs are unverified', () => {
   const ds: Dataset = {
     ...RUN_2026_10_21,
     checks: [{ network_id: 1, check: 'IVT', window: 'AFTER', result: 'NO_DATA', evidence_ref: 'r1', detail: '' }],
-    investigations: [{ network_id: 1, hypotheses: [{ label: 'h', confidence: 'HIGH', evidence_refs: ['r1', 'nope'], missing_info: [] }], draft_message: null, validation: { passed: null, ai_output_accepted: null, fallback_fields: null } }],
+    investigations: [{ network_id: 1, hypotheses: [{ label: 'first', evidence_refs: ['r1', 'nope'], missing_info: [] }, { label: 'second', evidence_refs: [], missing_info: [] }], draft_message: null, validation: { passed: null, ai_output_accepted: null, fallback_fields: null } }],
   };
-  const [h] = rankedHypotheses(ds, 1);
-  assert.equal(h.shownConfidence, 'MEDIUM');
-  assert.equal(h.capped, true);
-  assert.deepEqual(h.unverified, ['nope']);
+  const hs = rankedHypotheses(ds, 1);
+  assert.deepEqual(hs.map((h) => h.label), ['first', 'second']);
+  assert.deepEqual(hs[0].unverified, ['nope']);
+  assert.ok(!('confidence' in hs[0]) && !('shownConfidence' in hs[0]));
   const k = kpis(ds, deriveRows({ ...ds, disconnections: [row({ NETWORK_ID: 1 })] }), null);
   assert.equal(k.find((x) => x.id === 'failing')!.value, 0);
 });
@@ -89,6 +91,7 @@ test('"Drop is Amazon-specific" only when auctions are stable and Amazon bid req
   }
   assert.ok(flags.some((f) => f.amazonSpecific) && flags.some((f) => !f.amazonSpecific));
   assert.equal(trafficContext(RUN_2026_10_21, 4883).amazonSpecific, false); // spend metric only: no banner
+  assert.ok(!JSON.stringify([RUN_2026_10_21, SYNTHETIC]).match(/rpmbr|RPMBR|"confidence"|€/)); // removed from the product data
 });
 
 test('Funnel: intake, continued %, dropped and top 3 reasons; no funnel data gives no stages', () => {
@@ -100,13 +103,14 @@ test('Funnel: intake, continued %, dropped and top 3 reasons; no funnel data giv
   assert.equal(funnel(RUN_2026_10_21, deriveRows(RUN_2026_10_21), null).stages.length, 0);
 });
 
-test('Waterfall ends on before − cuts + recovered', () => {
+test('Revenue variance: pre-cut = removed + reconnected seats; nothing is called recovered; missing measures are unavailable', () => {
   const rows = deriveRows(SYNTHETIC);
-  const w = waterfall(rows);
-  const before = w[0].value, end = w[w.length - 1].value;
-  const losses = w.filter((s) => s.kind === 'loss').reduce((a, s) => a + s.value, 0);
-  const rec = w.find((s) => s.kind === 'gain')!.value;
-  assert.ok(Math.abs(before + losses + rec - end) < 1e-6);
+  const v = cohortVariance(rows);
+  const val = (id: string) => v.find((x) => x.id === id)!.value!;
+  assert.ok(Math.abs(val('precut') - val('removed') - val('reconnected')) < 1e-6);
+  assert.ok(v.every((x) => !/recovered/i.test(x.label)));
+  for (const id of ['runrate', 'projected', 'restored']) assert.equal(v.find((x) => x.id === id)!.value, null);
+  assert.ok(v.every((x) => x.label.length <= 22)); // short labels, no seat names
 });
 
 test('What-if: fixing ads.txt projects revenue and lowers P0 only through the same rules', () => {

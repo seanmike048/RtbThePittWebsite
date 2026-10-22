@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Info } from 'lucide-react';
 import { cx } from '../ui.tsx';
-import { ROOM_THEME } from '../../lib/pitt/engine.ts';
+import { PRIORITY_TONE, RESULT_TONE } from '../../lib/pitt/engine.ts';
 import type { CheckResult, Presence } from '../../lib/pitt/types.ts';
 
 export type Tone = 'neutral' | 'accent' | 'danger' | 'warn' | 'ok' | 'info';
@@ -21,21 +21,17 @@ export const Chip: React.FC<{ tone?: Tone; children: React.ReactNode; className?
 );
 
 export const PriorityChip: React.FC<{ p: 'P0' | 'P1' | 'P2' | null }> = ({ p }) => (
-  <span
-    className="num inline-flex min-w-8 justify-center rounded-md px-1.5 py-0.5 text-[11px] font-bold"
-    style={{ color: '#0a0d16', background: p ? ROOM_THEME.priority[p] : ROOM_THEME.priority.none }}
-    title={p ? 'Priority ' + p : 'No priority rule matched'}
-  >
+  <Chip tone={PRIORITY_TONE[p ?? 'none']} className="num min-w-8 justify-center" title={p ? 'Priority ' + p : 'No priority rule matched'}>
     {p ?? '—'}
-  </span>
+  </Chip>
 );
 
 export const ResultChip: React.FC<{ r: CheckResult | null }> = ({ r }) => {
   const v = r ?? 'NO_DATA';
   return (
-    <span className="num inline-flex rounded-md px-1.5 py-0.5 text-[11px] font-bold" style={{ color: '#0a0d16', background: ROOM_THEME.result[v] }}>
-      {v === 'NO_DATA' ? 'NO DATA' : v}
-    </span>
+    <Chip tone={RESULT_TONE[v]} className="num">
+      {v === 'NO_DATA' ? 'No data' : v}
+    </Chip>
   );
 };
 
@@ -46,7 +42,7 @@ export const PresenceChip: React.FC<{ p: Presence }> = ({ p }) => (
 export const Panel: React.FC<{ id?: string; title: string; eyebrow?: string; aside?: React.ReactNode; children: React.ReactNode; className?: string; description?: React.ReactNode }> = ({
   id, title, eyebrow, aside, children, className, description,
 }) => (
-  <section id={id} aria-labelledby={id ? id + '-h' : undefined} className={cx('rounded-2xl border border-line bg-surface p-4 sm:p-5', className)}>
+  <section id={id} aria-labelledby={id ? id + '-h' : undefined} className={cx('rounded-xl border border-line bg-surface p-4 sm:p-5', className)}>
     <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
       <div className="min-w-0">
         {eyebrow && <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-accent">{eyebrow}</p>}
@@ -144,4 +140,3 @@ export function useCountUp(target: number | null, ms = 700) {
   return v;
 }
 
-export const roomStyle = (): React.CSSProperties => ({ ...(ROOM_THEME.vars as React.CSSProperties), background: 'var(--canvas)', color: 'var(--ink)', colorScheme: 'dark' });

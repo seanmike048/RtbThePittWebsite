@@ -1,8 +1,9 @@
+import { showUsd, toUsd } from '../../lib/cases/fx.ts';
 import React, { useEffect, useState } from 'react';
 import { ChevronDown, EyeOff } from 'lucide-react';
 import { Badge, Button, Card, EmptyNote, Eyebrow, SectionHeading, cx } from '../ui.tsx';
 import { api } from '../../lib/ops/api.ts';
-import { RUN_LABEL, dispatchHint, fmtMoney, isTerminal } from '../../lib/ops/runs.ts';
+import { RUN_LABEL, dispatchHint, isTerminal } from '../../lib/ops/runs.ts';
 import type { CaseResult, Run } from '../../lib/ops/types.ts';
 import type { Ops } from './useOps.ts';
 
@@ -94,28 +95,15 @@ export const CaseView: React.FC<{ c: CaseResult }> = ({ c }) => {
         <h3 className="text-base font-semibold text-ink">
           {c.network.name ?? 'Network'} · #{c.network.id} · {c.partner.name}
         </h3>
-        {c.priority && <Badge tone="accent">Priority {c.priority.code} {c.priority.label}{c.priority.provisional ? ' (provisional)' : ''}</Badge>}
         <Badge tone={c.status === 'READY_FOR_APPROVAL' ? 'ok' : 'warn'}>{c.status.replace(/_/g, ' ').toLowerCase()}</Badge>
         <span className="text-xs text-muted">Disconnected {c.disconnected_at ?? 'n/a'} (time zone not stated by the source)</span>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-xl bg-surface-2 p-3">
-          <Eyebrow>Observed exposure</Eyebrow>
-          <p className="num mt-1 text-xl font-semibold text-ink">{fmtMoney(c.exposure.weekly_before_cut, cur.code)}</p>
-          <p className="mt-1 text-xs text-muted">{c.exposure.label}. {cur.label ?? 'Currency unknown'}.</p>
-        </div>
-        <div className="rounded-xl bg-surface-2 p-3">
-          <Eyebrow>RPMBr, 7 days before the cut</Eyebrow>
-          <p className="num mt-1 text-xl font-semibold text-ink">{c.exposure.rpmbr?.partner != null ? (cur.code === 'EUR' ? '€' : '') + c.exposure.rpmbr.partner.toFixed(2) : 'n/a'}</p>
-          <p className="mt-1 text-xs text-muted">
-            {c.exposure.rpmbr ? (c.exposure.rpmbr.unit ?? '') + '. Network, all partners: ' + (c.exposure.rpmbr.network_all_partners ?? 'n/a') + '.' : 'Not in this workflow output.'}
-          </p>
-        </div>
-        <div className="rounded-xl bg-surface-2 p-3">
-          <Eyebrow>Confidence</Eyebrow>
-          <p className="mt-1 text-sm text-ink">Evidence: {c.evidence_confidence?.label ?? 'n/a'}</p>
-          <p className="text-sm text-ink">Root cause: {c.root_cause_confidence ?? 'n/a'}</p>
+          <Eyebrow>Observed exposure · USD</Eyebrow>
+          <p className="num mt-1 text-xl font-semibold text-ink">{showUsd(c.exposure.weekly_before_cut == null ? null : toUsd(c.exposure.weekly_before_cut, cur.code === 'EUR' || cur.code === 'USD' ? cur.code : 'unknown', c.disconnected_at))}</p>
+          <p className="mt-1 text-xs text-muted">{c.exposure.label}. {cur.code === 'EUR' ? 'Source EUR converted at the cut-day rate.' : cur.code === 'USD' ? 'Source in USD.' : 'Source currency unknown: not converted.'}</p>
         </div>
       </div>
 

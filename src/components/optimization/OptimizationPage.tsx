@@ -223,7 +223,7 @@ const ApprovalDialog: React.FC<{ rec: Recommendation; p: Preview; environment: s
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="pitt-approve-title">
-      <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-overlay backdrop-blur-sm" />
       <div ref={ref} className="relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border border-line bg-surface shadow-2xl sm:max-w-2xl sm:rounded-2xl">
         <div className="border-b border-line px-5 py-4">
           <Badge tone={environment === 'production' ? 'danger' : 'info'} dot>

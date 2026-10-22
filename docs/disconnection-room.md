@@ -16,16 +16,17 @@ This is the output layer of The Pitt, built for Equativ AI Days 2026 (Competitiv
 ## Rules the code enforces
 
 - **Filters come first.** Business unit, Amazon partner, region, priority, status and date range are applied before every derivation (`applyFilters`), so every KPI, chart and table describes the same cohort.
-- **Reconciliation.** On load and on every cohort change, the browser console prints `RECONCILIATION OK (€…)`, or the exact mismatch. The check: Sankey "Still disconnected" = Revenue at risk KPI = sum of the at-risk rows in the risk table.
+- **Reconciliation.** On load and on every cohort change, the browser console prints `RECONCILIATION OK ($…)`, or the exact mismatch. The check: Sankey "Still disconnected" = Revenue at risk KPI = sum of the at-risk rows in the risk table.
 - **Missing is "No data", never 0.**
   - `RECONNECTED_AT = null` means still disconnected; it is never inferred.
   - A `NO_DATA` check is grey and never counts as a pass.
   - Owners come only from `USERNAME`.
-- **AI hypotheses:**
-  - If no check is FAIL, HIGH confidence is shown as MEDIUM, with a "capped" chip.
+- **Hypotheses** are shown in source order as "Leading hypothesis — not confirmed". There is no confidence, score or ranking.
   - An `evidence_ref` that is not a row in Checks gets a red "Unverified evidence" badge.
 - **Publisher view hides** owners, other publishers, Equativ revenue figures, the AI hypotheses and validation internals.
-- **The draft message is read-only**, with a "Requires human approval in Slack" lock. There is no send button.
+- **The draft message is read-only**, with a "Requires human approval in Slack" lock. There is no send button. For the real run, drafts live in the case file (src/lib/cases), rebuilt in USD without RPMBr.
+- **Theme:** the Room uses the shared light and dark tokens in `src/index.css`, like every page. Charts read `--chart-*` tokens; no component carries its own colours.
+- **Revenue variance** (`cohortVariance`): pre-cut weekly spend = removed + reconnected seats (additive). Reconnected seats are never called recovered. Run rate, projection and confirmed restored spend are per publisher (Financial Impact), so they show Unavailable here.
 
 ## Priority engine (placeholder thresholds)
 
@@ -38,7 +39,6 @@ These sit in `PRIORITY_RULES`, and the UI shows a "Placeholder thresholds" chip 
 Other settings in the same file:
 - **Risk** (`riskOf`): P0 is Critical, P1 is High, P2 or more than 30 days is Watch, everything else is Low.
 - **Age buckets:** Current, 1–7, 8–30, 31–90 and 90+ days, counted from `CUT_AT` to the data set's `asOf`.
-- **Amazon RPMBr reference** (USD per million bid requests): Americas $50, EMEA $25, APAC $10. Shown next to EUR RPMBr without conversion.
 
 ## Data contract (exact field names)
 
@@ -49,17 +49,17 @@ Other settings in the same file:
   - `change_pct` empty means it is derived from before and after.
   - The "Drop is Amazon-specific" banner needs `network_auctions_per_day` within ±10% and `amazon_bid_requests_per_day` at −50% or lower.
 - **D. Demand funnel:** `network_id, auctions, bid_requests, bids, wins, impressions` plus `drop_reasons[] {stage, reason, count}`. A reason's `stage` is the stage the request did not reach.
-- **E. AI investigation:** `network_id, hypotheses[] {label, confidence, evidence_refs[], missing_info[]}, draft_message, validation {passed, ai_output_accepted, fallback_fields[]}`. `confidence` may be null when the source does not state it.
+- **E. AI investigation:** `network_id, hypotheses[] {label, evidence_refs[], missing_info[]}, draft_message, validation {passed, ai_output_accepted, fallback_fields[]}`.
 - **Readiness:** `network_id, signal, presence ∈ {PRESENT, ABSENT, PARTIAL, NO_DATA}, detail`. The `content.*` group is tagged "Not fully relevant until January 2027".
 - **Saves:** `network_id, PUBLISHER, PARTNER_ID, kind ∈ {stayed_connected, reconnected_after_fix}, fixed_check, fixed_at, SPEND_7D`.
 
 ## Data sets
 
-1. **Synthetic demo data**, with a persistent banner. It has 25 networks and 41 seat rows across seats 437/489/490/491/492, three business units, and seed 20261021. The scenarios:
+1. **Synthetic demo data**, with a persistent banner. Figures are generated directly in USD-like units (not converted). It has 25 networks and 41 seat rows across seats 437/489/490/491/492, three business units, and seed 20261021. The scenarios:
    - **A:** ads.txt FAIL after the cut.
    - **B:** IVT spike.
-   - **C:** all PASS or NO_DATA with an Amazon-specific drop, LOW confidence and missing information listed. Some C networks show the HIGH cap and the "Unverified evidence" badge.
-2. **Real run · 21 Oct 2026, 4:55 PM** (the default): Display.io, E-Planning LATAM and Vidazoo Intermediary, totalling €7,002 a week over 4 cut seats with a spend. Source: `scripts/run-2026-10-21-1655.json`, the #thepittoutput post copied verbatim (headline, reads, findings, leading hypotheses, Verify steps, Jira drafts). It carries only what that output states; everything else is null or NO_DATA (business unit, owner, funnel and AI confidence are not in it).
+   - **C:** all PASS or NO_DATA with an Amazon-specific drop and missing information listed. Some C networks show the "Unverified evidence" badge.
+2. **Real run · 21 Oct 2026, 4:55 PM** (the default): Display.io, E-Planning LATAM and Vidazoo Intermediary, $7,853 a week (USD) over the 7 cut seats of the alert view. Seats, cut times and spend come from `data/snowflake/amazon-spend-2026-10-21.json` (read-only Snowflake snapshot), converted from EUR day by day with `ANALYTICS.PUBLIC.MAPPING_CURRENCY_RATE_HIST`, then summed. The case text (reads, findings, actions, drafts) is owned by the case layer, not by this data set.
 
 ## Replacing the sample data with a Snowflake CSV export
 
@@ -70,6 +70,6 @@ Other settings in the same file:
    ```bash
    python3 scripts/gen_room_data.py --csv path/to/export --label "Export 21 Oct" --as-of 2026-10-21
    ```
-   The script refuses missing columns and unknown enum values, and says which line. Empty cells (or `NULL`) become null, and a `RECONNECTED_AT` in 2099 (the alert view's "open") becomes null, meaning still disconnected.
+   The script refuses missing columns and unknown enum values, and says which line. Empty cells (or `NULL`) become null, and a `RECONNECTED_AT` in 2099 (the alert view's "open") becomes null, meaning still disconnected. STR publishers are dropped. `SPEND_7D_BEFORE` (EUR) is converted at the cut-day rate of the snapshot FX table; a day without a rate gives No data, never a guessed rate.
 3. The export appears as a third entry in the **Data** selector. Open the browser console and check for `RECONCILIATION OK`.
 4. To leave out the synthetic set, remove `SYNTHETIC` from `DATASETS` in the generator.

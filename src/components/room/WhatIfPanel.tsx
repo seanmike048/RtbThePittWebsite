@@ -46,7 +46,7 @@ export const WhatIfPanel: React.FC<{ ds: Dataset; rows: Row[]; symbol: string }>
         </div>
         <dl className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
           <Stat k="Networks fixed" v={String(r.fixedNetworks)} />
-          <Stat k="Projected revenue recovered" v={fmtMoney(r.recovered, symbol) + (r.recovered != null ? ' / wk' : '')} />
+          <Stat k="Projected recovery if fixed" v={fmtMoney(r.recovered, symbol) + (r.recovered != null ? ' / wk' : '')} />
           <Stat k="P0 seats" v={r.p0Before + ' → ' + r.p0After} />
           <Stat k="P0 that become P2" v={String(r.p0ToP2)} />
           <div className="col-span-2 rounded-lg border border-line bg-surface-2 p-2 sm:col-span-2">

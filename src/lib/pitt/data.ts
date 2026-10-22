@@ -11,8 +11,9 @@ export const SYNTHETIC: Dataset = {
  "synthetic": true,
  "asOf": "2026-10-21",
  "currency": {
-  "symbol": "€",
-  "note": "Synthetic figures in EUR-like units; not real revenue."
+  "code": "USD",
+  "symbol": "$",
+  "note": "Synthetic figures generated directly in USD-like units; not real revenue and not converted."
  },
  "source": "Seeded generator scripts/gen_room_data.py (seed 20261021). Scenarios A = ads.txt FAIL after cut, B = IVT spike, C = all PASS or NO_DATA with an Amazon-specific drop.",
  "disconnections": [
@@ -4588,7 +4589,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "ads.txt no longer authorises Equativ after the cut",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9100.ads_txt.after"
      ],
@@ -4596,7 +4596,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Amazon commercial decision on the seat",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Amazon account team confirmation"
@@ -4615,7 +4614,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "ads.txt no longer authorises Equativ after the cut",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9101.ads_txt.after"
      ],
@@ -4623,7 +4621,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Amazon commercial decision on the seat",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Amazon account team confirmation"
@@ -4642,7 +4639,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "Amazon-side seat decision, not visible in Equativ data",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Disconnection reason from Amazon",
@@ -4651,7 +4647,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Pricing or floor change on the publisher side",
-     "confidence": "LOW",
      "evidence_refs": [
       "syn-9102.sco.before"
      ],
@@ -4674,7 +4669,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "ads.txt no longer authorises Equativ after the cut",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9103.ads_txt.after"
      ],
@@ -4682,7 +4676,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Amazon commercial decision on the seat",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Amazon account team confirmation"
@@ -4701,7 +4694,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "IVT spike made the traffic unbuyable",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9104.ivt.after"
      ],
@@ -4711,7 +4703,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Supply mix change on the publisher side",
-     "confidence": "MEDIUM",
      "evidence_refs": [
       "syn-9104.sco.after"
      ],
@@ -4730,7 +4721,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "IVT spike made the traffic unbuyable",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9105.ivt.after"
      ],
@@ -4740,7 +4730,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Supply mix change on the publisher side",
-     "confidence": "MEDIUM",
      "evidence_refs": [
       "syn-9105.sco.after"
      ],
@@ -4759,7 +4748,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "Amazon-side seat decision, not visible in Equativ data",
-     "confidence": "HIGH",
      "evidence_refs": [],
      "missing_info": [
       "Disconnection reason from Amazon",
@@ -4768,7 +4756,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Pricing or floor change on the publisher side",
-     "confidence": "LOW",
      "evidence_refs": [
       "syn-9106.sco.before"
      ],
@@ -4789,7 +4776,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "ads.txt no longer authorises Equativ after the cut",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9107.ads_txt.after"
      ],
@@ -4797,7 +4783,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Amazon commercial decision on the seat",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Amazon account team confirmation"
@@ -4816,7 +4801,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "Amazon-side seat decision, not visible in Equativ data",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Disconnection reason from Amazon",
@@ -4825,7 +4809,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Pricing or floor change on the publisher side",
-     "confidence": "LOW",
      "evidence_refs": [
       "syn-9108.sco.before"
      ],
@@ -4846,7 +4829,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "IVT spike made the traffic unbuyable",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9109.ivt.after"
      ],
@@ -4856,7 +4838,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Supply mix change on the publisher side",
-     "confidence": "MEDIUM",
      "evidence_refs": [
       "syn-9109.sco.after"
      ],
@@ -4877,7 +4858,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "IVT spike made the traffic unbuyable",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9110.ivt.after"
      ],
@@ -4887,7 +4867,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Supply mix change on the publisher side",
-     "confidence": "MEDIUM",
      "evidence_refs": [
       "syn-9110.sco.after"
      ],
@@ -4906,7 +4885,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "IVT spike made the traffic unbuyable",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9111.ivt.after"
      ],
@@ -4916,7 +4894,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Supply mix change on the publisher side",
-     "confidence": "MEDIUM",
      "evidence_refs": [
       "syn-9111.sco.after"
      ],
@@ -4935,7 +4912,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "ads.txt no longer authorises Equativ after the cut",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9112.ads_txt.after"
      ],
@@ -4943,7 +4919,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Amazon commercial decision on the seat",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Amazon account team confirmation"
@@ -4962,7 +4937,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "Amazon-side seat decision, not visible in Equativ data",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Disconnection reason from Amazon",
@@ -4971,7 +4945,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Pricing or floor change on the publisher side",
-     "confidence": "LOW",
      "evidence_refs": [
       "syn-9113.sco.before",
       "syn-9113.floor_history"
@@ -4993,7 +4966,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "ads.txt no longer authorises Equativ after the cut",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9114.ads_txt.after"
      ],
@@ -5001,7 +4973,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Amazon commercial decision on the seat",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Amazon account team confirmation"
@@ -5020,7 +4991,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "Amazon-side seat decision, not visible in Equativ data",
-     "confidence": "HIGH",
      "evidence_refs": [],
      "missing_info": [
       "Disconnection reason from Amazon",
@@ -5029,7 +4999,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Pricing or floor change on the publisher side",
-     "confidence": "LOW",
      "evidence_refs": [
       "syn-9115.sco.before"
      ],
@@ -5050,7 +5019,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "IVT spike made the traffic unbuyable",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9116.ivt.after"
      ],
@@ -5060,7 +5028,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Supply mix change on the publisher side",
-     "confidence": "MEDIUM",
      "evidence_refs": [
       "syn-9116.sco.after"
      ],
@@ -5081,7 +5048,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "ads.txt no longer authorises Equativ after the cut",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9117.ads_txt.after"
      ],
@@ -5089,7 +5055,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Amazon commercial decision on the seat",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Amazon account team confirmation"
@@ -5108,7 +5073,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "IVT spike made the traffic unbuyable",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9118.ivt.after"
      ],
@@ -5118,7 +5082,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Supply mix change on the publisher side",
-     "confidence": "MEDIUM",
      "evidence_refs": [
       "syn-9118.sco.after"
      ],
@@ -5137,7 +5100,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "Amazon-side seat decision, not visible in Equativ data",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Disconnection reason from Amazon",
@@ -5146,7 +5108,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Pricing or floor change on the publisher side",
-     "confidence": "LOW",
      "evidence_refs": [
       "syn-9119.sco.before"
      ],
@@ -5167,7 +5128,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "Amazon-side seat decision, not visible in Equativ data",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Disconnection reason from Amazon",
@@ -5176,7 +5136,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Pricing or floor change on the publisher side",
-     "confidence": "LOW",
      "evidence_refs": [
       "syn-9120.sco.before"
      ],
@@ -5197,7 +5156,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "ads.txt no longer authorises Equativ after the cut",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9121.ads_txt.after"
      ],
@@ -5205,7 +5163,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Amazon commercial decision on the seat",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Amazon account team confirmation"
@@ -5224,7 +5181,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "Amazon-side seat decision, not visible in Equativ data",
-     "confidence": "LOW",
      "evidence_refs": [],
      "missing_info": [
       "Disconnection reason from Amazon",
@@ -5233,7 +5189,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Pricing or floor change on the publisher side",
-     "confidence": "LOW",
      "evidence_refs": [
       "syn-9122.sco.before"
      ],
@@ -5254,7 +5209,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "IVT spike made the traffic unbuyable",
-     "confidence": "HIGH",
      "evidence_refs": [
       "syn-9123.ivt.after"
      ],
@@ -5264,7 +5218,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Supply mix change on the publisher side",
-     "confidence": "MEDIUM",
      "evidence_refs": [
       "syn-9123.sco.after"
      ],
@@ -5285,7 +5238,6 @@ export const SYNTHETIC: Dataset = {
    "hypotheses": [
     {
      "label": "Amazon-side seat decision, not visible in Equativ data",
-     "confidence": "HIGH",
      "evidence_refs": [],
      "missing_info": [
       "Disconnection reason from Amazon",
@@ -5294,7 +5246,6 @@ export const SYNTHETIC: Dataset = {
     },
     {
      "label": "Pricing or floor change on the publisher side",
-     "confidence": "LOW",
      "evidence_refs": [
       "syn-9124.sco.before"
      ],
@@ -8545,12 +8496,24 @@ export const RUN_2026_10_21: Dataset = {
  "synthetic": false,
  "asOf": "2026-10-21",
  "currency": {
-  "symbol": "€",
-  "note": "EUR as documented by the source (TOTAL_PAID_PRICE_TRUE_COUNT); not Finance-validated. A run rate, not a confirmed loss."
+  "code": "USD",
+  "symbol": "$",
+  "note": "USD: source EUR (DAY_DEMAND, documented in Euro) converted day by day with ANALYTICS.PUBLIC.MAPPING_CURRENCY_RATE_HIST, then summed. A run rate, not a confirmed loss."
  },
- "source": "The Pitt run posted in #thepittoutput on 21 Oct 2026 at 4:55 PM (n8n Main MVP + Investigator v4.6), digest and Jira drafts copied verbatim.",
- "headline": "3 publishers · €7,002/week of Amazon DSP spend before the cut. All 3 cut during Equativ's own TOPS-11471 Amazon DSP reseller clean-up: 1 named in the ticket, 2 above wave-1 cutoff (confirm intended). Next: wave 2 on 22 Oct, 52 more publishers (multi-hop reselling, high risk or rebroadcasting, Acceptable and UnWanted only) to be cut from all Amazon accounts.",
+ "source": "The Pitt run posted in #thepittoutput on 21 Oct 2026 at 4:55 PM (n8n Main MVP + Investigator v4.6), digest and Jira drafts copied verbatim. Seats and spend: Snowflake snapshot read 22 Oct 2026.",
+ "headline": null,
  "disconnections": [
+  {
+   "PARTNER_ID": 437,
+   "PARTNER_NAME": "Amazon DSP AMER Display B",
+   "PUBLISHER": "Display.io",
+   "NETWORK_ID": 5412,
+   "BUSINESS_UNIT": null,
+   "USERNAME": null,
+   "CUT_AT": "2026-10-20 11:38",
+   "RECONNECTED_AT": null,
+   "SPEND_7D_BEFORE": 0.0
+  },
   {
    "PARTNER_ID": 489,
    "PARTNER_NAME": "Amazon DSP EMEA/APAC Display B",
@@ -8558,9 +8521,20 @@ export const RUN_2026_10_21: Dataset = {
    "NETWORK_ID": 5412,
    "BUSINESS_UNIT": null,
    "USERNAME": null,
-   "CUT_AT": "2026-10-20 11:44",
+   "CUT_AT": "2026-10-20 11:40",
    "RECONNECTED_AT": null,
-   "SPEND_7D_BEFORE": 2753
+   "SPEND_7D_BEFORE": 3084.09
+  },
+  {
+   "PARTNER_ID": 490,
+   "PARTNER_NAME": "Amazon DSP Native B",
+   "PUBLISHER": "Display.io",
+   "NETWORK_ID": 5412,
+   "BUSINESS_UNIT": null,
+   "USERNAME": null,
+   "CUT_AT": "2026-10-20 11:42",
+   "RECONNECTED_AT": null,
+   "SPEND_7D_BEFORE": 0.0
   },
   {
    "PARTNER_ID": 491,
@@ -8571,18 +8545,7 @@ export const RUN_2026_10_21: Dataset = {
    "USERNAME": null,
    "CUT_AT": "2026-10-20 11:44",
    "RECONNECTED_AT": null,
-   "SPEND_7D_BEFORE": 361
-  },
-  {
-   "PARTNER_ID": 437,
-   "PARTNER_NAME": "Amazon DSP AMER Display B",
-   "PUBLISHER": "Display.io",
-   "NETWORK_ID": 5412,
-   "BUSINESS_UNIT": null,
-   "USERNAME": null,
-   "CUT_AT": "2026-10-20 11:44",
-   "RECONNECTED_AT": null,
-   "SPEND_7D_BEFORE": null
+   "SPEND_7D_BEFORE": 405.44
   },
   {
    "PARTNER_ID": 437,
@@ -8593,7 +8556,18 @@ export const RUN_2026_10_21: Dataset = {
    "USERNAME": null,
    "CUT_AT": "2026-10-20 11:38",
    "RECONNECTED_AT": null,
-   "SPEND_7D_BEFORE": 2309
+   "SPEND_7D_BEFORE": 2590.69
+  },
+  {
+   "PARTNER_ID": 490,
+   "PARTNER_NAME": "Amazon DSP Native B",
+   "PUBLISHER": "Vidazoo Intermediary",
+   "NETWORK_ID": 4883,
+   "BUSINESS_UNIT": null,
+   "USERNAME": null,
+   "CUT_AT": "2026-10-20 11:42",
+   "RECONNECTED_AT": null,
+   "SPEND_7D_BEFORE": 0.0
   },
   {
    "PARTNER_ID": 491,
@@ -8604,7 +8578,7 @@ export const RUN_2026_10_21: Dataset = {
    "USERNAME": null,
    "CUT_AT": "2026-10-20 11:44",
    "RECONNECTED_AT": null,
-   "SPEND_7D_BEFORE": 1579
+   "SPEND_7D_BEFORE": 1772.79
   }
  ],
  "networks": [
@@ -8628,7 +8602,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "BEFORE",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5412.ads_txt.before",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 5412,
@@ -8644,7 +8618,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "BEFORE",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5412.sco.before",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 5412,
@@ -8652,7 +8626,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "AFTER",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5412.sco.after",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 5412,
@@ -8660,7 +8634,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "BEFORE",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5412.blocked_inventory.before",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 5412,
@@ -8668,7 +8642,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "AFTER",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5412.blocked_inventory.after",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 5412,
@@ -8676,7 +8650,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "BEFORE",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5412.ivt.before",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 5412,
@@ -8684,7 +8658,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "AFTER",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5412.ivt.after",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 5449,
@@ -8692,7 +8666,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "BEFORE",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5449.ads_txt.before",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 5449,
@@ -8708,7 +8682,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "BEFORE",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5449.sco.before",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 5449,
@@ -8716,7 +8690,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "AFTER",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5449.sco.after",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 5449,
@@ -8724,7 +8698,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "BEFORE",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5449.blocked_inventory.before",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 5449,
@@ -8732,7 +8706,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "AFTER",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5449.blocked_inventory.after",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 5449,
@@ -8740,7 +8714,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "BEFORE",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5449.ivt.before",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 5449,
@@ -8748,7 +8722,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "AFTER",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.5449.ivt.after",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 4883,
@@ -8756,7 +8730,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "BEFORE",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.4883.ads_txt.before",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 4883,
@@ -8764,7 +8738,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "AFTER",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.4883.ads_txt.after",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 4883,
@@ -8772,7 +8746,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "BEFORE",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.4883.sco.before",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 4883,
@@ -8780,7 +8754,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "AFTER",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.4883.sco.after",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 4883,
@@ -8788,7 +8762,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "BEFORE",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.4883.blocked_inventory.before",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 4883,
@@ -8796,7 +8770,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "AFTER",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.4883.blocked_inventory.after",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 4883,
@@ -8804,7 +8778,7 @@ export const RUN_2026_10_21: Dataset = {
    "window": "BEFORE",
    "result": "NO_DATA",
    "evidence_ref": "run-2026-10-21.4883.ivt.before",
-   "detail": "Not stated in the 21 Oct run page"
+   "detail": "Not stated in the 21 Oct run"
   },
   {
    "network_id": 4883,
@@ -8818,68 +8792,16 @@ export const RUN_2026_10_21: Dataset = {
  "traffic": [
   {
    "network_id": 4883,
-   "metric": "amazon_spend_per_week",
+   "metric": "amazon_spend_per_week_usd",
    "partner_name": "Amazon DSP Video B",
    "partner_ids": [
     491
    ],
    "change_pct": null,
-   "before": 36,
-   "after": 1709,
-   "period": "Week before the last week before the cut vs the last week before the cut",
-   "source": "The Pitt run, 21 Oct 2026"
-  },
-  {
-   "network_id": 5412,
-   "metric": "amazon_rpmbr",
-   "partner_name": "Amazon DSP EMEA/APAC Display B",
-   "partner_ids": [
-    489
-   ],
-   "change_pct": null,
-   "before": 15.84,
-   "after": null,
-   "period": "7 days before the cut",
-   "source": "The Pitt run, 21 Oct 2026"
-  },
-  {
-   "network_id": 5412,
-   "metric": "amazon_rpmbr",
-   "partner_name": "Amazon DSP Video B",
-   "partner_ids": [
-    491
-   ],
-   "change_pct": null,
-   "before": 33.48,
-   "after": null,
-   "period": "7 days before the cut",
-   "source": "The Pitt run, 21 Oct 2026"
-  },
-  {
-   "network_id": 5449,
-   "metric": "amazon_rpmbr",
-   "partner_name": "Amazon DSP AMER Display B",
-   "partner_ids": [
-    437
-   ],
-   "change_pct": null,
-   "before": 28.78,
-   "after": null,
-   "period": "7 days before the cut",
-   "source": "The Pitt run, 21 Oct 2026"
-  },
-  {
-   "network_id": 4883,
-   "metric": "amazon_rpmbr",
-   "partner_name": "Amazon DSP Video B",
-   "partner_ids": [
-    491
-   ],
-   "change_pct": null,
-   "before": 12.07,
-   "after": null,
-   "period": "7 days before the cut",
-   "source": "The Pitt run, 21 Oct 2026"
+   "before": 40.26,
+   "after": 1926.25,
+   "period": "6–12 Oct vs 13–19 Oct (USD, converted per day)",
+   "source": "Snowflake DAY_DEMAND, read 22 Oct 2026"
   }
  ],
  "funnels": [],
@@ -8889,7 +8811,6 @@ export const RUN_2026_10_21: Dataset = {
    "hypotheses": [
     {
      "label": "Equativ's own TOPS-11471 reseller clean-up, possibly wider than the wave-1 cutoff",
-     "confidence": null,
      "evidence_refs": [
       "TOPS-11471"
      ],
@@ -8898,12 +8819,7 @@ export const RUN_2026_10_21: Dataset = {
      ]
     }
    ],
-   "draft_message": "[The Pitt] Display.io (5412) disconnected from Amazon DSP · €3,114/week at stake\n\nThe Pitt investigation\n\nPublisher: Display.io (network 5412)\nDemand partner: Amazon DSP · disconnected 2026-10-20 11:44\nSpend at stake: €3,114 per week before the cut (official alert view, currency not documented; not a confirmed loss)\nPriority score: 41/100\nRead: Most likely Equativ's own TOPS-11471 reseller clean-up, but Display.io is above the wave-1 cutoff (about $15K/month vs $150). Confirm with Jaroslaw Stolarz whether it was intended before contacting the publisher.\n\nOpen items\n\n• [TechOps] Cut in TOPS-11471, Equativ's own Amazon DSP reseller clean-up. Wave 1 cut resellers under $150/month; Display.io made about $15K/month on Amazon DSP.\nNext step: Ask Jaroslaw Stolarz whether Display.io was on the list. If not, ask for reconnection before anyone contacts the publisher.\n• [TechOps] RPMBR under Amazon DSP's bar: EMEA/APAC Display B (489) €15.84 vs €22.26 ($25 EMEA); Video B (491) €33.48 vs €44.53 ($50 Americas)\nNext step: Ask #help-call-limiter to raise the RPMA threshold on these seats for Display.io, so Amazon DSP only gets its higher-value requests (Jaroslaw Stolarz is already reviewing this threshold for Amazon DSP).\n• [Publisher KAM] Signals Amazon DSP gets elsewhere but not here: GPID on 0.1% of requests to EMEA/APAC Display B (489) vs 43% on App elsewhere; GPID on 0% of requests to Video B (491) vs 32.9% on App elsewhere\nNext step: Ask the publisher to pass a GPID (imp.ext.gpid) on every placement: Amazon DSP values requests on these signals, so they lift RPMBR.\n• [Publisher KAM] Amazon DSP AMER Display B (seat 437): Blocked By Ads.Txt on 12.91% of pre-cut calls (App Display 12.91%)\nNext step: Ask the publisher to add the Equativ ads.txt / app-ads.txt line for this inventory.\n• [Publisher KAM] 26.24% of auctions on ads.txt files without the Equativ line\nNext step: Ask the publisher to add or correct the Equativ ads.txt / app-ads.txt line.\n\nInternal research & sources\n\n* TOPS-11517 (2026-09-16) — publisher_wide\nJarosław Stolarz logged on 2026-09-16 that Display.io (5412) was disconnected from Google DV360 with the comment 'IVT cut, could be reconnected in time' (TOPS-10411).\n* TOPS-10474 (2026-09-21) — analogous\nPriyanka Selvam reported a ~92% revenue drop for Kakaku (5915) from Amazon DSP EMEA/APAC Display B (489) starting 10 September.\n* TOPS-11539 (2026-10-19) — analogous\nDmitri Iartsev logged an ongoing Amazon DSP discrepancy with T-Mobile (5859), whose supply is 100% mobile app delivered via Google OB.\n* TOPS-11326 (2026-10-13) — partner_wide\nLuc Marsolais reported that clicks for Amazon DSP partner 437 (AMER Display B) on web appear not to be tracked properly on certain server-side bidding callers (Mediavine, Prebid client side and Seedtag).\n\nThese sources provide investigation context. They do not establish causality unless independently verified.\n\nLeading hypothesis (not confirmed)\nEquativ's own TOPS-11471 reseller clean-up, possibly wider than the wave-1 cutoff\nVerify: Check the TOPS-11471 wave-1 list and comments for Display.io (5412).\n\nGenerated by The Pitt (n8n). Figures from Snowflake. Case LIVE-5412-amazon_dsp.",
-   "read": "Most likely Equativ's own TOPS-11471 reseller clean-up, but Display.io is above the wave-1 cutoff (about $15K/month vs $150). Confirm with Jaroslaw Stolarz whether it was intended before contacting the publisher.",
-   "findings": [
-    "Amazon DSP won 13.4% of its bids on EMEA/APAC Display B (489) vs 37.9% on App elsewhere: its bids rarely cleared (floors or competition)",
-    "Amazon DSP bid on 18% of requests to EMEA/APAC Display B (489) vs 32% elsewhere"
-   ],
+   "draft_message": null,
    "meta": "Ad Network · Tier D · UnWanted · US",
    "validation": {
     "passed": null,
@@ -8916,7 +8832,6 @@ export const RUN_2026_10_21: Dataset = {
    "hypotheses": [
     {
      "label": "Intended Equativ cut under the TOPS-11471 reseller clean-up",
-     "confidence": null,
      "evidence_refs": [
       "TOPS-11471"
      ],
@@ -8925,9 +8840,7 @@ export const RUN_2026_10_21: Dataset = {
      ]
     }
    ],
-   "draft_message": "[The Pitt] E-Planning LATAM (5449) disconnected from Amazon DSP · €2,309/week at stake\n\nThe Pitt investigation\n\nPublisher: E-Planning LATAM (network 5449)\nDemand partner: Amazon DSP · disconnected 2026-10-20 11:38\nSpend at stake: €2,309 per week before the cut (official alert view, currency not documented; not a confirmed loss)\nPriority score: 41/100\nRead: Likely an intended Equativ cut under TOPS-11471, with seat 437 RPMBR at €28.78 against a €44.53 bar. Next move: confirm with Jaroslaw Stolarz in TOPS-11471 before any reconnection request to Amazon.\n\nOpen items\n\n• [TechOps] E-Planning LATAM is named in TOPS-11471, Equativ's own Amazon DSP reseller clean-up (Hsiao-Chi Weng, 2026-10-20), among the rebroadcasters sending massive mApp volume to Amazon (with Algorix, Gitberry and BidMachine), candidates for a cutoff of up to $10K MTD.\nNext step: Treat the cut as intended: no reconnection request to Amazon. If the publisher pushes back, align with Jaroslaw Stolarz (TOPS-11471) first.\n• [TechOps] RPMBR under Amazon DSP's bar: AMER Display B (437) €28.78 vs €44.53 ($50 Americas)\nNext step: Only if Supply wants E-Planning LATAM back: ask #help-call-limiter to raise the RPMA threshold on AMER Display B (437) for E-Planning LATAM, so Amazon DSP only gets its higher-value requests (Jaroslaw Stolarz is already reviewing this threshold for Amazon DSP).\n• [Publisher KAM] 7.61% of auctions on ads.txt files without the Equativ line\nNext step: Ask the publisher to add or correct the Equativ ads.txt / app-ads.txt line.\n\nInternal research & sources\n\n* TOPS-10474 (2026-09-21) — analogous\nPriyanka Selvam reported a ~92% revenue drop for Kakaku (5915) from Amazon DSP EMEA/APAC Display B (partner 489) starting September 10, with stable bid requests and QPS but fewer bid responses from the APAC DC, and…\n* TOPS-11539 (2026-10-19) — analogous\nDmitri Iartsev logged an ongoing Amazon DSP discrepancy with T-Mobile (5859), with supply fully mobile app via Google OB, QPS caps of 400 on us-west1-1 and 400 on us-east1-1, and discrepancy numbers still to be…\n* TOPS-10867 (2026-10-01) — partner_wide\nQuentin Beltran logged that 7 EBA partners active in July had stopped receiving traffic by the end of September, mostly legacy Amazon DSP endpoints that were likely migrated to the \"B\" endpoints, and opened a review to…\n* TOPS-11326 (2026-10-13) — partner_wide\nLuc Marsolais reported that clicks on Amazon DSP partner 437 (web) may not be tracked properly on certain SSB callers such as Mediavine, Prebid client-side and Seedtag, while PrebidServer, Google OB and Rise looked…\n\nThese sources provide investigation context. They do not establish causality unless independently verified.\n\nLeading hypothesis (not confirmed)\nIntended Equativ cut under the TOPS-11471 reseller clean-up\nVerify: Check the TOPS-11471 wave lists and comments for E-Planning LATAM and seat 437.\n\nGenerated by The Pitt (n8n). Figures from Snowflake. Case LIVE-5449-amazon_dsp.",
-   "read": "Likely an intended Equativ cut under TOPS-11471, with seat 437 RPMBR at €28.78 against a €44.53 bar. Next move: confirm with Jaroslaw Stolarz in TOPS-11471 before any reconnection request to Amazon.",
-   "findings": [],
+   "draft_message": null,
    "meta": "Ad Network · Tier D · UnWanted · LATAM",
    "validation": {
     "passed": null,
@@ -8940,7 +8853,6 @@ export const RUN_2026_10_21: Dataset = {
    "hypotheses": [
     {
      "label": "Equativ's own TOPS-11471 Amazon reseller clean-up removed these seats",
-     "confidence": null,
      "evidence_refs": [
       "TOPS-11471"
      ],
@@ -8949,12 +8861,7 @@ export const RUN_2026_10_21: Dataset = {
      ]
     }
    ],
-   "draft_message": "[The Pitt] Vidazoo Intermediary (4883) disconnected from Amazon DSP · €1,579/week at stake\n\nThe Pitt investigation\n\nPublisher: Vidazoo Intermediary (network 4883)\nDemand partner: Amazon DSP · disconnected 2026-10-20 11:44\nSpend at stake: €1,579 per week before the cut (official alert view, currency not documented; not a confirmed loss)\nPriority score: 31/100\nRead: Likely Equativ's own TOPS-11471 Amazon reseller clean-up, yet the network sits above the wave 1 cutoff and Video B (491) RPMBR is €12.07 vs €44.53 target. Next: confirm with Jaroslaw Stolarz whether it was intended.\n\nOpen items\n\n• [TechOps] Cut in TOPS-11471, Equativ's own Amazon DSP reseller clean-up. Wave 1 cut resellers under $150/month; Vidazoo Intermediary made about $7.6K/month on Amazon DSP.\nNext step: Ask Jaroslaw Stolarz whether Vidazoo Intermediary was on the list. If not, ask for reconnection before anyone contacts the publisher.\n• [TechOps] RPMBR under Amazon DSP's bar: Video B (491) €12.07 vs €44.53 ($50 Americas). Video B (491) earns 71% less per request here than on Web elsewhere (€41.27): the traffic, not the seat, is the problem\nNext step: Ask #help-call-limiter to raise the RPMA threshold on Video B (491) for Vidazoo Intermediary, so Amazon DSP only gets its higher-value requests (Jaroslaw Stolarz is already reviewing this threshold for Amazon DSP).\n• [TechOps] IVT 4.08% / SIVT 0.72% of requests after the cut\nNext step: Identify the IVT sources (placements, bundles, IP ranges) and filter them before reconnection.\n\nInternal research & sources\n\n* BS-21803 (2026-10-12) — publisher_wide\nGrant Minsky asked whether mail.aol.com or other AOL domains are blocked on the Vidazoo (4883) account, saying the client had enabled traffic and shared a sample bid request that looked healthy in Dust.\n* PLD-2753 (2026-10-01) — publisher_wide\nZhanhao Liu reported that since 2026-09-29 10:00 UTC the Call Limiter AB dashboard shows CallLimiterStatus UNKNOWN for 100% of bid requests of 291 networks on every partner, a list that includes network 4883, and that…\n* TOPS-11326 (2026-10-13) — partner_wide\nLuc Marsolais reported that clicks may not be tracked properly for Amazon DSP partner 437 on web traffic from certain SSB callers (Mediavine, Prebid client side, Seedtag), while PrebidServer, Google OB and Rise look…\n* TOPS-10474 (2026-09-21) — partner_wide\nPriyanka Selvam reported a ~92% revenue drop for Kakaku (5915) from Amazon DSP EMEA/APAC Display B (partner 489) since 10 September.\n* TOPS-11539 (2026-10-19) — partner_wide\nDmitri Iartsev logged an ongoing Amazon DSP discrepancy with T-Mobile (5859), whose supply is 100% mobile app via Google OB.\n\nThese sources provide investigation context. They do not establish causality unless independently verified.\n\nLeading hypothesis (not confirmed)\nEquativ's own TOPS-11471 Amazon reseller clean-up removed these seats\nVerify: Ask Jaroslaw Stolarz whether Vidazoo Intermediary was on the wave 1 list.\n\nGenerated by The Pitt (n8n). Figures from Snowflake. Case LIVE-4883-amazon_dsp.",
-   "read": "Likely Equativ's own TOPS-11471 Amazon reseller clean-up, yet the network sits above the wave 1 cutoff and Video B (491) RPMBR is €12.07 vs €44.53 target. Next: confirm with Jaroslaw Stolarz whether it was intended.",
-   "findings": [
-    "Amazon DSP still buys Vidazoo Intermediary on AMER Display B (437) (€34,785/week): only the other seats were cut",
-    "Spend on Video B (491) jumped from €36 to €1,709 in the last week before the cut (a cut list built on earlier weeks would have seen it as a small network)"
-   ],
+   "draft_message": null,
    "meta": "Ad Network · Tier C · UnWanted · US",
    "validation": {
     "passed": null,

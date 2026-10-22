@@ -70,12 +70,9 @@ export interface DemandFunnel {
   drop_reasons: DropReason[];
 }
 
-export type Confidence = 'LOW' | 'MEDIUM' | 'HIGH';
-
+/** A hypothesis as stated by the source. Confidence is not part of the product (no score, no ranking). */
 export interface Hypothesis {
   label: string;
-  /** null = the source does not state a confidence. */
-  confidence: Confidence | null;
   evidence_refs: string[];
   missing_info: string[];
 }
@@ -84,6 +81,7 @@ export interface Hypothesis {
 export interface AiInvestigation {
   network_id: number;
   hypotheses: Hypothesis[];
+  /** Read-only draft. The real run's drafts live in the case layer (src/lib/cases), rebuilt without RPMBr. */
   draft_message: string | null;
   validation: { passed: boolean | null; ai_output_accepted: boolean | null; fallback_fields: string[] | null };
   /** Optional, as written in the run output: the one-line read, "what the data shows" lines and the network's tags. */
@@ -119,7 +117,8 @@ export interface Dataset {
   synthetic: boolean;
   /** Days since CUT_AT are counted to this date (YYYY-MM-DD). */
   asOf: string;
-  currency: { symbol: string; note: string };
+  /** Every amount in the set is in this currency (USD for the product). */
+  currency: { code: 'USD'; symbol: '$'; note: string };
   source: string;
   /** Run-level summary line, as written in the run output. */
   headline?: string | null;

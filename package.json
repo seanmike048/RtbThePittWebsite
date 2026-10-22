@@ -11,7 +11,7 @@
     "api:n8n-dev": "node --env-file=.env.n8n-dev server.mjs",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "test": "node --test src/lib/cfo437/model.test.ts src/lib/investigations/investigations.test.ts src/lib/finance/finance.test.ts src/lib/ops/ops.test.ts src/lib/pitt/engine.test.ts server/server.test.mjs"
+    "test": "node --test src/lib/cases/cases.test.ts src/lib/cfo437/model.test.ts src/lib/investigations/investigations.test.ts src/lib/finance/finance.test.ts src/lib/ops/ops.test.ts src/lib/pitt/engine.test.ts server/server.test.mjs"
   },
   "dependencies": {
     "d3-sankey": "^0.12.3",
