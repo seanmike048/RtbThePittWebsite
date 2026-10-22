@@ -3,15 +3,15 @@
 1. SYNTHETIC: 25 seeded networks across Amazon seats 437/489/490/491/492, three business units, and the demo
    scenarios A (ads.txt FAIL after the cut), B (IVT spike) and C (all PASS or NO_DATA, Amazon-specific drop).
    Every name says "(synthetic)"; owners are synthetic placeholders, not people.
-2. REAL: the 21 Oct 2026 run (n8n Main MVP + Investigator v4.6) as published in "The Pitt Results" page:
-   Display.io, E-Planning LATAM, Vidazoo Intermediary. Only figures written in that page are used; anything it does
-   not state is null / NO_DATA. Drafts are copied verbatim from the page's DRAFTS object.
+2. REAL: the 21 Oct 2026 run (n8n Main MVP + Investigator v4.6) as posted in #thepittoutput at 4:55 PM, kept in
+   scripts/run-2026-10-21-1655.json (digest lines, leading hypotheses, Verify steps and Jira drafts, verbatim):
+   Display.io, E-Planning LATAM, Vidazoo Intermediary. Only figures written in that output are used; anything it does
+   not state is null / NO_DATA.
 
 3. Optional SNOWFLAKE EXPORT: --csv DIR reads one CSV per array (column names = the data contract, see
    docs/disconnection-room.md) and adds it as a third data set. Empty cells become null, never 0.
 
-Run: python3 scripts/gen_room_data.py [--results "The Pitt Results.html"] [--csv DIR --label "Export 21 Oct" --as-of 2026-10-21]
-Without --results, the real drafts already in data.ts are kept (read back from it)."""
+Run: python3 scripts/gen_room_data.py [--run scripts/run-2026-10-21-1655.json] [--csv DIR --label "Export 21 Oct" --as-of 2026-10-21]"""
 import argparse, csv, json, pathlib, random, re, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -131,7 +131,7 @@ def synthetic():
             'disconnections': disc, 'networks': nets, 'checks': checks, 'traffic': traffic, 'funnels': funnels, 'investigations': invs, 'readiness': ready, 'saves': saves}
 
 # ---------------------------------------------------------------- real run (21 Oct 2026)
-def real(drafts):
+def real(run):
     seat = lambda pid: SEATS[pid]
     disc = [
         # Display.io #5412, cut 2026-10-20 11:44: seats 489 EUR 2,753 / 491 EUR 361 / 437 "none listed"
@@ -163,14 +163,10 @@ def real(drafts):
         {'network_id': 5449, 'metric': 'amazon_rpmbr', 'partner_name': seat(437), 'partner_ids': [437], 'change_pct': None, 'before': 28.78, 'after': None, 'period': '7 days before the cut', 'source': 'The Pitt run, 21 Oct 2026'},
         {'network_id': 4883, 'metric': 'amazon_rpmbr', 'partner_name': seat(491), 'partner_ids': [491], 'change_pct': None, 'before': 12.07, 'after': None, 'period': '7 days before the cut', 'source': 'The Pitt run, 21 Oct 2026'},
     ]
-    hyp = {
-        5412: ("Equativ's own TOPS-11471 reseller clean-up, wave 1", ['Whether Display.io was on the TOPS-11471 wave-1 list and whether the cut was intended (ask Jaroslaw Stolarz)']),
-        5449: ('Equativ cut the network under the TOPS-11471 reseller clean-up', ['Confirmation in the TOPS-11471 comments and wave lists that E-Planning LATAM was an intended cut on 2026-10-20']),
-        4883: ("Equativ's own TOPS-11471 Amazon reseller clean-up removed the seats", ['Whether Vidazoo Intermediary was on the TOPS-11471 wave-1 list (ask Jaroslaw Stolarz)']),
-    }
-    names = {5412: 'Display.io', 5449: 'E-Planning LATAM', 4883: 'Vidazoo Intermediary'}
-    invs = [{'network_id': nid, 'hypotheses': [{'label': hyp[nid][0], 'confidence': None, 'evidence_refs': ['TOPS-11471'], 'missing_info': hyp[nid][1]}],
-             'draft_message': drafts.get(names[nid]), 'validation': {'passed': None, 'ai_output_accepted': None, 'fallback_fields': None}} for nid in (5412, 5449, 4883)]
+    cases = run['cases']
+    invs = [{'network_id': nid, 'hypotheses': [{'label': cases[str(nid)]['hypothesis'], 'confidence': None, 'evidence_refs': ['TOPS-11471'], 'missing_info': ['Verify: ' + cases[str(nid)]['verify']]}],
+             'draft_message': cases[str(nid)]['draft'], 'read': cases[str(nid)]['read'], 'findings': cases[str(nid)]['findings'], 'meta': cases[str(nid)]['meta'],
+             'validation': {'passed': None, 'ai_output_accepted': None, 'fallback_fields': None}} for nid in (5412, 5449, 4883)]
     ready = []
     for nid in (5412, 5449, 4883):
         for sig in READINESS:
@@ -178,23 +174,10 @@ def real(drafts):
                 ready.append({'network_id': nid, 'signal': sig, 'presence': 'PARTIAL', 'detail': 'GPID on 0.1% of requests to seat 489 and 0% to seat 491 (43% and 32.9% on App elsewhere)'})
             else:
                 ready.append({'network_id': nid, 'signal': sig, 'presence': 'NO_DATA', 'detail': None})
-    return {'id': 'run-2026-10-21', 'label': 'Real run · 21 Oct 2026', 'synthetic': False, 'asOf': '2026-10-21',
+    return {'id': 'run-2026-10-21', 'label': 'Real run · 21 Oct 2026, 4:55 PM', 'synthetic': False, 'asOf': '2026-10-21',
             'currency': {'symbol': '€', 'note': 'EUR as documented by the source (TOTAL_PAID_PRICE_TRUE_COUNT); not Finance-validated. A run rate, not a confirmed loss.'},
-            'source': 'The Pitt run posted in #thepittoutput on 21 Oct 2026 at 13:30 EDT (n8n Main MVP + Investigator v4.6), as published in "The Pitt Results".',
+            'source': run['source'], 'headline': run['headline'],
             'disconnections': disc, 'networks': nets, 'checks': checks, 'traffic': traffic, 'funnels': [], 'investigations': invs, 'readiness': ready, 'saves': []}
-
-def read_drafts(path):
-    s = pathlib.Path(path).read_text(encoding='utf-8')
-    m = re.search(r'const DRAFTS = (\{.*?\});\n', s, re.S)
-    if not m:
-        sys.exit('DRAFTS object not found in ' + path)
-    return json.loads(m.group(1))
-
-def existing_drafts():
-    if not OUT.exists():
-        return {}
-    m = re.search(r'/\*DRAFTS\*/(\{.*?\})/\*END\*/', OUT.read_text(encoding='utf-8'), re.S)
-    return json.loads(m.group(1)) if m else {}
 
 # ---------------------------------------------------------------- Snowflake CSV export
 ENUMS = {'check': set(CHECKS), 'window': {'BEFORE', 'AFTER'}, 'result': {'PASS', 'FAIL', 'NO_DATA'}, 'presence': {'PRESENT', 'ABSENT', 'PARTIAL', 'NO_DATA'},
@@ -263,15 +246,13 @@ def from_csv(d, label, as_of):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('results', nargs='?', help='legacy positional form of --results')
-    ap.add_argument('--results')
+    ap.add_argument('--run', default=str(ROOT / 'scripts/run-2026-10-21-1655.json'))
     ap.add_argument('--csv')
     ap.add_argument('--label', default='Snowflake export')
     ap.add_argument('--as-of', dest='as_of')
     a = ap.parse_args()
-    src = a.results
-    drafts = read_drafts(src) if src else existing_drafts()
-    syn, run = synthetic(), real(drafts)
+    run_src = json.loads(pathlib.Path(a.run).read_text(encoding='utf-8'))
+    syn, run = synthetic(), real(run_src)
     export = None
     if a.csv:
         from datetime import date
@@ -284,21 +265,18 @@ def main():
         ' */',
         "import type { Dataset } from './types.ts';",
         '',
-        '/** Jira drafts of the 21 Oct run, verbatim from "The Pitt Results" page. */',
-        'const RUN_DRAFTS: Record<string, string> = /*DRAFTS*/' + json.dumps(drafts, ensure_ascii=False) + '/*END*/;',
-        'void RUN_DRAFTS;',
-        '',
         'export const SYNTHETIC: Dataset = ' + json.dumps(syn, ensure_ascii=False, indent=1) + ';',
         '',
         'export const RUN_2026_10_21: Dataset = ' + json.dumps(run, ensure_ascii=False, indent=1) + ';',
         '',
         *(['export const EXPORT: Dataset = ' + json.dumps(export, ensure_ascii=False, indent=1) + ';', ''] if export else []),
-        'export const DATASETS: Dataset[] = [SYNTHETIC, RUN_2026_10_21' + (', EXPORT' if export else '') + '];',
+        '/** First entry = the data set the Room opens on: the latest real run. */',
+        'export const DATASETS: Dataset[] = [RUN_2026_10_21, SYNTHETIC' + (', EXPORT' if export else '') + '];',
         '',
     ]
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text('\n'.join(body), encoding='utf-8')
-    print('wrote', OUT, '| synthetic rows', len(syn['disconnections']), 'networks', len(syn['networks']), '| real rows', len(run['disconnections']), '| drafts', len(drafts),
+    print('wrote', OUT, '| synthetic rows', len(syn['disconnections']), 'networks', len(syn['networks']), '| real rows', len(run['disconnections']), '| drafts', sum(1 for i in run['investigations'] if i['draft_message']),
           '| export rows', len(export['disconnections']) if export else 0)
 
 if __name__ == '__main__':

@@ -54,15 +54,38 @@ function citedEvidence(report: InvestigationReport) {
   return out;
 }
 
-export const InvestigationPage: React.FC<{
+type Props = {
   reports: InvestigationReport[];
   selected: number;
   onSelect: (i: number) => void;
   contexts: Record<string, NetworkContext>;
   onContext: (c: NetworkContext) => void;
   onOpenImport: () => void;
-}> = ({ reports, selected, onSelect, contexts, onContext, onOpenImport }) => {
-  const report = reports[selected];
+  onOpenRoom?: () => void;
+};
+
+/** No seeded case: the tab starts empty and fills with what is pasted. The latest run lives in the Disconnection Room. */
+export const InvestigationPage: React.FC<Props> = (p) =>
+  p.reports.length ? (
+    <InvestigationView {...p} />
+  ) : (
+    <Card className="p-6 sm:p-8">
+      <SectionHeading eyebrow="Investigations" title="No investigation loaded" description="Paste an approved investigation or an Investigator v4.6 Slack card to read it here with its Snowflake context." />
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button variant="primary" onClick={p.onOpenImport}>
+          Paste investigation
+        </Button>
+        {p.onOpenRoom && (
+          <Button variant="secondary" onClick={p.onOpenRoom}>
+            Open the Disconnection Room (21 Oct run)
+          </Button>
+        )}
+      </div>
+    </Card>
+  );
+
+const InvestigationView: React.FC<Props> = ({ reports, selected, onSelect, contexts, onContext, onOpenImport }) => {
+  const report = reports[Math.min(selected, reports.length - 1)];
   const ctx = contexts[report.networkId] ?? null;
   const { available, query } = useSnowflake();
   const [status, setStatus] = useState<{ state: 'idle' | 'loading' | 'ok' | 'error'; text?: string }>({ state: 'idle' });

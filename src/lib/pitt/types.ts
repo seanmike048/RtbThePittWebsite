@@ -86,6 +86,10 @@ export interface AiInvestigation {
   hypotheses: Hypothesis[];
   draft_message: string | null;
   validation: { passed: boolean | null; ai_output_accepted: boolean | null; fallback_fields: string[] | null };
+  /** Optional, as written in the run output: the one-line read, "what the data shows" lines and the network's tags. */
+  read?: string | null;
+  findings?: string[];
+  meta?: string | null;
 }
 
 export type Presence = 'PRESENT' | 'ABSENT' | 'PARTIAL' | 'NO_DATA';
@@ -117,6 +121,8 @@ export interface Dataset {
   asOf: string;
   currency: { symbol: string; note: string };
   source: string;
+  /** Run-level summary line, as written in the run output. */
+  headline?: string | null;
   disconnections: Disconnection[];
   networks: NetworkMeta[];
   checks: Check[];

@@ -59,7 +59,7 @@ Other settings in the same file:
    - **A:** ads.txt FAIL after the cut.
    - **B:** IVT spike.
    - **C:** all PASS or NO_DATA with an Amazon-specific drop, LOW confidence and missing information listed. Some C networks show the HIGH cap and the "Unverified evidence" badge.
-2. **Real run · 21 Oct 2026**: Display.io, E-Planning LATAM and Vidazoo Intermediary, totalling €7,002 a week over 4 cut seats with a spend. It carries only what "The Pitt Results" page states; everything else is null or NO_DATA. Business unit, owner, funnel and AI confidence are not in that page. The Jira drafts are kept verbatim.
+2. **Real run · 21 Oct 2026, 4:55 PM** (the default): Display.io, E-Planning LATAM and Vidazoo Intermediary, totalling €7,002 a week over 4 cut seats with a spend. Source: `scripts/run-2026-10-21-1655.json`, the #thepittoutput post copied verbatim (headline, reads, findings, leading hypotheses, Verify steps, Jira drafts). It carries only what that output states; everything else is null or NO_DATA (business unit, owner, funnel and AI confidence are not in it).
 
 ## Replacing the sample data with a Snowflake CSV export
 

@@ -42,13 +42,19 @@ const c = (
   updatedBy: string | null,
 ): RecentCut => ({ networkId, networkName, seats, partners, cutAt, revenue7d, reasonCode, comment, updatedBy });
 
+/** Networks with "STR" as a separate word are being sunset and are left out (same rule as the n8n main workflow's M2/M4). */
+export const isSunset = (name: string) => /(^|\s)STR(\s|$)/.test(name);
+
 export const WATCHLIST_SNAPSHOT: Watchlist = {
-  asOf: '2026-10-20',
+  asOf: '2026-10-21',
   lastActivityDay: '2026-10-19',
   source: 'snapshot',
   cuts: [
-    c('5100', 'Tubi TV STR', 5, '437, 489, 490, 491, 492', '2026-09-25 08:11', 16037.192306, 1, 'Reauct phase out', 'aglaizal@equativ.com'),
-    c('5339', 'Raptive STR', 4, '437, 489, 490, 491', '2026-10-01 08:28', 14662.909996, 1, 'TOPS-10851', 'tdelalande@equativ.com'),
+    // The 20 Oct TOPS-11471 wave, from The Pitt run of 21 Oct 2026 (4:55 PM): weekly spend per network over the seats with a
+    // recorded spend; no reason code or comment is stated in the run.
+    c('5412', 'Display.io', 3, '437, 489, 491', '2026-10-20 11:44', 3114, null, null, null),
+    c('5449', 'E-Planning LATAM', 1, '437', '2026-10-20 11:38', 2309, null, null, null),
+    c('4883', 'Vidazoo Intermediary', 1, '491', '2026-10-20 11:44', 1579, null, null, null),
     c('3600', 'VIX Latam', 1, '492', '2026-09-01 18:06', 2328.693409, 3, 'No spend', 'diartsev@equativ.com'),
     c('5530', 'Markapp Media', 1, '492', '2026-09-01 17:10', 20.577272, 3, 'No spend', 'diartsev@equativ.com'),
     c('4164', 'playstream.media', 1, '492', '2026-09-01 17:39', 9.309915, 3, 'No spend', 'diartsev@equativ.com'),

@@ -1,6 +1,6 @@
 /** Read-only Snowflake queries for investigation context and the watchlist. Network IDs are validated as integers. */
 import type { DailyPoint, NetworkContext, SeatEvent } from './context.ts';
-import type { AtRiskSeat, RecentCut, Watchlist } from './watchlist.ts';
+import { isSunset, type AtRiskSeat, type RecentCut, type Watchlist } from './watchlist.ts';
 
 const AMZ = '437, 489, 490, 491, 492';
 const id = (v: string) => {
@@ -117,7 +117,7 @@ export function toWatchlist(cuts: Row[], atRisk: Row[], asOf: string): Watchlist
     asOf,
     source: 'live',
     lastActivityDay: atRisk[0]?.LAST_DAY ?? '',
-    cuts: cuts.map(
+    cuts: cuts.filter((r) => !isSunset(r.NETWORK_NAME ?? '')).map(
       (r): RecentCut => ({
         networkId: r.NETWORK_ID ?? '',
         networkName: r.NETWORK_NAME ?? '',

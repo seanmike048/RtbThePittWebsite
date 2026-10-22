@@ -5,8 +5,7 @@
  */
 import { useState } from 'react';
 import type { NetworkContext } from './lib/investigations/context.ts';
-import { type InvestigationReport, parseInvestigation } from './lib/investigations/report.ts';
-import { TUBI_CONTEXT, TUBI_REPORT_TEXT } from './lib/investigations/tubi5100.ts';
+import type { InvestigationReport } from './lib/investigations/report.ts';
 import { type Watchlist, WATCHLIST_SNAPSHOT } from './lib/investigations/watchlist.ts';
 import { Header, type TabId } from './components/Header.tsx';
 import { InvestigationPage } from './components/investigations/InvestigationPage.tsx';
@@ -21,10 +20,11 @@ import { useOps } from './components/ops/useOps.ts';
 import { RoomPage } from './components/room/RoomPage.tsx';
 
 export default function App() {
-  const [tab, setTab] = useState<TabId>('investigations');
-  const [reports, setReports] = useState<InvestigationReport[]>(() => [parseInvestigation(TUBI_REPORT_TEXT)]);
+  // Opens on the Disconnection Room; Investigations starts empty (no seeded case) and fills with pasted outputs.
+  const [tab, setTab] = useState<TabId>('room');
+  const [reports, setReports] = useState<InvestigationReport[]>([]);
   const [selected, setSelected] = useState(0);
-  const [contexts, setContexts] = useState<Record<string, NetworkContext>>({ [TUBI_CONTEXT.networkId]: TUBI_CONTEXT });
+  const [contexts, setContexts] = useState<Record<string, NetworkContext>>({});
   const [watchlist, setWatchlist] = useState<Watchlist>(WATCHLIST_SNAPSHOT);
   const [pasteOpen, setPasteOpen] = useState(false);
   const ops = useOps();
@@ -57,6 +57,7 @@ export default function App() {
             contexts={contexts}
             onContext={c => setContexts(prev => ({ ...prev, [c.networkId]: c }))}
             onOpenImport={() => setPasteOpen(true)}
+            onOpenRoom={() => changeTab('room')}
           />
         )}
         {tab === 'watchlist' && (

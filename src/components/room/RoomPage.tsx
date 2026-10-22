@@ -143,6 +143,12 @@ export const RoomPage: React.FC = () => {
         <NetworkPage ds={ds} networkId={view.networkId} onBack={() => setView({ page: 'room' })} />
       ) : (
         <>
+          {ds.headline && (
+            <p className="rounded-xl border border-accent/40 bg-accent-soft px-4 py-3 text-sm text-ink">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-accent-ink">The Pitt · </span>
+              {ds.headline}
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
             {k.map((x) => (
               <KpiCard key={x.id} k={x} symbol={sym} hasPrior={!!prior} />

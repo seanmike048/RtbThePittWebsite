@@ -27,6 +27,7 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-accent">Network #{networkId}</p>
           <h2 className="text-xl font-bold text-ink">{s.publisher}</h2>
+          {inv?.meta && <p className="text-xs text-ink-2">{inv.meta}</p>}
           <p className="text-xs text-muted">
             Region {s.region ?? 'No data'} · {s.rows.map((r) => r.PARTNER_ID + ' ' + r.PARTNER_NAME.replace('Amazon DSP ', '') + ' cut ' + r.CUT_AT).join(' · ')}
           </p>
@@ -133,6 +134,22 @@ export const NetworkPage: React.FC<{ ds: Dataset; networkId: number; onBack: () 
           <p className="text-sm italic text-muted">No data: no AI investigation for this network.</p>
         ) : (
           <div className="space-y-3">
+            {inv.read && (
+              <p className="rounded-lg border border-accent/40 bg-accent-soft px-3 py-2 text-sm text-ink">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-accent-ink">Read · </span>
+                {inv.read}
+              </p>
+            )}
+            {inv.findings && inv.findings.length > 0 && (
+              <div className="text-xs">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">What the data shows</p>
+                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-ink-2">
+                  {inv.findings.map((f) => (
+                    <li key={f}>{f}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="flex flex-wrap gap-1.5 text-xs">
               <Chip tone={inv.validation.passed == null ? 'neutral' : inv.validation.passed ? 'ok' : 'danger'}>validation passed: {inv.validation.passed == null ? 'No data' : String(inv.validation.passed)}</Chip>
               <Chip tone={inv.validation.ai_output_accepted == null ? 'neutral' : inv.validation.ai_output_accepted ? 'ok' : 'warn'}>
